@@ -1,0 +1,17 @@
+# Raspberry Pi 5 SIMULATION: Debian 13 "trixie" on aarch64 (the base of current Raspberry Pi OS),
+# installing exactly what deploy/pi_setup.sh installs on the real Pi.
+# Run under QEMU on a PC it proves the code and the Arm wheels work; speed numbers come from the real Pi.
+#   docker build --platform linux/arm64 -f deploy/Dockerfile.pi -t pcb-pi-sim .
+FROM --platform=linux/arm64 debian:trixie-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv python3-pip libgl1 libglib2.0-0 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY deploy/requirements-pi.txt /tmp/requirements-pi.txt
+RUN python3 -m venv /opt/pcb && \
+    /opt/pcb/bin/pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r /tmp/requirements-pi.txt
+
+ENV PATH=/opt/pcb/bin:$PATH
+WORKDIR /repo

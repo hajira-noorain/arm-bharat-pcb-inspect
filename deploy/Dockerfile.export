@@ -1,0 +1,17 @@
+# Host-side export environment (x86_64): turns PyTorch models into ExecuTorch .pte files.
+# Usage:
+#   docker build -f deploy/Dockerfile.export -t pcb-export .
+#   docker run --rm -v <repo>:/repo -v <pcb_work>:/work --env-file .env pcb-export <command>
+FROM python:3.13-slim-trixie
+
+RUN apt-get update && apt-get install -y --no-install-recommends git cmake build-essential \
+    libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+
+# CPU torch is enough for export; executorch pins a compatible torch itself
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
+    executorch==1.6.0 && \
+    pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
+    torchvision ultralytics huggingface_hub tiktoken sentencepiece blobfile \
+    hydra-core omegaconf numpy opencv-python-headless pyyaml
+
+WORKDIR /repo

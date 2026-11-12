@@ -256,25 +256,34 @@ def enrol(feature_fn: FeatureFn, good_images: list[np.ndarray], design: str,
     the normal-score statistics are honest even with very few images.
     """
     feats = [descriptors(feature_fn(preprocess(im))) for im in good_images]
-    per_img = len(feats[0])
-    all_desc = np.concatenate(feats)
-    k = min(max_bank, max(1, int(len(all_desc) * coreset_ratio)))
-    bank = all_desc[greedy_coreset(all_desc, k, seed)]
 
-    loo_img_scores, loo_patch = [], []
-    if len(feats) >= 2:
+    def build(fs):
+        x = np.concatenate(fs)
+        k = min(max_bank, max(1, int(len(x) * coreset_ratio)))
+        return x[greedy_coreset(x, k, seed)]
+
+    held_img_scores, held_patch = [], []
+    if 2 <= len(feats) <= 20:
+        # few images: leave-one-out so every image is scored by a bank that never saw it
         for i in range(len(feats)):
-            others = np.concatenate([f for j, f in enumerate(feats) if j != i])
-            kk = min(max_bank, max(1, int(len(others) * coreset_ratio)))
-            nn = NearestNeighbour(others[greedy_coreset(others, kk, seed)])
+            nn = NearestNeighbour(build([f for j, f in enumerate(feats) if j != i]))
             dist = nn.dist(feats[i])
-            loo_img_scores.append(float(dist.max()))
-            loo_patch.append(dist)
-        patch_d = np.concatenate(loo_patch)
-    else:
-        patch_d = NearestNeighbour(bank).dist(all_desc)
-        loo_img_scores = [float(patch_d.max())]
+            held_img_scores.append(float(dist.max()))
+            held_patch.append(dist)
+    elif len(feats) > 20:
+        # many images: calibrate on a held-out 20%, then build the shipped bank from all of them
+        n_hold = max(4, len(feats) // 5)
+        nn = NearestNeighbour(build(feats[n_hold:]))
+        for f in feats[:n_hold]:
+            dist = nn.dist(f)
+            held_img_scores.append(float(dist.max()))
+            held_patch.append(dist)
+    bank = build(feats)
+    if held_patch:
+        patch_d = np.concatenate(held_patch)
+    else:  # a single image: no honest estimate possible, fall back to self-distances
+        patch_d = NearestNeighbour(bank).dist(feats[0])
+        held_img_scores = [float(patch_d.max())]
     pixel_thr = float(np.percentile(patch_d, pixel_q))
-    norm_scale = float(np.median(loo_img_scores))
-    assert per_img > 0
+    norm_scale = float(np.median(held_img_scores))
     return AnomalyModel(feature_fn, bank, norm_scale, pixel_thr, design)

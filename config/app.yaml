@@ -1,0 +1,16 @@
+# Runtime configuration. Paths are relative to `root` (the deployed bundle directory).
+root: .
+data_dir: var                 # SQLite log + images + learning buffers (created on first run)
+designs_dir: config/designs
+camera: auto                  # auto | picamera2 | usb | replay
+replay_glob: demo/boards/*.jpg
+vision_backend: executorch    # executorch (deployed) | ultralytics (laptop dev)
+detector_pte: models/vision/pcb_y26n_xnnpack.pte
+detector_pt: models/vision/pcb_y26n.pt
+backbone_pte: models/vision/resnet18_patch_xnnpack.pte
+llm_pte: models/llm/llama3_2_1b_spinquant.pte
+llm_tokenizer: models/llm/tokenizer.model
+llm_threads: 4
+gpio: true
+host: 0.0.0.0
+port: 8000

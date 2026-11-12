@@ -1,0 +1,12 @@
+# Runtime dependencies on the Raspberry Pi 5 (aarch64). No ultralytics, no torchvision:
+# vision and Llama both run from ExecuTorch .pte files.
+executorch==1.6.0
+numpy
+scipy
+opencv-python-headless
+pyyaml
+fastapi
+uvicorn
+scikit-learn
+faiss-cpu
+psutil
