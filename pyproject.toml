@@ -1,0 +1,18 @@
+[project]
+name = "pcbinspect"
+version = "0.1.0"
+description = "Offline PCB inspection with on-device Llama (ExecuTorch) advice — Arm Bharat AI-SoC 2026-27 PS5"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "scipy",
+    "opencv-python-headless",
+    "pyyaml",
+    "fastapi",
+    "uvicorn",
+    "scikit-learn",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

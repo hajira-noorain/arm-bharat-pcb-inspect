@@ -1,0 +1,53 @@
+# Severity and IPC-style acceptance rules.
+#
+# HONESTY NOTE: we do not have the licensed IPC-A-600 text. The limits below are the commonly
+# quoted conductor-width-reduction / spacing-reduction acceptability limits from secondary sources:
+#   - https://atlaspcb.com/blog/ipc-a-600-class-2-vs-class-3-pcb-acceptability
+#   - https://resources.pcb.cadence.com/blog/2023-ipc-standard-tolerance-effects
+# Every number here is editable per customer/design. The report states this explicitly.
+
+# Maximum allowed reduction (%) of the minimum design conductor width (nicks, pinholes, mouse bites)
+width_reduction_limit_pct:
+  class1: 30
+  class2: 20
+  class3: 10
+
+# Maximum allowed reduction (%) of the minimum design conductor spacing (spurs, spurious copper)
+spacing_reduction_limit_pct:
+  class1: 30
+  class2: 20
+  class3: 10
+
+# Nominal design rules used when the design profile does not provide its own.
+# 0.2 mm (~8 mil) trace/space is a common low-cost fab default.
+default_design_rules:
+  min_trace_width_mm: 0.20
+  min_spacing_mm: 0.20
+
+# How each class is judged.
+#   rule: reject_all      -> functional defect, rejected at every IPC class
+#         width_reduction -> judged against width_reduction_limit_pct using the defect's short side
+#         spacing_reduction -> judged against spacing_reduction_limit_pct using the defect's short side
+#         area            -> anomaly: judged on area thresholds below (our assumption, not IPC)
+#   fallback_severity: used when no mm scale is available
+classes:
+  short:            {rule: reject_all,        fallback_severity: critical}
+  open:             {rule: reject_all,        fallback_severity: critical}
+  missing_hole:     {rule: reject_all,        fallback_severity: critical}
+  mouse_bite:       {rule: width_reduction,   fallback_severity: major}
+  pin_hole:         {rule: width_reduction,   fallback_severity: minor}
+  # The bbox of a damaged pad measures the pad, not the damage, so a mm rule would mislead:
+  # grade by class until a pad-area measurement exists.
+  missing_pad:      {rule: fixed,             fallback_severity: major}
+  spur:             {rule: spacing_reduction, fallback_severity: major}
+  spurious_copper:  {rule: spacing_reduction, fallback_severity: major}
+  unknown_anomaly:  {rule: area,              fallback_severity: major}
+
+# Our own assumption for unnamed anomalies on assembled boards (NOT from IPC).
+anomaly_area_mm2:
+  minor_below: 0.5
+  major_below: 4.0      # >= this is critical
+# Without a mm scale, grade anomalies by normalised score instead.
+anomaly_score:
+  minor_below: 0.6
+  major_below: 0.85

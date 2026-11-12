@@ -1,0 +1,31 @@
+# secrets
+.env
+*.token
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# large artefacts live outside the repo (C:\Users\sulai\pcb_work); never commit these
+*.pte
+*.pt
+*.pth
+*.onnx
+*.bin
+*.safetensors
+*.tar
+*.zip
+data/
+runs/
+models/
+*_ncnn_model/
+
+# runtime state
+var/
+*.db
+*.db-wal
+*.db-shm
