@@ -28,7 +28,7 @@ Goal: every photo of every board looks the same, so any difference we see is a r
 2. **Flat-field card.** Lay the grey card where boards sit, same light, same height. Take 8 frames. This fixes dark corners (vignetting). Do it again if the light moves.
 3. **Eye-test card.** Golden sheet 0 first, then test sheets 1 to 11, one after another, each in the corner stops. RAW for sheet 0.
 4. **Real boards.** The golden (known-good) board first, with RAW. Then the boards to test, each with its marker and grey patch in view.
-5. **Benchmarks (on the Pi, from the bundle folder).** `.venv/bin/python bench/bench_device.py --out results/device_bench.json` (detector on ExecuTorch vs the Arm runtime, anomaly backbone, Llama tokens/s, end-to-end), then `.venv/bin/python bench/soak.py --minutes 30` with the active cooler on (temperature and throttling over time). Copy the `results/` folder back to the laptop.
+5. **Benchmarks (on the Pi, from the bundle folder).** `bash deploy/measure_on_pi.sh quick` first (about 5 minutes: checks Llama runs on ExecuTorch and every benchmark starts), then `bash deploy/measure_on_pi.sh` with the active cooler on (about 45 minutes: detector on ExecuTorch vs the Arm runtime at 1/2/4 threads, anomaly backbone, Llama tokens/s, end to end, then a 30-minute soak with temperature and throttling). Copy the `results_pi_<time>.tgz` it prints back to the laptop.
 
 ## Quick check before you start shooting
 Take one photo and ask `imaging.capture_quality(img)`. It says if the picture is blurry, too dark, too bright or clipped. After the first good golden photo, build a reference with `CaptureProfile.from_images([...])`. Later photos are checked against it, so a bumped stand or a changed lamp is caught straight away.
