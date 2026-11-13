@@ -195,6 +195,13 @@ Inkjet dot gain 40 um, camera 30 px/mm on paper, perspective, blur, noise and JP
 | fused_golden | mouse bite | Finds mouse bites from 0.48 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:6/30 0.3:14/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
 | fused_golden | spur | Finds spurs from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:30/30 0.3:30/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
 
+False calls per test pattern on the simulated card, at the operating threshold:
+
+| Evidence | False calls per pattern |
+|---|---|
+| detector | 0.39 |
+| fused_golden | 0.32 |
+
 ### Customer requirements to rules (Llama on ExecuTorch vs keyword reader)
 
 Tuning = 80 clauses used while writing the checks; held-out = 40 clauses written independently and never used for tuning. Silently wrong = the checks passed but the rule is wrong.

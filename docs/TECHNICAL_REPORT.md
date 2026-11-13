@@ -195,6 +195,8 @@ The limits in `config/severity.yaml` are the commonly quoted IPC-A-600 width and
 
 Shorts, opens and missing holes are functional failures, rejected at every class.
 
+**Location.** The PS guidance asks for severity from type, size and location. Location enters in one way: what the defect sits on. A nick in a conductor is graded by the share of the conductor's width it removes; a defect in a gap is graded by the share of the spacing it closes, and a defect that joins two conductors or cuts one is a functional failure wherever it is. Where on the board it sits (top-left, centre, and so on) is recorded and shown to the operator and to Llama, but does not change the grade: we have no design data saying which areas matter more, and inventing a weighting would make the grade look more informed than it is.
+
 **Severity is not confidence.** A named defect's severity comes from its type and its measured size against the limits above: the share of a conductor's width it removes, or the share of a gap it closes. The detector's confidence plays no part in it: confidence only decides whether the station is sure enough to call PASS or FAIL by itself (section 5.1). An unnamed anomaly has no type, so it is graded by the area it covers in mm2, with thresholds that are our own assumption and are marked as such in the file. Only when the station has no millimetre scale for the board does it fall back to grading an anomaly by how far its score is from normal, and it says so in the reason shown to the operator.
 
 ## 5. A station that knows its limits
@@ -217,6 +219,8 @@ On held-out test boards at a 5% allowed miss rate:
 | DeepPCB | 250 / 250 | 6.5% (5.0% to 8.1%) | 6.8% of 1,579 | 0.12 | 20% |
 | HRIPCB | 121 / 2 | 4.5% (2.8% to 6.3%) | 4.4% of 610 | 1.07 | 100% |
 | Mendeley | 27 / 0 | 3.6% (1.1% to 6.4%) | 3.4% of 207 | 7.07 | 100% |
+
+The detector alone misses 6.5% here and 6.3% in the golden-board table of section 3.3. Both are measured on the same DeepPCB test boards, but they count a defect as seen in slightly different ways: here a detection must overlap the defect (IoU of 0.3 or more); in section 3.3, where the golden comparison's free-form regions are scored too, a detection also counts if it overlaps a little (IoU 0.1) or its centre lies inside the defect. Each gate is calibrated with its own rule, so each figure is correct for its own table.
 
 **What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.2%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
 
@@ -342,7 +346,7 @@ Median time per board in these runs was about 7 s on an x86 host used for develo
 
 The gain over the keyword rule is small and the held-out set is only 20 questions, so we claim no more than this: Llama is at least as good as the rule, and every answer it words contains only numbers from the rows.
 
-`docs/RESULTS.md` has the full tables, including the earlier 1B variants. What failed on the way: asking for knowledge-base IDs as strings passed grounding about 15% of the time, and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
+`docs/RESULTS.md` has the full tables, including the earlier 1B variants. What failed on the way: asking for knowledge-base IDs as strings mostly failed grounding (an early run whose result file was not kept, so no figure is quoted), and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
 
 If Llama fails to load on the device, the dashboard shows a red banner and the functional check (`deploy/arm_check.py`) fails loudly. The station never silently pretends to run Llama.
 

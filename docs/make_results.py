@@ -661,6 +661,11 @@ def eyetest_section(r: Path) -> list[str]:
                 rows.append([ch, t.replace("_", " "), v["sentence"],
                              " ".join(f"{x['size_mm']}:{x['hits']}/{x['n']}" for x in v["table"])])
         out.append(table(["Evidence", "Defect", "Statement", "Found / planted per size (mm)"], rows))
+        fcs = [[ch, num(sres.get("false_calls_per_coupon"), 2)] for ch, sres in sim["channels"].items()
+               if sres.get("false_calls_per_coupon") is not None]
+        if fcs:
+            out.append("\nFalse calls per test pattern on the simulated card, at the operating threshold:\n")
+            out.append(table(["Evidence", "False calls per pattern"], fcs))
     return out
 
 
