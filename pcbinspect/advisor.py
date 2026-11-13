@@ -17,7 +17,6 @@ from .kb import KnowledgeBase, default_kb
 
 SEV_RANK = {"critical": 0, "major": 1, "minor": 2, None: 3}
 MAX_LLM_DEFECTS = 5          # keep the prompt short on a Pi; the rest get template advice
-ASSISTANT_PREFIX = '{"summary": "'
 
 
 @dataclass
@@ -58,40 +57,72 @@ def _sorted_defects(record: dict) -> list[dict]:
                                                     -(d.get("confidence") or 0)))
 
 
+def history_numbers(history: dict[str, int] | None, window: int = 20) -> list[float]:
+    """Numbers the prompt states about history: allowed in the summary by the grounding check."""
+    if not history:
+        return []
+    return [float(window)] + [float(v) for v in history.values() if v]
+
+
+PROMPT_STYLE = "numbered"     # 'numbered' (v2, default) or 'ids' (v1)
+
+
 def build_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase,
-                 window: int = 20) -> str:
-    """Llama 3.2 Instruct chat prompt. history = {defect_type: count in last `window` boards}."""
+                 window: int = 20, style: str | None = None) -> str:
+    """Compact Llama 3.2 Instruct chat prompt (prefill time dominates on a Pi, so every token counts).
+
+    history = {defect_type: number of the last `window` boards on which it appeared}.
+    style 'numbered': options are numbered per defect and the model answers with numbers, which a
+    1B model copies far less often than ID strings; the checker maps numbers back to KB IDs.
+    """
+    style = style or PROMPT_STYLE
     defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
-    small = {**record, "defects": defects}
     lines = []
     for d in defects:
         e = kb.entry(d["type"])
         size = f", {d['size_mm']} mm" if d.get("size_mm") is not None else ""
-        lines.append(f"{d['id']} ({d['type']}, {d.get('severity')}{size}, {d.get('location')}):")
-        lines.append("  causes: " + "; ".join(f"{c['id']}: {c['text']}" for c in e["causes"]))
-        lines.append("  actions: " + "; ".join(f"{a['id']}: {a['text']}" for a in e["actions"]))
+        lines.append(f"{d['id']}: {d['type'].replace('_', ' ')}, {d.get('severity')}{size}, "
+                     f"{d.get('location')}, confidence {d.get('confidence')}")
+        if style == "numbered":
+            lines.append("  causes: " + "; ".join(f"{i + 1} {c['short']}" for i, c in enumerate(e["causes"])))
+            lines.append("  actions: " + "; ".join(f"{i + 1} {a['short']}" for i, a in enumerate(e["actions"])))
+        else:
+            lines.append("  causes: " + " | ".join(f"{c['id']} {c['short']}" for c in e["causes"]))
+            lines.append("  actions: " + " | ".join(f"{a['id']} {a['short']}" for a in e["actions"]))
+    if style == "numbered":
+        pick = ("For each defect pick one cause number and one action number from its own lists. ")
+        fmt = ('JSON format: {"steps": [{"defect": "D1", "cause": 1, "action": 1}], "summary": "..."}')
+    else:
+        pick = "For each defect pick one cause ID and one action ID from its own lists. "
+        fmt = ('JSON format: {"steps": [{"defect": "D1", "cause": "<cause ID>", "action": "<action ID>"}], '
+               '"summary": "..."}')
     hist = ""
     if history:
-        parts = [f"{k} on {v} of the last {window} boards" for k, v in sorted(history.items()) if v]
+        parts = [f"{k.replace('_', ' ')} on {v} of the last {window} boards"
+                 for k, v in sorted(history.items()) if v]
         if parts:
-            hist = "Recent history for this design: " + ", ".join(parts) + ".\n"
-    system = ("You are the quality assistant on a PCB inspection station. Use only the options "
-              "given for each defect. Reply with JSON only.")
+            hist = "History: " + ", ".join(parts) + ".\n"
+    system = ("You are the quality assistant on a PCB inspection station. Choose only from the "
+              "listed IDs. Reply with JSON only.")
     user = (
-        f"Inspection record:\n{json.dumps(small, separators=(',', ':'))}\n\n"
-        "Options per defect:\n" + "\n".join(lines) + "\n\n" + hist +
-        "Task: for each defect choose the single most likely cause and the most useful next "
-        "action from its own options. A defect type that keeps repeating points to a process "
-        "cause. Put the most severe defect first. Then write a summary of at most two sentences "
-        "for the operator using only facts from the record.\n"
-        'Reply in exactly this JSON format: {"summary": "...", "steps": [{"defect": "D1", '
-        '"cause": "<cause id>", "action": "<action id>"}]}'
+        f"Board {record['board_id']} verdict {record['verdict']}. Defects:\n" + "\n".join(lines) +
+        "\n" + hist + pick +
+        "A defect that keeps repeating points to a process cause. Most severe first. Then a "
+        "summary of one or two sentences for the operator using only the facts above.\n" + fmt
     )
     return (
         "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n" + system + "<|eot_id|>"
         "<|start_header_id|>user<|end_header_id|>\n\n" + user + "<|eot_id|>"
-        "<|start_header_id|>assistant<|end_header_id|>\n\n" + ASSISTANT_PREFIX
+        "<|start_header_id|>assistant<|end_header_id|>\n\n" + assistant_prefix(record, style)
     )
+
+
+def assistant_prefix(record: dict, style: str | None = None) -> str:
+    """Start the answer for the model: the first thing it must produce is the cause choice for the
+    most severe defect. Small models follow a started structure far more reliably than an instruction."""
+    style = style or PROMPT_STYLE
+    first = _sorted_defects(record)[0]["id"]
+    return '{"steps": [{"defect": "' + first + '", "cause": ' + ('' if style == "numbered" else '"')
 
 
 def template_advice(record: dict, kb: KnowledgeBase) -> dict:
@@ -158,8 +189,8 @@ class Advisor:
             t = template_advice(record, self.kb)
             return Advice("template", None, t["summary"], render(t, record, self.kb), True,
                           [f"LLM error: {exc!r}"])
-        raw = ASSISTANT_PREFIX + gen.text
-        res: GroundingResult = check(raw, record, self.kb)
+        raw = assistant_prefix(record) + gen.text
+        res: GroundingResult = check(raw, record, self.kb, extra_numbers=history_numbers(history))
         # defects beyond the prompt cap get template steps
         if res.ok:
             covered = {s["defect"] for s in res.advice["steps"]}

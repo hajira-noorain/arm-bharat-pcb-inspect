@@ -1,0 +1,11 @@
+name: deeppcb
+kind: bare
+description: DeepPCB bare boards (binarised linear-scan images, 48 px/mm)
+detector: true
+anomaly_dir: null
+mm_per_px: 0.020833   # 48 px/mm stated by the DeepPCB authors
+marker_mm: 20
+rules: {min_trace_width_mm: 0.20, min_spacing_mm: 0.20}
+gate: models/gate/deeppcb.json
+alpha: 0.05
+beta: 0.01

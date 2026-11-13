@@ -1,0 +1,11 @@
+name: hripcb
+kind: bare
+description: PKU-Market-PCB bare boards (colour photos; physical scale not published)
+detector: true
+anomaly_dir: null
+mm_per_px: null       # unknown: severity falls back to defect-type defaults
+marker_mm: 20
+rules: {min_trace_width_mm: 0.20, min_spacing_mm: 0.20}
+gate: models/gate/hripcb.json
+alpha: 0.05
+beta: 0.01

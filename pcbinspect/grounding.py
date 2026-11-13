@@ -88,7 +88,32 @@ def _record_numbers(record: dict) -> set[float]:
     return nums
 
 
-def check(raw_text: str, record: dict, kb: KnowledgeBase) -> GroundingResult:
+KB_ID_RE = re.compile(r"\b[A-Z]{3,6}-[CA]\d+\b")
+
+
+def _normalise_id(value, allowed: set[str], ordered: list[str] | None = None):
+    """Map the model's choice to a KB ID, or return it unchanged so it is rejected.
+
+    - an option NUMBER (numbered prompt): 1-based index into this defect's own option list;
+      out of range -> unchanged -> rejected
+    - an echoed option line ('causes: SHORT-C1: under-etching'): formatting noise, accepted only if
+      the field contains exactly one KB ID and that ID is allowed for this defect
+    """
+    if ordered is not None and not isinstance(value, bool):
+        if isinstance(value, int) or (isinstance(value, str) and value.strip().isdigit()):
+            k = int(value)
+            return ordered[k - 1] if 1 <= k <= len(ordered) else f"option {k} (out of range)"
+    if not isinstance(value, str) or value in allowed:
+        return value
+    ids = set(KB_ID_RE.findall(value))
+    if len(ids) == 1 and next(iter(ids)) in allowed:
+        return next(iter(ids))
+    return value
+
+
+def check(raw_text: str, record: dict, kb: KnowledgeBase,
+          extra_numbers: list[float] | None = None) -> GroundingResult:
+    """extra_numbers: other facts given to the model in the prompt (e.g. history counts)."""
     reasons: list[str] = []
     obj = extract_json(raw_text)
     if obj is None:
@@ -115,6 +140,9 @@ def check(raw_text: str, record: dict, kb: KnowledgeBase) -> GroundingResult:
             reasons.append(f"step cites unknown defect {did!r}")
             continue
         allowed_c, allowed_a = kb.allowed_ids(defects[did]["type"])
+        entry = kb.entry(defects[did]["type"])
+        cause = _normalise_id(cause, allowed_c, [c["id"] for c in entry["causes"]])
+        action = _normalise_id(action, allowed_a, [a["id"] for a in entry["actions"]])
         if cause not in allowed_c:
             reasons.append(f"{did}: cause {cause!r} not allowed for {defects[did]['type']}")
             continue
@@ -127,7 +155,7 @@ def check(raw_text: str, record: dict, kb: KnowledgeBase) -> GroundingResult:
         clean_steps.append({"defect": did, "cause": cause, "action": action})
 
     # numbers in the summary must come from the record
-    allowed_nums = _record_numbers(record)
+    allowed_nums = _record_numbers(record) | {round(float(x), 2) for x in (extra_numbers or [])}
     for m in NUM_RE.findall(summary):
         v = round(float(m), 2)
         if v not in allowed_nums and not (v.is_integer() and v in {round(x) for x in allowed_nums}):

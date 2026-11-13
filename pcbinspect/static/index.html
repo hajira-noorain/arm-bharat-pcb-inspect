@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCB Inspection Station</title>
+<style>
+@font-face { font-family: "Atkinson"; src: url("/static/fonts/AtkinsonHyperlegible-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Atkinson"; src: url("/static/fonts/AtkinsonHyperlegible-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url("/static/fonts/BarlowCondensed-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Barlow Condensed"; src: url("/static/fonts/BarlowCondensed-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+:root {
+  --mask: #0F3D2E;        /* solder-mask green: chrome and controls */
+  --mask-2: #1A5240;
+  --ink: #1C2B26;         /* primary text */
+  --ink-2: #4A5A54;       /* secondary text */
+  --ink-3: #6E7D77;       /* muted text */
+  --surface: #F4F6F5;     /* work surface */
+  --panel: #FFFFFF;
+  --rule: #D5DCD9;
+  --silk: #FFFFFF;        /* silkscreen white on mask */
+  --pass: #1F9D55;
+  --review: #E8A317;
+  --fail: #D2342B;
+  --sev-critical: #D2342B;
+  --sev-major: #D97A0B;
+  --sev-minor: #A88A00;
+  --focus: #2F6FEB;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Atkinson", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--surface); color: var(--ink); font: 400 17px/1.45 var(--body); }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- header ---------- */
+header { background: var(--mask); color: var(--silk); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 10px 20px; }
+header h1 { font: 700 26px/1 var(--display); letter-spacing: .02em; margin: 0 12px 0 0; }
+header label { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+header select { background: var(--mask-2); color: var(--silk); border: 1px solid #3B6E5C; border-radius: 6px; padding: 6px 10px; }
+.status { margin-left: auto; display: flex; gap: 14px; font-size: 14px; color: #CFE3DA; }
+.status span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #7FA898; margin-right: 6px; vertical-align: 1px; }
+.status span.on::before { background: #5BD08F; }
+nav { display: flex; gap: 2px; padding: 0 20px; background: var(--mask); }
+nav button { background: none; border: 0; color: #B7D2C7; padding: 10px 16px 12px; font: 500 19px/1 var(--display); letter-spacing: .02em; cursor: pointer; border-bottom: 4px solid transparent; }
+nav button[aria-selected="true"] { color: var(--silk); border-bottom-color: var(--silk); }
+
+main { padding: 18px 20px 120px; max-width: 1500px; margin: 0 auto; }
+section[hidden] { display: none; }
+
+/* ---------- verdict band: the one loud element ---------- */
+.verdict { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px 28px; padding: 18px 26px; border-radius: 10px; color: #fff; background: #9AA8A2; min-height: 120px; }
+.verdict .word { font: 700 clamp(64px, 9vw, 112px)/.9 var(--display); letter-spacing: .01em; }
+.verdict .what { font-size: 20px; line-height: 1.35; }
+.verdict .what strong { font-size: 24px; }
+.verdict .board { text-align: right; font: 500 22px/1.2 var(--display); }
+.verdict.PASS { background: var(--pass); }
+.verdict.REVIEW { background: var(--review); color: #2A1E00; }
+.verdict.FAIL { background: var(--fail); }
+.verdict.fresh { animation: land .45s ease-out; }
+@keyframes land { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .verdict.fresh { animation: none; } }
+.timing { color: var(--ink-3); font-size: 14px; margin: 8px 2px 16px; }
+
+/* ---------- inspection layout ---------- */
+.work { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr); gap: 20px; align-items: start; }
+.board-img { background: #10241D; border-radius: 10px; overflow: hidden; display: grid; place-items: center; min-height: 320px; }
+.board-img img { width: 100%; height: auto; display: block; }
+.board-img .empty { color: #B7D2C7; padding: 40px; text-align: center; max-width: 30ch; }
+.side h2 { font: 700 24px/1.1 var(--display); margin: 0 0 10px; }
+.side > div + div { margin-top: 22px; }
+
+.defect { display: grid; grid-template-columns: 52px 1fr; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
+.defect:last-child { border-bottom: 1px solid var(--rule); }
+.defect .ref { font: 700 30px/1 var(--display); grid-row: span 3; color: var(--ink); }
+.defect .title { font-weight: 700; }
+.sev { display: inline-block; font: 700 15px/1 var(--display); letter-spacing: .03em; padding: 4px 8px 3px; border-radius: 4px; color: #fff; margin-left: 6px; vertical-align: 2px; }
+.sev.critical { background: var(--sev-critical); }
+.sev.major { background: var(--sev-major); }
+.sev.minor { background: var(--sev-minor); }
+.defect .facts { color: var(--ink-2); font-size: 15px; }
+.ipc { display: inline-flex; gap: 4px; margin-left: 4px; }
+.ipc b { font-weight: 400; font-size: 13px; border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; }
+.ipc b.reject { border-color: var(--fail); color: var(--fail); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btn { border: 2px solid var(--mask); background: var(--panel); color: var(--mask); border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; min-height: 44px; }
+.btn:hover { background: #E7EFEB; }
+.btn.solid { background: var(--mask); color: var(--silk); }
+.btn.solid:hover { background: var(--mask-2); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.done { color: var(--ink-2); font-size: 15px; }
+
+.advice { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+.advice .summary { font-size: 19px; margin: 0 0 12px; }
+.advice ol { margin: 0; padding-left: 22px; }
+.advice li { margin-bottom: 12px; }
+.advice .cause { color: var(--ink-2); }
+.advice .kbid { font-size: 13px; color: var(--ink-3); }
+.advice .source { font-size: 14px; color: var(--ink-3); margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pending { color: var(--ink-2); }
+.pending::after { content: ""; display: inline-block; width: 1.4em; text-align: left; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+.review-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #FFF4D6; border: 1px solid #F0D27A; border-radius: 10px; padding: 12px 16px; }
+
+/* ---------- inspect button (also: space bar / USB foot pedal) ---------- */
+.inspect-dock { position: fixed; right: 20px; bottom: 20px; z-index: 5; display: flex; align-items: center; gap: 14px; }
+.inspect-dock .hint { color: var(--ink-3); font-size: 14px; background: var(--surface); padding: 4px 8px; border-radius: 6px; }
+#inspect { font: 700 30px/1 var(--display); letter-spacing: .03em; padding: 20px 40px; border-radius: 12px; border: 0; background: var(--mask); color: var(--silk); cursor: pointer; box-shadow: 0 6px 18px rgba(15, 61, 46, .35); min-width: 220px; }
+#inspect:hover { background: var(--mask-2); }
+#inspect[disabled] { background: #7FA898; cursor: progress; }
+
+/* ---------- other tabs ---------- */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+.panel h2 { font: 700 24px/1.1 var(--display); margin: 0 0 4px; }
+.panel .sub { color: var(--ink-2); margin: 0 0 12px; font-size: 15px; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .tip { position: fixed; pointer-events: none; background: var(--ink); color: #fff; padding: 6px 9px; border-radius: 6px; font-size: 14px; display: none; z-index: 10; }
+.alert { border-left: 5px solid var(--review); padding: 8px 12px; background: #FFF9E8; margin: 8px 0; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); }
+th { color: var(--ink-2); font-weight: 700; }
+td.v-PASS { color: var(--pass); font-weight: 700; }
+td.v-FAIL { color: var(--fail); font-weight: 700; }
+td.v-REVIEW { color: #9A6A00; font-weight: 700; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.field input, .field select { border: 1px solid #AFC0B9; border-radius: 8px; padding: 10px 12px; background: #fff; }
+.ask-row { display: flex; gap: 10px; }
+.ask-row input { flex: 1; border: 1px solid #AFC0B9; border-radius: 8px; padding: 12px 14px; font-size: 18px; }
+.answer { font-size: 20px; margin: 16px 0 8px; }
+.meta { color: var(--ink-3); font-size: 14px; }
+
+.toast { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 10px; display: none; gap: 14px; align-items: center; z-index: 20; max-width: 90vw; }
+.toast button { background: none; border: 1px solid #fff; color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .work, .grid2 { grid-template-columns: 1fr; }
+  .verdict { grid-template-columns: 1fr; }
+  .verdict .board { text-align: left; }
+  .status { margin-left: 0; }
+  .inspect-dock { left: 12px; right: 12px; bottom: 12px; }
+  .inspect-dock .hint { display: none; }
+  #inspect { width: 100%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>PCB inspection</h1>
+  <label>Board design <select id="design"></select></label>
+  <label title="The share of defective boards you accept being passed by mistake. Lower sends more boards to a person.">Allowed miss rate
+    <select id="alpha"><option value="0.01">1%</option><option value="0.05" selected>5%</option><option value="0.10">10%</option></select>
+  </label>
+  <div class="status" aria-live="polite">
+    <span id="st-camera">Camera</span><span id="st-vision">Vision</span><span id="st-llm">Llama</span>
+  </div>
+</header>
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-tab="inspect">Inspect</button>
+  <button role="tab" aria-selected="false" data-tab="trends">Trends</button>
+  <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
+  <button role="tab" aria-selected="false" data-tab="teach">Teach a board</button>
+  <button role="tab" aria-selected="false" data-tab="log">Log</button>
+</nav>
+
+<main>
+  <section id="tab-inspect">
+    <div id="verdict" class="verdict" aria-live="assertive">
+      <div class="word">Ready</div>
+      <div class="what">Place a board under the camera and press Inspect.</div>
+      <div class="board"></div>
+    </div>
+    <div class="timing" id="timing"></div>
+    <div class="work">
+      <div class="board-img" id="board-img"><div class="empty">The inspected board appears here with each defect marked.</div></div>
+      <div class="side">
+        <div id="review"></div>
+        <div id="defects"></div>
+        <div id="advice"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-trends" hidden>
+    <div id="alerts"></div>
+    <div class="grid2">
+      <div class="panel chart" id="pareto-panel"><h2>Defects by type</h2><p class="sub">Most frequent first, false alarms excluded.</p><div id="pareto"></div></div>
+      <div class="panel chart" id="pchart-panel"><h2>Boards not passed, per 20 boards</h2><p class="sub">Dashed lines are the 3-sigma control limits. Points outside them mean the process changed.</p><div id="pchart"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-ask" hidden>
+    <div class="panel">
+      <h2>Ask about the inspection log</h2>
+      <p class="sub">For example: how many shorts in the last 3 hours, what was the yield this shift, history of board B-0042.</p>
+      <form class="ask-row" id="ask-form"><input id="question" autocomplete="off" placeholder="Type a question"><button class="btn solid">Ask</button></form>
+      <div id="ask-out"></div>
+    </div>
+  </section>
+
+  <section id="tab-teach" hidden>
+    <div class="panel" style="max-width:640px">
+      <h2>Teach a new board design</h2>
+      <p class="sub">Put good boards of the new design under the camera one after another. The station learns what good looks like from them, with no training run.</p>
+      <form id="teach-form">
+        <div class="field"><label for="t-name">Design name</label><input id="t-name" required pattern="[A-Za-z0-9_-]{2,40}" placeholder="for example motor-driver-v2"></div>
+        <div class="field"><label for="t-kind">Board type</label><select id="t-kind"><option value="assembled">Assembled (with components)</option><option value="bare">Bare board</option></select></div>
+        <div class="field"><label for="t-n">Number of good boards</label><select id="t-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></div>
+        <button class="btn solid" id="teach-btn">Capture good boards and learn</button>
+      </form>
+      <p id="teach-out" class="answer"></p>
+    </div>
+  </section>
+
+  <section id="tab-log" hidden>
+    <div class="panel">
+      <h2>Recent inspections</h2>
+      <p class="sub">Every inspection is stored on this station. <a href="/api/export.csv">Download all as CSV</a></p>
+      <table><thead><tr><th>#</th><th>Time</th><th>Board</th><th>Design</th><th>Verdict</th><th>Decided by person</th></tr></thead><tbody id="log-body"></tbody></table>
+    </div>
+  </section>
+</main>
+
+<div class="inspect-dock"><span class="hint">Space bar or foot pedal also inspects</span><button id="inspect">Inspect</button></div>
+<div class="toast" id="toast"><span id="toast-text"></span><button id="toast-undo" hidden>Undo</button></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail || `${r.status}`);
+  return body;
+};
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const words = (s) => String(s || "").replaceAll("_", " ");
+let state = null, current = null, pollTimer = null;
+
+// ---------------- tabs ----------------
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("main > section").forEach((s) => s.hidden = s.id !== `tab-${b.dataset.tab}`);
+  if (b.dataset.tab === "trends") loadTrends();
+  if (b.dataset.tab === "log") loadLog();
+}));
+
+// ---------------- state ----------------
+async function loadState() {
+  state = await api("/api/state");
+  const sel = $("#design"), keep = sel.value;
+  sel.innerHTML = state.designs.map((d) => `<option value="${esc(d.name)}">${esc(d.name)}${d.calibrated ? "" : " (not calibrated)"}</option>`).join("");
+  if (keep && state.designs.some((d) => d.name === keep)) sel.value = keep;
+  const on = (id, ok, text) => { const el = $(id); el.className = ok ? "on" : ""; el.textContent = text; };
+  on("#st-camera", !!state.camera, state.camera ? `Camera: ${state.camera}` : "No camera");
+  on("#st-vision", !!state.vision.detector || state.vision.backbone, state.vision.detector ? `Vision: ${state.vision.detector}` : "Vision: anomaly only");
+  on("#st-llm", !!state.llm, state.llm ? `Llama: ${state.llm}` : "Llama not loaded");
+}
+
+// ---------------- inspection ----------------
+async function inspect() {
+  const btn = $("#inspect");
+  if (btn.disabled) return;
+  btn.disabled = true; btn.textContent = "Inspecting";
+  try {
+    const r = await api("/api/inspect", { method: "POST", body: JSON.stringify({ design: $("#design").value, alpha: parseFloat($("#alpha").value) }) });
+    current = r; showInspection(r, true); poll(r.id);
+  } catch (e) { toast(`Inspection did not run: ${e.message}`); }
+  finally { btn.disabled = false; btn.textContent = "Inspect"; }
+}
+
+function verdictText(r) {
+  const n = r.defects.length;
+  if (r.verdict === "PASS") return { word: "PASS", what: "No defect found at the chosen miss rate." };
+  if (r.verdict === "REVIEW") return { word: "CHECK", what: `<strong>A person needs to decide.</strong><br>${n ? `${n} possible defect${n > 1 ? "s" : ""} marked` : "Evidence is borderline"}.` };
+  const worst = r.defects[0];
+  return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.</strong><br>Most serious: ${esc(words(worst.cls))}${worst.severity ? `, ${worst.severity}` : ""}.` };
+}
+
+function showInspection(r, fresh) {
+  const v = $("#verdict"), t = verdictText(r);
+  v.className = `verdict ${r.verdict}${fresh ? " fresh" : ""}`;
+  v.innerHTML = `<div class="word">${t.word}</div><div class="what">${t.what}</div><div class="board">Board ${esc(r.board_id)}<br>${esc(r.design)}</div>`;
+  const L = r.latency || {};
+  const vis = (L.detector_tiles || 0) + (L.anomaly_backbone || 0) + (L.anomaly_knn || 0);
+  $("#timing").textContent = `Verdict in ${Math.round(L.total_to_verdict || 0)} ms on this device (vision ${Math.round(vis)} ms${L.n_tiles ? ` over ${L.n_tiles} tiles` : ""}). Allowed miss rate ${Math.round(r.alpha * 100)}%${r.gate ? `, calibrated on ${r.gate.n_defective} defective and ${r.gate.n_good} good boards` : ""}.`;
+  $("#board-img").innerHTML = `<img alt="Inspected board with defects marked" src="/api/overlay/${r.id}.jpg?t=${Date.now()}">`;
+  $("#review").innerHTML = r.verdict === "REVIEW" && !r.final_verdict ? `<div class="review-bar"><span>Your decision for this board:</span><button class="btn solid" data-review="PASS">Pass board</button><button class="btn" data-review="FAIL">Fail board</button></div>`
+    : r.final_verdict ? `<p class="done">You decided: ${r.final_verdict === "PASS" ? "pass" : "fail"}.</p>` : "";
+  $("#defects").innerHTML = r.defects.length ? `<h2>What is wrong</h2>` + r.defects.map(defectRow).join("") : "";
+  renderAdvice(r);
+}
+
+function defectRow(d) {
+  const ipc = Object.entries(d.ipc || {}).map(([k, v]) => `<b class="${v}" title="IPC ${k.replace("class", "Class ")}: ${v}">C${k.slice(-1)} ${v === "reject" ? "reject" : "ok"}</b>`).join("");
+  const size = d.size_mm != null ? `${d.size_mm.toFixed(2)} mm, ` : "";
+  const labelled = d.operator_label ? `<span class="done">Marked ${d.operator_label === "false_alarm" ? "false alarm" : "confirmed"}.</span>` :
+    `<button class="btn" data-fb="confirmed" data-d="${d.id}">Confirm defect</button><button class="btn" data-fb="false_alarm" data-d="${d.id}">False alarm</button>`;
+  return `<div class="defect"><div class="ref">${esc(d.defect_key)}</div>
+    <div class="title">${esc(d.name)}${d.severity ? `<span class="sev ${d.severity}">${d.severity}</span>` : ""}</div>
+    <div class="facts">${size}${esc(d.location)}, confidence ${Math.round(d.confidence * 100)}%<span class="ipc">${ipc}</span><br>${esc(d.severity_reason)}</div>
+    <div class="actions">${labelled}</div></div>`;
+}
+
+function renderAdvice(r) {
+  const el = $("#advice");
+  if (!r.defects.length) { el.innerHTML = ""; return; }
+  const a = r.advice[r.advice.length - 1];
+  if (!a) { el.innerHTML = `<div class="advice"><p class="pending">Llama is writing advice</p></div>`; return; }
+  const adv = a.advice;
+  const llama = a.backend === "llama-executorch";
+  const source = llama ? `Written by ${esc(a.model)} on this device in ${(a.latency_ms / 1000).toFixed(1)} s${a.decode_tps ? `, ${a.decode_tps.toFixed(1)} tokens/s` : ""}. Every cause and action is checked against the defect knowledge base.`
+    : `Standard advice from the knowledge base${a.rejected_reason ? `. Llama's answer was rejected: ${esc(a.rejected_reason)}` : ""}.`;
+  const rate = a.operator_rating == null ? `<button class="btn" data-rate="1" data-a="${a.id}" aria-label="Advice was useful">Useful</button><button class="btn" data-rate="-1" data-a="${a.id}" aria-label="Advice was not useful">Not useful</button>` : `<span>Thanks, rated ${a.operator_rating > 0 ? "useful" : "not useful"}.</span>`;
+  el.innerHTML = `<h2>What to do</h2><div class="advice"><p class="summary">${esc(adv.summary)}</p><ol>${adv.steps.map((s) =>
+    `<li><strong>${esc(s.defect)}: ${esc(s.action)}</strong><br><span class="cause">Likely cause: ${esc(s.cause)}</span><br><span class="kbid">${esc(s.cause_id)}, ${esc(s.action_id)}${s.process_step ? `, ${esc(s.process_step.split(":")[0])}` : ""}</span></li>`).join("")}</ol>
+    <div class="source">${source}</div><div class="actions">${rate}</div></div>`;
+}
+
+function poll(id) {
+  clearInterval(pollTimer);
+  let n = 0;
+  pollTimer = setInterval(async () => {
+    n++;
+    const r = await api(`/api/inspection/${id}`).catch(() => null);
+    if (!r || current?.id !== id) return clearInterval(pollTimer);
+    if (!r.advice_pending || n > 120) { clearInterval(pollTimer); current = r; showInspection(r, false); }
+  }, 800);
+}
+
+document.addEventListener("click", async (e) => {
+  const fb = e.target.closest("[data-fb]"), rv = e.target.closest("[data-review]"), rt = e.target.closest("[data-rate]"), ack = e.target.closest("[data-ack]");
+  try {
+    if (fb) {
+      fb.disabled = true;
+      const res = await api("/api/feedback", { method: "POST", body: JSON.stringify({ inspection_id: current.id, defect_id: +fb.dataset.d, action: fb.dataset.fb }) });
+      if (res.accepted === false) { toast(res.message); fb.disabled = false; return; }
+      toast(`${fb.dataset.fb === "false_alarm" ? "Marked as false alarm" : "Confirmed"}. ${res.learned ? res.learned[0].toUpperCase() + res.learned.slice(1) + "." : ""}`, res.event_id);
+      current = await api(`/api/inspection/${current.id}`); showInspection(current, false);
+    } else if (rv) {
+      await api("/api/review", { method: "POST", body: JSON.stringify({ inspection_id: current.id, verdict: rv.dataset.review }) });
+      current = await api(`/api/inspection/${current.id}`); showInspection(current, false);
+    } else if (rt) {
+      await api(`/api/advice/${rt.dataset.a}/rate/${rt.dataset.rate}`, { method: "POST" });
+      current = await api(`/api/inspection/${current.id}`); renderAdvice(current);
+    } else if (ack) {
+      await api(`/api/alerts/${ack.dataset.ack}/ack`, { method: "POST" }); loadTrends();
+    }
+  } catch (err) { toast(err.message); }
+});
+
+let toastTimer;
+function toast(text, undoEvent) {
+  const t = $("#toast"), u = $("#toast-undo");
+  $("#toast-text").textContent = text; t.style.display = "flex";
+  u.hidden = !undoEvent;
+  u.onclick = async () => { await api(`/api/undo/${undoEvent}`, { method: "POST" }).catch((e) => toast(e.message)); t.style.display = "none"; if (current) { current = await api(`/api/inspection/${current.id}`); showInspection(current, false); } };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = "none", 7000);
+}
+
+$("#inspect").addEventListener("click", inspect);
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !["INPUT", "SELECT", "TEXTAREA", "BUTTON"].includes(document.activeElement.tagName) && !$("#tab-inspect").hidden) { e.preventDefault(); inspect(); }
+});
+
+// ---------------- trends ----------------
+async function loadTrends() {
+  const d = await api(`/api/spc/${encodeURIComponent($("#design").value)}`);
+  $("#alerts").innerHTML = d.alerts.map((a) => `<div class="alert"><span><strong>Process drift:</strong> ${esc(a.message)}</span><button class="btn" data-ack="${a.id}">Acknowledge</button></div>`).join("");
+  drawPareto(d.pareto); drawPChart(d.p_chart, d.boards);
+}
+
+function tipFor(container) {
+  let tip = container.querySelector(".tip");
+  if (!tip) { tip = document.createElement("div"); tip.className = "tip"; container.appendChild(tip); }
+  return { show: (e, html) => { tip.innerHTML = html; tip.style.display = "block"; tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY + 14}px`; }, hide: () => tip.style.display = "none" };
+}
+
+function drawPareto(rows) {
+  const box = $("#pareto");
+  if (!rows.length) { box.innerHTML = `<p class="meta">No defects logged for this design yet.</p>`; return; }
+  const W = 560, rowH = 34, left = 150, right = 120, H = rows.length * rowH + 8, max = rows[0][1];
+  const x = (v) => (W - left - right) * v / max;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Defect counts by type">${rows.map(([cls, n, cum], i) => `
+    <g data-i="${i}"><rect x="0" y="${i * rowH}" width="${W}" height="${rowH}" fill="transparent"/>
+    <text x="${left - 10}" y="${i * rowH + 22}" text-anchor="end" font-size="15" fill="#1C2B26">${esc(words(cls))}</text>
+    <rect x="${left}" y="${i * rowH + 7}" width="${Math.max(2, x(n))}" height="20" rx="4" fill="#0F3D2E"/>
+    <text x="${left + x(n) + 8}" y="${i * rowH + 22}" font-size="15" fill="#1C2B26">${n}</text>
+    <text x="${W}" y="${i * rowH + 22}" text-anchor="end" font-size="14" fill="#6E7D77">${Math.round(cum * 100)}% so far</text></g>`).join("")}</svg>`;
+  const tip = tipFor($("#pareto-panel"));
+  box.querySelectorAll("g[data-i]").forEach((g) => { const [cls, n, cum] = rows[+g.dataset.i];
+    g.addEventListener("mousemove", (e) => tip.show(e, `${esc(words(cls))}: ${n} defects<br>${Math.round(cum * 100)}% of all defects up to here`)); g.addEventListener("mouseleave", tip.hide); });
+}
+
+function drawPChart(pc, boards) {
+  const box = $("#pchart");
+  if (!pc.p.length) { box.innerHTML = `<p class="meta">Needs at least 20 inspected boards (${boards} so far).</p>`; return; }
+  const W = 560, H = 240, L = 44, R = 70, T = 12, B = 30;
+  const ymax = Math.max(pc.ucl, ...pc.p, 0.05) * 1.1;
+  const x = (i) => L + (pc.p.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (pc.p.length - 1));
+  const y = (v) => T + (H - T - B) * (1 - v / ymax);
+  const out = new Set(pc.out_of_control);
+  const path = pc.p.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join("");
+  const ticks = [0, ymax / 2, ymax].map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#E3E8E6"/><text x="${L - 6}" y="${y(v) + 5}" text-anchor="end" font-size="13" fill="#6E7D77">${Math.round(v * 100)}%</text>`).join("");
+  const ref = (v, name) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#4A5A54" stroke-dasharray="5 4"/><text x="${W - R + 6}" y="${y(v) + 5}" font-size="13" fill="#4A5A54">${name} ${Math.round(v * 100)}%</text>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of boards not passed per group of 20">${ticks}${ref(pc.ucl, "upper")}${pc.lcl > 0 ? ref(pc.lcl, "lower") : ""}
+    <line x1="${L}" x2="${W - R}" y1="${y(pc.pbar)}" y2="${y(pc.pbar)}" stroke="#AFC0B9"/>
+    <path d="${path}" fill="none" stroke="#0F3D2E" stroke-width="2"/>
+    ${pc.p.map((v, i) => `<g data-i="${i}"><circle cx="${x(i)}" cy="${y(v)}" r="14" fill="transparent"/><circle cx="${x(i)}" cy="${y(v)}" r="${out.has(i) ? 6 : 4}" fill="${out.has(i) ? "#D2342B" : "#0F3D2E"}" stroke="#fff" stroke-width="2"/>${out.has(i) ? `<text x="${x(i)}" y="${y(v) - 12}" text-anchor="middle" font-size="13" fill="#D2342B">! out of control</text>` : ""}</g>`).join("")}
+    <text x="${L}" y="${H - 6}" font-size="13" fill="#6E7D77">oldest</text><text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="13" fill="#6E7D77">latest</text></svg>`;
+  const tip = tipFor($("#pchart-panel"));
+  box.querySelectorAll("g[data-i]").forEach((g) => { const i = +g.dataset.i;
+    g.addEventListener("mousemove", (e) => tip.show(e, `Boards ${i * 20 + 1} to ${i * 20 + 20}: ${Math.round(pc.p[i] * 100)}% not passed${out.has(i) ? "<br>Outside the control limits" : ""}`)); g.addEventListener("mouseleave", tip.hide); });
+}
+
+// ---------------- ask ----------------
+$("#ask-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = $("#question").value.trim(); if (!q) return;
+  $("#ask-out").innerHTML = `<p class="pending answer">Looking it up</p>`;
+  try {
+    const r = await api("/api/ask", { method: "POST", body: JSON.stringify({ question: q }) });
+    const cols = r.rows.length ? Object.keys(r.rows[0]) : [];
+    $("#ask-out").innerHTML = `<p class="answer">${esc(r.answer)}</p>
+      <p class="meta">Answered from the "${esc(r.query)}" query${r.route === "llama" ? ", chosen by Llama" : ""}; ${r.summary_by === "llama" ? "summary written by Llama and checked against these rows" : "shown directly from the rows"}.</p>
+      ${cols.length ? `<table><thead><tr>${cols.map((c) => `<th>${esc(words(c))}</th>`).join("")}</tr></thead><tbody>${r.rows.map((row) => `<tr>${cols.map((c) => `<td>${esc(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;
+  } catch (err) { $("#ask-out").innerHTML = `<p class="answer">The question could not be answered: ${esc(err.message)}</p>`; }
+});
+
+// ---------------- teach ----------------
+$("#teach-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const b = $("#teach-btn"); b.disabled = true; $("#teach-out").textContent = "Capturing good boards and learning";
+  try {
+    const r = await api("/api/enrol", { method: "POST", body: JSON.stringify({ name: $("#t-name").value, kind: $("#t-kind").value, images: +$("#t-n").value }) });
+    $("#teach-out").textContent = `Learned ${r.design} from ${r.images} good boards in ${r.seconds} s. ${r.note}`;
+    await loadState(); $("#design").value = r.design;
+  } catch (err) { $("#teach-out").textContent = `Could not learn the design: ${err.message}`; }
+  finally { b.disabled = false; }
+});
+
+// ---------------- log ----------------
+async function loadLog() {
+  await loadState();
+  $("#log-body").innerHTML = state.recent.map((r) => `<tr><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? (r.final_verdict === "PASS" ? "passed" : "failed") : ""}</td></tr>`).join("");
+}
+
+loadState().catch((e) => toast(`Station not reachable: ${e.message}`));
+setInterval(() => loadState().catch(() => {}), 15000);
+</script>
+</body>
+</html>

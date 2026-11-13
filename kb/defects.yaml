@@ -1,5 +1,6 @@
 # Defect knowledge base — the ONLY source of causes and actions the Llama advisor may cite.
 # Every cause / action has a stable ID; the grounding checker rejects advice that cites anything else.
+# `short` is what Llama sees in its (deliberately small) prompt; `text` is what the operator reads.
 #
 # Process steps (bare-board fabrication): imaging (resist laminate / expose / develop), etching,
 # drilling, plating, handling. Rework references point to IPC-7711/7721 (rework & repair of
@@ -19,113 +20,113 @@ defects:
     what: "Unwanted copper joining two conductors that should be isolated."
     process_step: etching
     causes:
-      - {id: SHORT-C1, step: etching, text: "Under-etching: etch time too short, etchant weak or cold, or spray pressure low, leaving copper between conductors."}
-      - {id: SHORT-C2, step: imaging, text: "Resist or phototool defect: a spot on the phototool or resist residue protected copper that should have been etched."}
-      - {id: SHORT-C3, step: handling, text: "Conductive debris or copper slivers pressed onto the panel before etching."}
+      - {id: SHORT-C1, step: etching, short: "under-etching", text: "Under-etching: etch time too short, etchant weak or cold, or spray pressure low, leaving copper between conductors."}
+      - {id: SHORT-C2, step: imaging, short: "phototool spot or resist residue", text: "Resist or phototool defect: a spot on the phototool or resist residue protected copper that should have been etched."}
+      - {id: SHORT-C3, step: handling, short: "conductive debris on panel", text: "Conductive debris or copper slivers pressed onto the panel before etching."}
     actions:
-      - {id: SHORT-A1, text: "Quarantine the board and confirm the short with a continuity test between the two nets."}
-      - {id: SHORT-A2, text: "Repair only if the customer class allows it: remove the excess copper with a scalpel or micro-abrasion following IPC-7721, then re-measure spacing."}
-      - {id: SHORT-A3, text: "Check the etch line: conveyor speed, etchant concentration and temperature, and spray pressure."}
-      - {id: SHORT-A4, text: "Inspect the phototool for opaque spots or scratches at the same location on other boards."}
+      - {id: SHORT-A1, short: "quarantine, continuity test", text: "Quarantine the board and confirm the short with a continuity test between the two nets."}
+      - {id: SHORT-A2, short: "remove excess copper if class allows", text: "Repair only if the customer class allows it: remove the excess copper with a scalpel or micro-abrasion following IPC-7721, then re-measure spacing."}
+      - {id: SHORT-A3, short: "check etch line settings", text: "Check the etch line: conveyor speed, etchant concentration and temperature, and spray pressure."}
+      - {id: SHORT-A4, short: "inspect phototool at this spot", text: "Inspect the phototool for opaque spots or scratches at the same location on other boards."}
 
   open:
     name: "Open circuit (broken conductor)"
     what: "A conductor is interrupted, so the circuit cannot conduct."
     process_step: imaging
     causes:
-      - {id: OPEN-C1, step: imaging, text: "Resist defect: scratch, pinhole or poor adhesion let etchant attack the conductor."}
-      - {id: OPEN-C2, step: imaging, text: "Dust or hair on the phototool blocked exposure across the conductor."}
-      - {id: OPEN-C3, step: etching, text: "Over-etching: etch time too long or etchant too aggressive."}
-      - {id: OPEN-C4, step: handling, text: "Mechanical scratch across the conductor during handling."}
+      - {id: OPEN-C1, step: imaging, short: "resist scratch or poor adhesion", text: "Resist defect: scratch, pinhole or poor adhesion let etchant attack the conductor."}
+      - {id: OPEN-C2, step: imaging, short: "dust or hair on phototool", text: "Dust or hair on the phototool blocked exposure across the conductor."}
+      - {id: OPEN-C3, step: etching, short: "over-etching", text: "Over-etching: etch time too long or etchant too aggressive."}
+      - {id: OPEN-C4, step: handling, short: "handling scratch", text: "Mechanical scratch across the conductor during handling."}
     actions:
-      - {id: OPEN-A1, text: "Quarantine the board and confirm the open with a continuity test along the conductor."}
-      - {id: OPEN-A2, text: "Repair only if the customer class allows it: bridge the gap with a jumper wire or conductor repair following IPC-7721."}
-      - {id: OPEN-A3, text: "Clean the phototool and the exposure area, and check resist lamination temperature and pressure."}
-      - {id: OPEN-A4, text: "Check whether the same location fails on consecutive boards; a repeat points to the phototool, not handling."}
+      - {id: OPEN-A1, short: "quarantine, continuity test", text: "Quarantine the board and confirm the open with a continuity test along the conductor."}
+      - {id: OPEN-A2, short: "jumper repair if class allows", text: "Repair only if the customer class allows it: bridge the gap with a jumper wire or conductor repair following IPC-7721."}
+      - {id: OPEN-A3, short: "clean phototool, check lamination", text: "Clean the phototool and the exposure area, and check resist lamination temperature and pressure."}
+      - {id: OPEN-A4, short: "check if same spot repeats", text: "Check whether the same location fails on consecutive boards; a repeat points to the phototool, not handling."}
 
   mouse_bite:
     name: "Mouse bite (edge nick)"
     what: "Irregular bites along a conductor edge that reduce its width."
     process_step: etching
     causes:
-      - {id: MBITE-C1, step: etching, text: "Over-etching or undercut at the conductor edges."}
-      - {id: MBITE-C2, step: imaging, text: "Poor resist adhesion or a ragged phototool edge along the conductor."}
+      - {id: MBITE-C1, step: etching, short: "over-etching or undercut", text: "Over-etching or undercut at the conductor edges."}
+      - {id: MBITE-C2, step: imaging, short: "poor resist adhesion at edge", text: "Poor resist adhesion or a ragged phototool edge along the conductor."}
     actions:
-      - {id: MBITE-A1, text: "Compare the remaining conductor width with the IPC limit for the customer class; accept or reject on that basis."}
-      - {id: MBITE-A2, text: "Check etch time and etchant activity for over-etching."}
-      - {id: MBITE-A3, text: "Check resist adhesion: surface preparation before lamination and lamination settings."}
+      - {id: MBITE-A1, short: "compare width with IPC limit", text: "Compare the remaining conductor width with the IPC limit for the customer class; accept or reject on that basis."}
+      - {id: MBITE-A2, short: "check etch time", text: "Check etch time and etchant activity for over-etching."}
+      - {id: MBITE-A3, short: "check resist adhesion", text: "Check resist adhesion: surface preparation before lamination and lamination settings."}
 
   spur:
     name: "Spur (copper protrusion)"
     what: "A copper protrusion from a conductor edge that reduces spacing to its neighbour."
     process_step: etching
     causes:
-      - {id: SPUR-C1, step: etching, text: "Under-etching left copper attached to the conductor edge."}
-      - {id: SPUR-C2, step: imaging, text: "Incomplete resist development or resist residue along the edge."}
+      - {id: SPUR-C1, step: etching, short: "under-etching", text: "Under-etching left copper attached to the conductor edge."}
+      - {id: SPUR-C2, step: imaging, short: "incomplete development", text: "Incomplete resist development or resist residue along the edge."}
     actions:
-      - {id: SPUR-A1, text: "Measure the remaining spacing to the nearest conductor and compare it with the IPC limit for the customer class."}
-      - {id: SPUR-A2, text: "If the class allows repair, trim the protrusion following IPC-7721 and re-measure spacing."}
-      - {id: SPUR-A3, text: "Check developer concentration and dwell time, and etch line parameters."}
+      - {id: SPUR-A1, short: "measure spacing vs IPC limit", text: "Measure the remaining spacing to the nearest conductor and compare it with the IPC limit for the customer class."}
+      - {id: SPUR-A2, short: "trim if class allows", text: "If the class allows repair, trim the protrusion following IPC-7721 and re-measure spacing."}
+      - {id: SPUR-A3, short: "check developer and etch", text: "Check developer concentration and dwell time, and etch line parameters."}
 
   spurious_copper:
     name: "Spurious copper (copper island)"
     what: "Isolated copper left where there should be bare laminate."
     process_step: etching
     causes:
-      - {id: SPCU-C1, step: etching, text: "Incomplete etching in that area, often from poor etchant flow."}
-      - {id: SPCU-C2, step: imaging, text: "Resist residue or a phototool spot protected copper there."}
-      - {id: SPCU-C3, step: handling, text: "Contamination on the panel before etching."}
+      - {id: SPCU-C1, step: etching, short: "incomplete etching", text: "Incomplete etching in that area, often from poor etchant flow."}
+      - {id: SPCU-C2, step: imaging, short: "resist residue or phototool spot", text: "Resist residue or a phototool spot protected copper there."}
+      - {id: SPCU-C3, step: handling, short: "contamination before etching", text: "Contamination on the panel before etching."}
     actions:
-      - {id: SPCU-A1, text: "Measure the spacing between the copper island and nearby conductors against the IPC limit for the customer class."}
-      - {id: SPCU-A2, text: "If the class allows repair, remove the island following IPC-7721."}
-      - {id: SPCU-A3, text: "Check etchant flow and nozzle condition on the etch line."}
+      - {id: SPCU-A1, short: "measure spacing vs IPC limit", text: "Measure the spacing between the copper island and nearby conductors against the IPC limit for the customer class."}
+      - {id: SPCU-A2, short: "remove island if class allows", text: "If the class allows repair, remove the island following IPC-7721."}
+      - {id: SPCU-A3, short: "check etchant flow and nozzles", text: "Check etchant flow and nozzle condition on the etch line."}
 
   missing_hole:
     name: "Missing hole"
     what: "A drilled hole that should exist is absent, so a component cannot be fitted."
     process_step: drilling
     causes:
-      - {id: MHOLE-C1, step: drilling, text: "Drill program error: the hit is missing from the drill file or the wrong tool file was loaded."}
-      - {id: MHOLE-C2, step: drilling, text: "Broken drill bit that was not detected by the drill machine."}
+      - {id: MHOLE-C1, step: drilling, short: "drill program error", text: "Drill program error: the hit is missing from the drill file or the wrong tool file was loaded."}
+      - {id: MHOLE-C2, step: drilling, short: "broken drill bit", text: "Broken drill bit that was not detected by the drill machine."}
     actions:
-      - {id: MHOLE-A1, text: "Compare the drill file against the design data for the missing hole position."}
-      - {id: MHOLE-A2, text: "Check the drill machine's broken-bit log and replace worn bits."}
-      - {id: MHOLE-A3, text: "Scrap the board if the hole needed plating; re-drilling after plating does not restore a plated hole."}
+      - {id: MHOLE-A1, short: "check drill file", text: "Compare the drill file against the design data for the missing hole position."}
+      - {id: MHOLE-A2, short: "check broken-bit log", text: "Check the drill machine's broken-bit log and replace worn bits."}
+      - {id: MHOLE-A3, short: "scrap if hole needed plating", text: "Scrap the board if the hole needed plating; re-drilling after plating does not restore a plated hole."}
 
   pin_hole:
     name: "Pinhole"
     what: "A small void in copper inside a conductor or pad."
     process_step: imaging
     causes:
-      - {id: PHOLE-C1, step: imaging, text: "Dust or bubbles during resist lamination or exposure."}
-      - {id: PHOLE-C2, step: plating, text: "Plating voids from contamination or poor current distribution."}
+      - {id: PHOLE-C1, step: imaging, short: "dust or bubbles at lamination", text: "Dust or bubbles during resist lamination or exposure."}
+      - {id: PHOLE-C2, step: plating, short: "plating voids", text: "Plating voids from contamination or poor current distribution."}
     actions:
-      - {id: PHOLE-A1, text: "Compare the void size with the conductor-width-reduction limit for the customer class."}
-      - {id: PHOLE-A2, text: "Check cleanliness of the lamination and exposure area."}
-      - {id: PHOLE-A3, text: "Check plating bath cleanliness and current density."}
+      - {id: PHOLE-A1, short: "compare void with IPC limit", text: "Compare the void size with the conductor-width-reduction limit for the customer class."}
+      - {id: PHOLE-A2, short: "clean lamination area", text: "Check cleanliness of the lamination and exposure area."}
+      - {id: PHOLE-A3, short: "check plating bath", text: "Check plating bath cleanliness and current density."}
 
   missing_pad:
     name: "Damaged pad"
     what: "A pad is partly or wholly missing, so the component lead may not solder reliably."
     process_step: etching
     causes:
-      - {id: MPAD-C1, step: etching, text: "Over-etching or undercut attacked the pad copper."}
-      - {id: MPAD-C2, step: imaging, text: "Poor resist adhesion or a phototool defect over the pad."}
-      - {id: MPAD-C3, step: handling, text: "Mechanical damage lifted or scraped the pad."}
+      - {id: MPAD-C1, step: etching, short: "over-etching at pad", text: "Over-etching or undercut attacked the pad copper."}
+      - {id: MPAD-C2, step: imaging, short: "resist or phototool defect at pad", text: "Poor resist adhesion or a phototool defect over the pad."}
+      - {id: MPAD-C3, step: handling, short: "pad lifted or scraped", text: "Mechanical damage lifted or scraped the pad."}
     actions:
-      - {id: MPAD-A1, text: "Check how much pad and annular ring remain; reject if the lead cannot be soldered with a reliable joint for the customer class."}
-      - {id: MPAD-A2, text: "Check etch time and etchant activity for over-etching."}
-      - {id: MPAD-A3, text: "Check resist adhesion over pads: surface preparation and lamination settings."}
+      - {id: MPAD-A1, short: "check remaining pad and ring", text: "Check how much pad and annular ring remain; reject if the lead cannot be soldered with a reliable joint for the customer class."}
+      - {id: MPAD-A2, short: "check etch time", text: "Check etch time and etchant activity for over-etching."}
+      - {id: MPAD-A3, short: "check resist adhesion over pads", text: "Check resist adhesion over pads: surface preparation and lamination settings."}
 
   unknown_anomaly:
     name: "Unclassified anomaly"
     what: "The board differs from known-good boards of this design in a way the detector cannot name."
     process_step: assembly
     causes:
-      - {id: ANOM-C1, step: assembly, text: "Assembly fault such as a missing, shifted or wrong component, or a solder bridge."}
-      - {id: ANOM-C2, step: handling, text: "Physical damage such as a scratch, bent pin or burn mark."}
-      - {id: ANOM-C3, step: handling, text: "Contamination such as flux residue, dust or a foreign object on the board."}
+      - {id: ANOM-C1, step: assembly, short: "assembly fault", text: "Assembly fault such as a missing, shifted or wrong component, or a solder bridge."}
+      - {id: ANOM-C2, step: handling, short: "physical damage", text: "Physical damage such as a scratch, bent pin or burn mark."}
+      - {id: ANOM-C3, step: handling, short: "contamination or foreign object", text: "Contamination such as flux residue, dust or a foreign object on the board."}
     actions:
-      - {id: ANOM-A1, text: "Inspect the highlighted area under magnification and compare it with a known-good board."}
-      - {id: ANOM-A2, text: "Label the defect in the system (or mark it a false alarm) so the device learns this case."}
-      - {id: ANOM-A3, text: "Hold the board until a person has confirmed or cleared the finding."}
+      - {id: ANOM-A1, short: "inspect under magnification", text: "Inspect the highlighted area under magnification and compare it with a known-good board."}
+      - {id: ANOM-A2, short: "label it so the station learns", text: "Label the defect in the system (or mark it a false alarm) so the device learns this case."}
+      - {id: ANOM-A3, short: "hold until a person clears it", text: "Hold the board until a person has confirmed or cleared the finding."}

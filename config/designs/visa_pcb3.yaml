@@ -1,0 +1,11 @@
+name: visa_pcb3
+kind: assembled
+description: VisA pcb3 assembled boards (anomaly memory from good boards only)
+detector: false
+anomaly_dir: models/anomaly/pcb3
+mm_per_px: null
+marker_mm: 20
+rules: {min_trace_width_mm: 0.20, min_spacing_mm: 0.20}
+gate: models/gate/visa_pcb3.json
+alpha: 0.05
+beta: 0.01

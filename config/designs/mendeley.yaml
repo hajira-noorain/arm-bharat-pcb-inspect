@@ -1,0 +1,11 @@
+name: mendeley
+kind: bare
+description: Real etched single-layer boards (Mendeley PCB-Defect 2025, flatbed scans, 20 mil traces)
+detector: true
+anomaly_dir: null
+mm_per_px: 0.020333   # measured by training/calibrate_trace_scale.py: 20 mil min trace = 25.0 px (IQR 22-30) over 40 boards
+marker_mm: 20
+rules: {min_trace_width_mm: 0.508, min_spacing_mm: 0.508}
+gate: models/gate/mendeley.json
+alpha: 0.05
+beta: 0.01

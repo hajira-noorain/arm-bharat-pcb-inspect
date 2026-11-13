@@ -337,6 +337,8 @@ def create_app(cfg: dict) -> FastAPI:
     st = Station(cfg)
     app = FastAPI(title="PCB inspection station")
     app.state.station = st
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/", response_class=HTMLResponse)
     def index():

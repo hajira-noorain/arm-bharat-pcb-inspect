@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from pcbinspect.advisor import ASSISTANT_PREFIX, Advisor, GenResult, build_prompt, template_advice
+from pcbinspect.advisor import Advisor, GenResult, assistant_prefix, build_prompt, template_advice
 from pcbinspect.grounding import check, extract_json
 from pcbinspect.kb import KnowledgeBase
 
@@ -24,9 +24,9 @@ RECORD = {
 
 
 def good_output():
-    return json.dumps({"summary": "A short circuit (0.31 mm) at top-left makes this board fail.",
-                       "steps": [{"defect": "D1", "cause": "SHORT-C1", "action": "SHORT-A1"},
-                                 {"defect": "D2", "cause": "MBITE-C1", "action": "MBITE-A1"}]})
+    return json.dumps({"steps": [{"defect": "D1", "cause": "SHORT-C1", "action": "SHORT-A1"},
+                                 {"defect": "D2", "cause": "MBITE-C1", "action": "MBITE-A1"}],
+                       "summary": "A short circuit (0.31 mm) at top-left makes this board fail."})
 
 
 def test_kb_ids_unique_and_complete(kb):
@@ -91,6 +91,43 @@ def test_missing_critical_defect_is_filled_and_flagged(kb):
     assert r.ok and r.filled_from_template == ["D1"]
 
 
+def test_echoed_option_line_normalises_to_single_allowed_id(kb):
+    out = json.loads(good_output())
+    out["steps"][0]["cause"] = "causes: SHORT-C1: under-etching"
+    r = check(json.dumps(out), RECORD, kb)
+    assert r.ok and r.advice["steps"][0]["cause"] == "SHORT-C1"
+
+
+def test_normalisation_never_rescues_ambiguous_or_foreign_ids(kb):
+    out = json.loads(good_output())
+    out["steps"][0]["cause"] = "SHORT-C1 or SHORT-C2"           # two IDs: ambiguous
+    assert not check(json.dumps(out), RECORD, kb).ok
+    out["steps"][0]["cause"] = "causes: OPEN-C1: over-etching"   # an ID from another defect type
+    assert not check(json.dumps(out), RECORD, kb).ok
+
+
+def test_numbered_choices_map_to_this_defects_own_options(kb):
+    out = {"steps": [{"defect": "D1", "cause": 2, "action": "3"},
+                     {"defect": "D2", "cause": 1, "action": 1}],
+           "summary": "A short circuit makes this board fail."}
+    r = check(json.dumps(out), RECORD, kb)
+    assert r.ok
+    assert r.advice["steps"][0] == {"defect": "D1", "cause": "SHORT-C2", "action": "SHORT-A3"}
+    assert r.advice["steps"][1] == {"defect": "D2", "cause": "MBITE-C1", "action": "MBITE-A1"}
+    out["steps"][1]["cause"] = 9            # mouse bite has only 2 causes
+    r = check(json.dumps(out), RECORD, kb)
+    assert not r.ok and any("out of range" in x for x in r.reasons)
+    out["steps"][1]["cause"] = 0
+    assert not check(json.dumps(out), RECORD, kb).ok
+
+
+def test_history_numbers_are_grounded_only_when_given(kb):
+    out = json.loads(good_output())
+    out["summary"] = "Short circuit seen on 4 of the last 20 boards."
+    assert not check(json.dumps(out), RECORD, kb).ok
+    assert check(json.dumps(out), RECORD, kb, extra_numbers=[20, 4]).ok
+
+
 def test_not_json_rejected(kb):
     assert not check("The board has a short.", RECORD, kb).ok
 
@@ -113,23 +150,26 @@ class FakeBackend:
 
 
 def test_advisor_uses_llm_when_grounded(kb):
-    cont = good_output()[len(ASSISTANT_PREFIX):]
+    cont = good_output()[len(assistant_prefix(RECORD)):]
     adv = Advisor(FakeBackend(cont), kb).advise(RECORD)
     assert adv.backend == "llama-executorch" and adv.grounded
     assert adv.steps[0]["action"] == kb.text("SHORT-A1")  # KB text verbatim
 
 
 def test_advisor_falls_back_to_template_on_hallucination(kb):
-    cont = good_output().replace("SHORT-C1", "MADE-UP-1")[len(ASSISTANT_PREFIX):]
+    cont = good_output().replace("SHORT-C1", "MADE-UP-1")[len(assistant_prefix(RECORD)):]
     adv = Advisor(FakeBackend(cont), kb).advise(RECORD)
     assert adv.backend == "template" and adv.rejected_reasons
 
 
 def test_prompt_contains_only_present_defect_options(kb):
+    p_ids = build_prompt(RECORD, {"short": 4}, kb, style="ids")
+    assert "SHORT-C1" in p_ids and "MBITE-A1" in p_ids and "OPEN-C1" not in p_ids
     p = build_prompt(RECORD, {"short": 4}, kb)
-    assert "SHORT-C1" in p and "MBITE-A1" in p and "OPEN-C1" not in p
+    assert "1 under-etching" in p and "1 over-etching or undercut" in p
+    assert "dust or hair on phototool" not in p     # open-circuit options must not appear
     assert "short on 4 of the last 20 boards" in p
-    assert p.endswith(ASSISTANT_PREFIX)
+    assert p.endswith(assistant_prefix(RECORD))
 
 
 def test_template_orders_by_severity(kb):

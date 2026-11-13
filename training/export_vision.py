@@ -88,12 +88,18 @@ def main():
         yolo = Path(args.yolo)
         local = out_dir / "pcb_y26n.pt"
         shutil.copy(yolo, local)
+        # INT8 calibration reads the val tiles: point a container-local data yaml at them
+        import yaml
+        dy = yaml.safe_load((work / "data" / "bare_yolo" / "data.yaml").read_text())
+        dy["path"] = str(work / "data" / "bare_yolo")
+        cyaml = work / "data" / "bare_yolo" / "data_container.yaml"
+        cyaml.write_text(yaml.safe_dump(dy))
         for int8 in (False, True):
             try:
                 kw = {"format": "executorch", "imgsz": 640}
                 if int8:
                     kw["int8"] = True
-                    kw["data"] = str(work / "data" / "bare_yolo" / "data.yaml")
+                    kw["data"] = str(cyaml)
                 exported = Path(YOLO(str(local)).export(**kw))
                 pte = next(exported.rglob("*.pte")) if exported.is_dir() else exported
                 name = "pcb_y26n_xnnpack_int8.pte" if int8 else "pcb_y26n_xnnpack.pte"

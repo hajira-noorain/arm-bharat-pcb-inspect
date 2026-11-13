@@ -15,6 +15,10 @@ class ExecuTorchLlama:
     name = "llama-executorch"
 
     def __init__(self, pte_path: str | Path, tokenizer_path: str | Path, threads: int = 4):
+        # Register the LLM kernels the .pte needs (KV-cache update, custom SDPA, SpinQuant's
+        # fast Hadamard transform, quantized embedding) BEFORE the runner loads the program.
+        import executorch.extension.llm.custom_ops.custom_ops  # noqa: F401
+        import executorch.kernels.quantized  # noqa: F401
         from executorch.extension.llm.runner import GenerationConfig, TextLLMRunner
         self._GenerationConfig = GenerationConfig
         self.model = Path(pte_path).stem
