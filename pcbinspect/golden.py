@@ -77,7 +77,7 @@ def copper_mask(bgr: np.ndarray) -> np.ndarray:
         a, b = c8[m > 0], c8[m == 0]
         if len(a) < 10 or len(b) < 10:
             continue
-        sep = abs(float(a.mean()) - float(b.mean())) / (float(c8.std()) + 1e-6)
+        sep = abs(float(a.mean()) - float(b.mean()))  # absolute contrast (see golden_diff.consistent_masks)
         if sep > best_sep:
             best, best_sep = m, sep
     m = best if best is not None else np.zeros(bgr.shape[:2], np.uint8)
