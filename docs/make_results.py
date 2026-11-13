@@ -334,7 +334,8 @@ def eyetest_section(r: Path) -> list[str]:
     return out
 
 
-SPEC_TAGS = {"1b": "zero-shot", "3b": "zero-shot", "3b_fewshot": "worked examples (deployed)"}
+SPEC_TAGS = {"1b": "free generation, zero-shot", "3b": "free generation, zero-shot",
+             "3b_fewshot": "free generation, worked examples"}
 
 
 def spec_section(r: Path) -> list[str]:
@@ -344,7 +345,11 @@ def spec_section(r: Path) -> list[str]:
         return []
     out = ["### Customer requirements to rules (Llama on ExecuTorch vs keyword reader)\n",
            "Tuning = 80 clauses used while writing the checks; held-out = 40 clauses written independently and "
-           "never used for tuning. Silently wrong = the checks passed but the rule is wrong.\n"]
+           "never used for tuning. Silently wrong = the checks passed but the rule is wrong.\n",
+           "Free generation: Llama writes each field as text. Constrained decoding: Llama can only output an entry "
+           "of the option list (a prefix tree over its next-token scores). Grounded choice: the clause's own words "
+           "narrow each list first. Methods were compared on the tuning set; the held-out set was run once for a "
+           "method that was kept.\n"]
     rows = []
     seen_kw = False
     for tag, ev in files.items():
@@ -355,7 +360,10 @@ def spec_section(r: Path) -> list[str]:
                 seen_kw = True
             for sname, sc in by_set.items():
                 size = "3B" if "3b" in name else "1B" if "1b" in name else name
-                label = "Keyword reader" if name == "keyword" else f"Llama 3.2 {size}, {SPEC_TAGS.get(tag, tag)}"
+                how = ("grounded choice, constrained decoding (deployed)" if name.endswith("_grounded") else
+                       "constrained decoding, full option lists" if name.endswith("_constrained") else
+                       SPEC_TAGS.get(tag, tag))
+                label = "Keyword reader" if name == "keyword" else f"Llama 3.2 {size}, {how}"
                 rows.append([label, sname, sc["n"], pct(sc["exact"]), pct(sc["auto_correct"]), pct(sc["silent_wrong"]),
                              pct(sc["to_operator"]), pct(sc["failed"]),
                              "0" if name == "keyword" else f"{sc['latency_ms_median'] / 1000:.1f} s"])
