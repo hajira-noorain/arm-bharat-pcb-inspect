@@ -201,3 +201,40 @@ def test_teaching_records_how_alike_each_part_looks_across_good_boards(tmp_path)
     assert all(0.3 <= unlike_below(p) <= 0.85 and unlike_below(p) <= p.sim_min for p in pm.parts)
     pm.save(tmp_path / "p.json")
     assert PartsMap.load(tmp_path / "p.json").parts[0].sim_min == pm.parts[0].sim_min
+
+
+def test_something_the_detector_newly_notices_is_not_unexpected_if_the_place_looks_as_on_the_good_board(tmp_path):
+    from pcbinspect.golden import align_warp
+    from pcbinspect.parts import check_board, find_parts
+    good = board()
+    pm = teach_parts(BrightBoxes(), None, good, mm_per_px=1 / 16)
+    shot = board(shift=(6, -5))                               # a good board: nothing added
+    dets, _ = find_parts(BrightBoxes(), shot, scale=pm.scale)
+    ghost = dets + [{"bbox": [640.0, 480.0, 700.0, 520.0], "conf": 0.9}]     # the detector 'sees' a part on bare board
+    warp, _ = align_warp(shot, good)
+    assert [f.what for f in check_board(pm, ghost, warp, (800, 600))] == ["extra_part"]      # detector alone
+    assert check_board(pm, ghost, warp, (800, 600), ref=good, test=shot) == []               # the place is unchanged
+    added = board(extra=[(650, 450, 45, 45)], shift=(6, -5))                 # something really was added
+    dets, _ = find_parts(BrightBoxes(), added, scale=pm.scale)
+    f = check_board(pm, dets, align_warp(added, good)[0], (800, 600), ref=good, test=added)
+    assert [x.what for x in f] == ["extra_part"]
+
+
+def test_what_the_detector_half_sees_on_the_good_board_is_never_called_unexpected_later(tmp_path):
+    class HalfSees(BrightBoxes):
+        """Finds the part at (560, 120) only doubtfully on the first picture it is shown, surely afterwards."""
+        n = 0
+
+        def detect(self, bgr, only_near=None):
+            dets, lat = super().detect(bgr)
+            self.n += 1
+            for d in dets:
+                if 540 <= d.bbox[0] <= 590 and 100 <= d.bbox[1] <= 140 and self.n == 1:
+                    d.conf = 0.3
+            return dets, lat
+    det = HalfSees()
+    pm = teach_parts(det, None, board(), mm_per_px=1 / 16)
+    assert len(pm.parts) == len(PARTS) - 1 and len(pm.ignore) == 1          # too doubtful for the map, but known
+    from pcbinspect.parts import compare
+    later, _ = det.detect(board())
+    assert compare(pm, [{"bbox": list(d.bbox), "conf": d.conf} for d in later]) == []

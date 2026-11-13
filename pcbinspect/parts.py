@@ -180,10 +180,12 @@ def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | Non
 
 def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_conf: float = 0.6,
             valid: tuple[float, float, float, float] | None = None,
-            likes: list[float | None] | None = None) -> list[PartFinding]:
+            likes: list[float | None] | None = None, like_at=None) -> list[PartFinding]:
     """dets: parts found on the board under inspection, already in the good board's picture coordinates.
     likes: for each part of the map, how much its place looks like the good board (likeness()), if the
            pictures were compared; without it the detector alone decides.
+    like_at: box -> likeness of that place, for places that are not on the map (used for unexpected parts: if
+           the place looks just as it does on the good board, nothing was added there).
 
     present_conf: a weak detection is enough to say a mapped part is still there (missing a real part is the
                   costly mistake, so the part gets the benefit of the doubt only from an actual detection).
@@ -215,7 +217,12 @@ def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_
         if any(_same_place(d["bbox"], z) for z in pmap.ignore):
             continue
         if judged(d["bbox"]) and not any(_same_place(d["bbox"], p.box) for p in pmap.parts):
-            out.append(PartFinding("extra_part", [float(v) for v in d["bbox"]], "part", float(d["conf"]), mm(d["bbox"])))
+            like = like_at(d["bbox"]) if like_at is not None else None
+            if like is not None and like >= LIKE_DEFAULT:
+                continue        # the detector found something the map lacks, but the place looks as it does on
+                #                 the good board: it was there when the board was taught, only not on the map
+            out.append(PartFinding("extra_part", [float(v) for v in d["bbox"]], "part", float(d["conf"]),
+                                   mm(d["bbox"]), like))
     return out
 
 
@@ -334,7 +341,11 @@ def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max
         dets, _ = find_parts(detector, ref, scale=s)
         m = build_map(dets, (w, h), (1.0 / mm_per_px) if mm_per_px else None)
         m.scale, m.taught_from = s, 1 + len(warps)
-        keep, zones = set(range(len(m.parts))), []
+        # what the detector half-sees on the good board itself (too doubtful for the map) is still known to be
+        # there: it must not be reported as unexpected when the detector is surer of it on another picture
+        keep, zones = set(range(len(m.parts))), [[float(v) for v in d["bbox"]] for d in dets
+                                                 if d["conf"] < MIN_MAP_CONF
+                                                 and not any(_same_place(d["bbox"], p.box) for p in m.parts)]
         for g, warp in warps:
             seen, _ = find_parts(detector, g, scale=s)
             for f in check_board(m, seen, warp, (g.shape[1], g.shape[0]), raw=True):
@@ -369,13 +380,18 @@ def moved(pmap: PartsMap, matrix, size: tuple[int, int]) -> PartsMap:
     return PartsMap([int(size[0]), int(size[1])], pmap.px_per_mm, parts, pmap.scale, zones)
 
 
-def likenesses(there: PartsMap, warp, ref_bgr, test_bgr) -> list[float | None]:
-    """likeness() for every part of a map already carried into the inspected picture."""
+def ref_in_test_frame(warp, ref_bgr, test_bgr):
+    """The good board's picture carried into the inspected picture's frame."""
     import cv2
     h, w = test_bgr.shape[:2]
     ref = ref_bgr if ref_bgr.shape[:2] == (h, w) else cv2.resize(ref_bgr, (w, h))
-    ref = cv2.warpAffine(ref, warp, (w, h), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
-                         borderMode=cv2.BORDER_REPLICATE)
+    return cv2.warpAffine(ref, warp, (w, h), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+                          borderMode=cv2.BORDER_REPLICATE)
+
+
+def likenesses(there: PartsMap, warp, ref_bgr, test_bgr, ref_there=None) -> list[float | None]:
+    """likeness() for every part of a map already carried into the inspected picture."""
+    ref = ref_there if ref_there is not None else ref_in_test_frame(warp, ref_bgr, test_bgr)
     # compared in colour: a part swapped for one of another colour but similar brightness must not look alike
     return [likeness(ref, test_bgr, p.box) for p in there.parts]
 
@@ -393,8 +409,12 @@ def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, in
     to_test = np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
     resize = np.diag([w / pmap.size[0], h / pmap.size[1], 1.0])        # good picture -> its resized self
     there = moved(pmap, to_test @ resize, (w, h))
-    likes = likenesses(there, np.asarray(warp, np.float32), ref, test) if ref is not None and test is not None else None
-    found = compare(there, dets, likes=likes)
+    likes = like_at = None
+    if ref is not None and test is not None:
+        ref_there = ref_in_test_frame(np.asarray(warp, np.float32), ref, test)
+        likes = likenesses(there, None, None, test, ref_there)
+        like_at = lambda box: likeness(ref_there, test, box)     # noqa: E731
+    found = compare(there, dets, likes=likes, like_at=like_at)
     if not raw:
         return found
     back = np.linalg.inv(to_test @ resize)
