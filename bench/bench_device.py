@@ -192,6 +192,52 @@ def bench_llm(root: Path, cfg: dict, quick: bool) -> dict:
             "prefill_tps_median": statistics.median([r["prefill_tps"] for r in runs if r["prefill_tps"]])}
 
 
+def bench_llm_scores(root: Path, cfg: dict, quick: bool) -> dict:
+    """The decisions Llama makes through next-token scores (pcbinspect/llm_logits.py), timed per model:
+    full advice for a two-defect board (causes judged one at a time, actions scored, number-safe summary),
+    one customer rule, one shift-question routing. These are the latencies an operator actually waits for."""
+    import sqlite3
+
+    from pcbinspect import ask
+    from pcbinspect.advisor import LLAMA_BACKEND, Advisor
+    from pcbinspect.kb import default_kb
+    from pcbinspect.llm_logits import LogitLlama
+    from pcbinspect.spec_llm import ConstrainedSpecCompiler
+    record = {"board_id": "B-0042", "design": "deeppcb", "verdict": "FAIL", "defects": [
+        {"id": "D1", "type": "short", "severity": "critical", "confidence": 0.91, "size_mm": 0.31, "location": "top-left"},
+        {"id": "D2", "type": "open", "severity": "critical", "confidence": 0.84, "size_mm": 0.22, "location": "centre"}]}
+    out = {}
+    for key in ("llm_pte", "spec_llm_pte"):
+        pte = root / cfg.get(key, "")
+        if not cfg.get(key) or not pte.is_file() or pte.name in out:
+            continue
+        rss0 = rss_mb()
+        be = LogitLlama(pte, root / cfg["llm_tokenizer"], threads=cfg.get("llm_threads", 4))
+        r = {"file_mb": round(pte.stat().st_size / 2**20, 1), "load_ms": round(be.load_ms, 1),
+             "rss_added_mb": round(rss_mb() - rss0), "advice": [], "rule": [], "route": []}
+        adv = Advisor(be, default_kb(), cause_mode="pointwise")
+        comp = ConstrainedSpecCompiler(be, grounded=True)
+        conn = sqlite3.connect(":memory:")
+        for _ in range(1 if quick else 3):
+            a = adv.advise(record, {"short": 5})
+            r["advice"].append({"wall_ms": round(a.gen.latency_ms, 1) if a.gen else None, "forwards": adv.last_forwards,
+                                "prompt_tokens": a.gen.prompt_tokens if a.gen else None,
+                                "prefill_tps": round(a.gen.prefill_tps, 1) if a.gen else None,
+                                "shown": a.backend == LLAMA_BACKEND, "temp_c": temp_c()})
+            c = comp.compile("Reject mouse bites that remove more than 20% of the trace width.")
+            r["rule"].append({"wall_ms": round(c.latency_ms, 1), "ok": c.rule is not None})
+            t = time.perf_counter()
+            qid, _ = ask.route_scored("How many boards failed in the last 3 hours?", be)
+            r["route"].append({"wall_ms": round((time.perf_counter() - t) * 1e3, 1), "query": qid})
+            print("llm scores", pte.name, r["advice"][-1], r["rule"][-1], r["route"][-1], flush=True)
+        conn.close()
+        for k in ("advice", "rule", "route"):
+            r[f"{k}_ms_median"] = statistics.median([x["wall_ms"] for x in r[k] if x["wall_ms"]])
+        out[pte.name] = r
+        del be, adv, comp
+    return out or {"skipped": "no Llama .pte found"}
+
+
 def bench_e2e(root: Path, cfg: dict, n: int) -> dict:
     from pcbinspect.advisor import Advisor
     from pcbinspect.anomaly import executorch_feature_fn
@@ -244,6 +290,11 @@ def main():
         res["end_to_end"] = bench_e2e(root, cfg, 5 if args.quick else 20)
     if "llm" not in skip:
         res["llm"] = bench_llm(root, cfg, args.quick)
+        try:
+            res["llm_scores"] = bench_llm_scores(root, cfg, args.quick)
+        except Exception as exc:    # noqa: BLE001  (record it: a missing number must be visible, not silent)
+            res["llm_scores"] = {"error": repr(exc)}
+            print("llm scores FAILED:", repr(exc), flush=True)
     res["system"]["temp_c_end"] = temp_c()
     res["system"]["throttled_end"] = throttled()
     out = root / args.out
