@@ -117,12 +117,18 @@ class LogitLlama:
     """Llama .pte through executorch.runtime, with a KV cache position we control."""
     name = "llama-executorch-logits"
 
-    def __init__(self, pte_path: str | Path, tokenizer_path: str | Path):
+    def __init__(self, pte_path: str | Path, tokenizer_path: str | Path, threads: int | None = None):
         import executorch.extension.llm.custom_ops.custom_ops  # noqa: F401  (KV cache, SDPA kernels)
         import executorch.kernels.quantized  # noqa: F401
         import torch
         from executorch.runtime import Runtime
         self._torch = torch
+        if threads:
+            try:    # ExecuTorch's shared threadpool (the Pi has 4 cores; the vision models use it too)
+                from executorch.extension.pybindings import portable_lib
+                portable_lib._unsafe_reset_threadpool(int(threads))
+            except Exception:   # noqa: BLE001  (not exposed in this build: keep the default)
+                pass
         self.model = Path(pte_path).stem
         t0 = time.perf_counter()
         prog = Runtime.get().load_program(str(pte_path))

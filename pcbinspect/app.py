@@ -119,7 +119,7 @@ class Station:
             # advice choices by option text, summaries that cannot contain a number that is not a fact.
             try:
                 from .llm_logits import LogitLlama
-                return LogitLlama(p, self.root / self.cfg["llm_tokenizer"])
+                return LogitLlama(p, self.root / self.cfg["llm_tokenizer"], threads=self.cfg.get("llm_threads", 4))
             except Exception as exc:    # noqa: BLE001
                 log.exception("Llama (scores) failed to load (%s): trying the text runner", exc)
         from .llm import ExecuTorchLlama
