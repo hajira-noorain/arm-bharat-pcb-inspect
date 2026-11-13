@@ -509,6 +509,26 @@ def parts_section(r: Path) -> list[str]:
                 "\nWhat teaching kept for each design:\n",
                 table(["Design", "Parts on the map", "Left off as unreliable", "Ignore zones", "Resampling factor"], per)]
         out += cmp_out
+    tr = load(r / "parts_rules_visa.json")
+    if tr:
+        rows = []
+        for goods, e in sorted(tr["by_goods"].items(), key=lambda kv: int(kv[0])):
+            for lab, sc in (("rule before", e["test_before"]), ("rule chosen on training photos", e["test"])):
+                g, m, x, w = (sc.get(k, {}) for k in ("good", "missing", "extra", "wrong place"))
+                rows.append([goods, lab, f"{g.get('anything', 0)} of {g.get('photos', 0)}",
+                             f"{m.get('on_area', 0)} of {m.get('photos', 0)}", f"{x.get('on_area', 0)} of {x.get('photos', 0)}",
+                             f"{w.get('on_area', 0)} of {w.get('photos', 0)}"])
+        ch = tr["by_goods"].get("8", next(iter(tr["by_goods"].values())))
+        out += ["\n### Assembled boards: the parts-check rule, chosen on good training photos\n",
+                "The thresholds were chosen from raw measurements, as the most sensitive rule whose false calls on good "
+                "VisA TRAINING photos (not used for teaching) stayed within 5%. The test photos took no part in the "
+                f"choice and were read once. Chosen rule (taught from 8 good photos): {ch['chosen_rule']}; false calls "
+                f"on the good training photos {pct(ch['dev_false_call_rate'])} (previous rule {pct(ch['dev_false_call_rate_before'])}).\n",
+                table(["Good photos taught", "Rule", "Good test boards raising anything", "'Missing' found on the spot",
+                       "'Extra' found on the spot", "'Wrong place' found on the spot"], rows),
+                "\nThese VisA designs had already been looked at while building the check (alignment acceptance and the "
+                "'looks different' rule were changed after a first VisA run), so this is a development result on four "
+                "designs whose faults were made by hand, not a blind test."]
     ex = load(r / "parts_export.json")
     if ex:
         c = ex.get("classifier", {})

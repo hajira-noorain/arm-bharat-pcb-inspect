@@ -47,7 +47,7 @@ def main():
     ap.add_argument("--classifier", default=None)
     ap.add_argument("--out", required=True)
     ap.add_argument("--designs", default="pcb1,pcb2,pcb3,pcb4")
-    ap.add_argument("--goods", type=int, default=4, help="good photos used to teach each design")
+    ap.add_argument("--goods", type=int, default=8, help="good photos used to teach each design")
     ap.add_argument("--normals", type=int, default=80, help="good test photos checked per design")
     a = ap.parse_args()
     from pcbinspect.detect_bare import BareDetector, UltralyticsTiles

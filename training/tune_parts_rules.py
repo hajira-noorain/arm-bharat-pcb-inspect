@@ -25,7 +25,7 @@ def decide(rec: dict, r: dict) -> dict:
     """What the rule reports on one photo: counts, and whether each kind lands on the labelled area."""
     out = {"missing": 0, "changed": 0, "unexpected": 0, "missing_on": False, "changed_on": False, "unexpected_on": False}
     for conf, like, sim_min, on in rec.get("parts", []):
-        thr = r["cap"] if sim_min is None else min(r["cap"], max(0.3, sim_min - r["margin"]))
+        thr = r["cap"] if sim_min is None else min(r["cap"], max(0.3, sim_min - r["margin"]))   # (the station: LIKE_DEFAULT = LIKE_CAP when no range is known)
         if conf < r["present_conf"]:
             if like is None or like < thr:
                 out["missing"] += 1

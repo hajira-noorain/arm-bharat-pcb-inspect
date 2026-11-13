@@ -147,8 +147,15 @@ def build_map(dets: list[dict], size: tuple[int, int], px_per_mm: float | None =
 # removed parts): at 0.7, 97% of removed parts read as unlike and 0.4% of present ones do. Software re-photographing
 # is gentler than a real second photo, which is why a board taught from several good pictures uses each part's own
 # measured range instead of this default.
-LIKE_DEFAULT = 0.7       # likeness below this = "does not look like the good board here" (no good-board range known)
+# The numbers below were then chosen on VisA: among a small grid, the most sensitive rule whose false calls on
+# GOOD TRAINING photos (not used to teach) stayed within 5%, teaching from 8 good photos
+# (training/tune_parts_rules.py; results/parts_rules_visa.json). Test photos played no part in the choice.
+LIKE_DEFAULT = 0.8       # likeness below this = "does not look like the good board here" (no good-board range known)
 LIKE_MARGIN = 0.15       # ... or this far below the lowest likeness the part showed across the good boards
+LIKE_CAP = 0.8           # ... but never demanding more likeness than this
+EXTRA_CONF = 0.8         # an unexpected part needs a detection at least this confident ...
+EXTRA_LIKE = 0.7         # ... at a place that looks less like the good board than this
+TEACH_GOODS = 8          # good photos the parts map is checked against (fewer if fewer are given)
 CHANGED_EXTRA = 0.2      # a part that IS detected must look this much worse still before it is called changed
 # Two colour photographs of the same good assembled board correlate 0.75 to 0.95 once lined up (VisA training
 # photos, 20 per design); the 0.85 the bare-board comparison demands of copper scans refused most of them.
@@ -160,7 +167,7 @@ def unlike_below(p: Part) -> float:
     """The likeness under which this part's place counts as not looking like the good board."""
     if p.sim_min is None:
         return LIKE_DEFAULT
-    return min(0.85, max(0.3, p.sim_min - LIKE_MARGIN))
+    return min(LIKE_CAP, max(0.3, p.sim_min - LIKE_MARGIN))
 
 
 def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | None:
@@ -192,7 +199,7 @@ def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | Non
     return None
 
 
-def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_conf: float = 0.6,
+def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_conf: float = EXTRA_CONF,
             valid: tuple[float, float, float, float] | None = None,
             likes: list[float | None] | None = None, like_at=None) -> list[PartFinding]:
     """dets: parts found on the board under inspection, already in the good board's picture coordinates.
@@ -234,7 +241,7 @@ def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_
             continue
         if judged(d["bbox"]) and not any(_same_place(d["bbox"], p.box) for p in pmap.parts):
             like = like_at(d["bbox"]) if like_at is not None else None
-            if like is not None and like >= LIKE_DEFAULT:
+            if like is not None and like >= EXTRA_LIKE:
                 continue        # the detector found something the map lacks, but the place looks as it does on
                 #                 the good board: it was there when the board was taught, only not on the map
             out.append(PartFinding("extra_part", [float(v) for v in d["bbox"]], "part", float(d["conf"]),
@@ -330,7 +337,7 @@ class PartKindClassifier:
 SEARCH_SCALES = (0.5, 0.75, 1.0, 1.5, 2.0)     # tried when the picture's mm scale is not known
 
 
-def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max_goods: int = 4) -> PartsMap:
+def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max_goods: int = TEACH_GOODS) -> PartsMap:
     """The parts map of a good board, from one good picture or several.
 
     goods[0] is the reference picture. With more good pictures the map is CHECKED against them: each is lined

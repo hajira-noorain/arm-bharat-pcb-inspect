@@ -334,6 +334,19 @@ The same photos decided two ways: by the part detector alone, and by the detecto
 | Labelled 'extra': reported on the labelled area | 30 | 46.7% | 46.7% |
 | Labelled 'wrong place': reported on the labelled area | 13 | 38.5% | 84.6% |
 
+### Assembled boards: the parts-check rule, chosen on good training photos
+
+The thresholds were chosen from raw measurements, as the most sensitive rule whose false calls on good VisA TRAINING photos (not used for teaching) stayed within 5%. The test photos took no part in the choice and were read once. Chosen rule (taught from 8 good photos): {'present_conf': 0.25, 'cap': 0.8, 'margin': 0.15, 'changed_extra': 0.2, 'extra_conf': 0.8, 'extra_like': 0.7}; false calls on the good training photos 2.5% (previous rule 13.1%).
+
+| Good photos taught | Rule | Good test boards raising anything | 'Missing' found on the spot | 'Extra' found on the spot | 'Wrong place' found on the spot |
+|---|---|---|---|---|---|
+| 4 | rule before | 74 of 320 | 60 of 92 | 15 of 30 | 11 of 13 |
+| 4 | rule chosen on training photos | 8 of 320 | 48 of 92 | 9 of 30 | 5 of 13 |
+| 8 | rule before | 33 of 320 | 57 of 92 | 14 of 30 | 10 of 13 |
+| 8 | rule chosen on training photos | 6 of 320 | 56 of 92 | 10 of 30 | 10 of 13 |
+
+These VisA designs had already been looked at while building the check (alignment acceptance and the 'looks different' rule were changed after a first VisA run), so this is a development result on four designs whose faults were made by hand, not a blind test.
+
 Both models exported to ExecuTorch: detector 9.3 MB, classifier 5.9 MB. The exported classifier gives the same answer as PyTorch on 100.0% of 400 test crops. Parts found on 12 test tiles, PyTorch vs exported: None.
 
 ### Earlier advice method, superseded (60 seeded defect records, x86 host)
