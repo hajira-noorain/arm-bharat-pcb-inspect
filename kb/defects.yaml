@@ -118,6 +118,46 @@ defects:
       - {id: MPAD-A2, short: "check etch time", text: "Check etch time and etchant activity for over-etching."}
       - {id: MPAD-A3, short: "check resist adhesion over pads", text: "Check resist adhesion over pads: surface preparation and lamination settings."}
 
+  # The three types below were added with the DsPCBSD+ production-line data (real AOI defects).
+  hole_breakout:
+    name: "Hole breakout"
+    what: "The drilled hole is not fully inside its pad, so the copper ring around the hole is broken."
+    process_step: drilling
+    causes:
+      - {id: HBRK-C1, step: drilling, short: "drill-to-pad misregistration", text: "Drill-to-pattern misregistration: panel scaling, tooling-pin wear or a wrong drill offset put the hole off the pad centre."}
+      - {id: HBRK-C2, step: imaging, short: "pattern shifted at exposure", text: "The conductor pattern was exposed shifted relative to the drilled holes (phototool registration)."}
+      - {id: HBRK-C3, step: drilling, short: "drill wander", text: "Drill wander from a worn bit or high feed rate."}
+    actions:
+      - {id: HBRK-A1, short: "check ring vs class limit", text: "Check the remaining annular ring and the breakout angle against the customer class: Class 3 allows no breakout."}
+      - {id: HBRK-A2, short: "measure registration on panel", text: "Measure drill-to-pattern registration across the panel to find a systematic offset or scaling."}
+      - {id: HBRK-A3, short: "check tooling pins and bits", text: "Check tooling pins and drill-bit wear on the drill machine."}
+
+  scratch:
+    name: "Conductor scratch"
+    what: "A scratch across a conductor that removes or damages copper."
+    process_step: handling
+    causes:
+      - {id: SCR-C1, step: handling, short: "panel handling or stacking", text: "Mechanical damage during panel handling, stacking or transport."}
+      - {id: SCR-C2, step: handling, short: "rollers or conveyor", text: "Abrasion by conveyor rollers or a fixture edge."}
+      - {id: SCR-C3, step: imaging, short: "scratched resist before etch", text: "Resist scratched before etching, so the scratch was etched into the copper."}
+    actions:
+      - {id: SCR-A1, short: "check width loss vs class limit", text: "Check how much conductor width or thickness is lost against the customer class limit."}
+      - {id: SCR-A2, short: "inspect handling path", text: "Inspect rollers, fixtures and stacking practice along the handling path."}
+      - {id: SCR-A3, short: "use interleaving sheets", text: "Use interleaving sheets when stacking panels."}
+
+  foreign_object:
+    name: "Foreign object"
+    what: "Debris on a conductor or on the bare laminate (fibre, dust, residue, metal particle)."
+    process_step: handling
+    causes:
+      - {id: FOB-C1, step: handling, short: "airborne dust or fibre", text: "Airborne dust or fibres settled on the panel."}
+      - {id: FOB-C2, step: plating, short: "process residue", text: "Process residue left after plating, etching or rinsing."}
+      - {id: FOB-C3, step: handling, short: "metal particle from tooling", text: "A metal particle from drilling or routing debris."}
+    actions:
+      - {id: FOB-A1, short: "clean and re-inspect", text: "Clean the area (air, brush or approved solvent) and inspect again."}
+      - {id: FOB-A2, short: "reject if conductive and bridging", text: "If the object is conductive and lies between conductors, treat it as a short until removed."}
+      - {id: FOB-A3, short: "check cleanroom and rinse", text: "Check cleanroom discipline and the rinse and dry stations."}
+
   unknown_anomaly:
     name: "Unclassified anomaly"
     what: "The board differs from known-good boards of this design in a way the detector cannot name."

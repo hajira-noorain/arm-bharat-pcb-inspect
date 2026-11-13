@@ -17,11 +17,15 @@ BARE_CLASSES: tuple[str, ...] = (
     "spurious_copper",
     "pin_hole",
     "missing_pad",   # damaged / partly etched-away pad (Mendeley PCB-Defect real boards)
+    # appended with DsPCBSD+ (real production-line AOI defects); indices 0-7 above are unchanged
+    "hole_breakout",
+    "scratch",
+    "foreign_object",  # DsPCBSD+ conductor foreign object + base-material foreign object, merged
 )
 # Anything the anomaly model flags that the detector cannot name.
 ANOMALY_CLASS = "unknown_anomaly"
 
-Source = Literal["detector", "anomaly"]
+Source = Literal["detector", "golden", "anomaly"]
 Severity = Literal["minor", "major", "critical"]
 Verdict = Literal["PASS", "FAIL", "REVIEW"]
 

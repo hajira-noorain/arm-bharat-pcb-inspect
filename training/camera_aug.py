@@ -107,7 +107,53 @@ def random_condition(rng: random.Random) -> dict:
     return c
 
 
-def build(src: Path, dst: Path, frac: float, seed: int = 0):
+# Board finishes seen in real photos, BGR: (substrate under mask, copper under mask). Mask colours are
+# typical of commercial boards; bare copper / HASL rows model unmasked boards (DeepPCB-like bare copper).
+FINISHES = {
+    "green":  ((40, 95, 30), (70, 170, 90)),
+    "dark_green": ((25, 60, 20), (55, 120, 60)),
+    "blue":   ((110, 50, 15), (170, 110, 60)),
+    "red":    ((25, 25, 130), (70, 80, 200)),
+    "black":  ((22, 22, 22), (60, 60, 60)),
+    "white":  ((215, 220, 220), (150, 180, 195)),
+    "yellow": ((30, 170, 200), (80, 210, 230)),
+    "purple": ((90, 30, 70), (150, 90, 130)),
+    "bare_copper": ((95, 135, 150), (70, 125, 205)),   # FR4 laminate, copper
+    "hasl":   ((80, 120, 130), (185, 185, 180)),         # FR4, tinned (silver) copper
+}
+
+
+def recolor_binary(im: np.ndarray, rng: random.Random, nrng: np.random.Generator) -> np.ndarray:
+    """Re-paint a binarised scan (copper dark) as a photographed board: a random finish, per-region colour
+    jitter, a soft copper edge, uneven illumination, a faint specular band and sensor noise. The geometry
+    (and therefore every label) is unchanged. TRAINING augmentation only, never used to make test images."""
+    g = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY) if im.ndim == 3 else im
+    cu = (g < 128).astype(np.float32)
+    cu = cv2.GaussianBlur(cu, (0, 0), rng.uniform(0.6, 1.6))            # soft, slightly rounded edges
+    sub_c, cu_c = FINISHES[rng.choice(list(FINISHES))]
+    jit = lambda c: np.clip(np.array(c, np.float32) * rng.uniform(0.8, 1.2) + nrng.normal(0, 8, 3), 0, 255)  # noqa: E731
+    sub_c, cu_c = jit(sub_c), jit(cu_c)
+    if np.abs(sub_c - cu_c).sum() < 90:   # keep copper visibly distinct from the substrate, as on real boards
+        cu_c = np.clip(cu_c + np.sign(cu_c - sub_c + 1e-3) * 35, 0, 255)
+    out = sub_c[None, None, :] * (1 - cu[..., None]) + cu_c[None, None, :] * cu[..., None]
+    h, w = g.shape
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    ang = rng.uniform(0, 2 * np.pi)
+    grad = 1 + rng.uniform(-0.12, 0.12) * ((xx / w - 0.5) * np.cos(ang) + (yy / h - 0.5) * np.sin(ang)) * 2
+    out *= grad[..., None]
+    if rng.random() < 0.5:   # a glossy band, as from a ring light on solder mask
+        pos = rng.uniform(0, 1)
+        d = np.abs((xx / w) * np.cos(ang + 1.3) + (yy / h) * np.sin(ang + 1.3) - pos)
+        peak = rng.uniform(10, 45) * (1.0 - out.mean() / 400.0)   # weaker glare on already-bright finishes
+        out += (peak * np.exp(-(d / rng.uniform(0.03, 0.12)) ** 2))[..., None]
+    out += nrng.normal(0, rng.uniform(2, 7), out.shape)
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+RECOLOR_SOURCES = ("deeppcb_",)   # tiles from binarised scans (their file names start with the source)
+
+
+def build(src: Path, dst: Path, frac: float, seed: int = 0, recolor_frac: float = 0.0):
     """Copy the dataset; add a degraded copy of `frac` of the TRAIN tiles (val stays clean)."""
     if dst.exists():
         shutil.rmtree(dst)
@@ -122,6 +168,17 @@ def build(src: Path, dst: Path, frac: float, seed: int = 0):
         cv2.imwrite(str(img_dir / f"{p.stem}_cam.jpg"), im, [cv2.IMWRITE_JPEG_QUALITY, 95])
         shutil.copy(lbl_dir / f"{p.stem}.txt", lbl_dir / f"{p.stem}_cam.txt")
         n += 1
+    n_rc = 0
+    if recolor_frac > 0:   # extra copies of binarised-scan tiles repainted as photographed boards
+        for p in sorted(img_dir.glob("*.jpg")):
+            if p.stem.endswith("_cam") or not p.name.startswith(RECOLOR_SOURCES) or rng.random() > recolor_frac:
+                continue
+            im = recolor_binary(cv2.imread(str(p)), rng, nrng)
+            im = apply(im, random_condition(rng), nrng)
+            cv2.imwrite(str(img_dir / f"{p.stem}_rc.jpg"), im, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            shutil.copy(lbl_dir / f"{p.stem}.txt", lbl_dir / f"{p.stem}_rc.txt")
+            n_rc += 1
+    print(f"added {n_rc} recoloured tiles")
     y = (dst / "data.yaml").read_text().splitlines()
     y[0] = f"path: {dst.as_posix()}"
     (dst / "data.yaml").write_text("\n".join(y) + "\n")
@@ -134,5 +191,6 @@ if __name__ == "__main__":
     ap.add_argument("--src", required=True)
     ap.add_argument("--dst", required=True)
     ap.add_argument("--frac", type=float, default=0.6)
+    ap.add_argument("--recolor-frac", type=float, default=0.0, help="repaint this share of binarised-scan tiles as photographed boards")
     a = ap.parse_args()
-    build(Path(a.src), Path(a.dst), a.frac)
+    build(Path(a.src), Path(a.dst), a.frac, recolor_frac=a.recolor_frac)

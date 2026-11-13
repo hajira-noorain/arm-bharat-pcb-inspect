@@ -49,6 +49,10 @@ classes:
   missing_pad:      {rule: fixed,             fallback_severity: major,    repair: {class1: rework, class2: rework, class3: scrap}}
   spur:             {rule: spacing_reduction, fallback_severity: major,    repair: {class1: rework, class2: rework, class3: rework}}
   spurious_copper:  {rule: spacing_reduction, fallback_severity: major,    repair: {class1: rework, class2: rework, class3: rework}}
+  # added with DsPCBSD+ (real production AOI defects); breakout and debris are graded by type for now
+  hole_breakout:    {rule: fixed,             fallback_severity: major,    repair: {class1: review, class2: review, class3: scrap}}
+  scratch:          {rule: width_reduction,   fallback_severity: minor,    repair: {class1: rework, class2: rework, class3: review}}
+  foreign_object:   {rule: fixed,             fallback_severity: major,    repair: {class1: rework, class2: rework, class3: rework}}
   unknown_anomaly:  {rule: area,              fallback_severity: major,    repair: {class1: review, class2: review, class3: review}}
 
 # Our own assumption for unnamed anomalies on assembled boards (NOT from IPC).

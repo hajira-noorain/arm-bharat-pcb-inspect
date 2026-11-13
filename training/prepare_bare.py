@@ -22,6 +22,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.record import BARE_CLASSES  # noqa: E402
@@ -157,6 +158,99 @@ def load_mendeley(root: Path, rng: random.Random):
     return out
 
 
+DSP_CLASSES = {0: "short", 1: "spur", 2: "spurious_copper", 3: "open", 4: "mouse_bite",
+               5: "hole_breakout", 6: "scratch", 7: "foreign_object", 8: "foreign_object"}  # SH SP SC OP MB HB CS CFO BMFO
+DSP_GRID, DSP_CELL = 3, 213   # 3 x 3 crops of 226 px resized to 213 px -> one 640 px "board" (639 + 1 px pad)
+
+
+def load_dspcbsd(root: Path, rng: random.Random, out_dir: Path):
+    """DsPCBSD+ (Lv et al., Scientific Data 2024, CC BY 4.0): 10,259 crops of REAL production-line defects
+    from an industrial AOI line-scan system, 226 x 226 px, no solder mask. The crops carry no board id, so
+    the dataset is split by crop: its own val split is our TEST (never trained on); its train split is
+    divided 80 / 10 / 10 into our train / val / cal. Crops are tiled 3 x 3 into 640 px mosaics so a defect
+    keeps (almost) its native pixel size and the detector sees several patterns at once."""
+    src = root / "x" / "Data_YOLO"
+    if not src.exists():
+        return {}
+    mos_dir = out_dir / "dspcbsd_mosaics"
+    out = defaultdict(list)
+    for theirs in ("train", "val"):
+        ims = sorted((src / "images" / theirs).glob("*.jpg"))
+        rng.shuffle(ims)
+        groups = [ims[i:i + DSP_GRID ** 2] for i in range(0, len(ims), DSP_GRID ** 2)]
+        for gi, grp in enumerate(groups):
+            if theirs == "val":
+                split = "test"
+            else:
+                r = rng.random()
+                split = "train" if r < 0.8 else ("val" if r < 0.9 else "cal")
+            canvas = np.full((640, 640, 3), 255, np.uint8)
+            boxes = []
+            for k, p in enumerate(grp):
+                cy, cx = divmod(k, DSP_GRID)
+                im = cv2.resize(cv2.imread(str(p)), (DSP_CELL, DSP_CELL), interpolation=cv2.INTER_AREA)
+                ox, oy = cx * DSP_CELL, cy * DSP_CELL
+                canvas[oy:oy + DSP_CELL, ox:ox + DSP_CELL] = im
+                lbl = src / "labels" / theirs / f"{p.stem}.txt"
+                for line in (lbl.read_text().splitlines() if lbl.exists() else []):
+                    f = line.split()
+                    if len(f) < 5:
+                        continue
+                    c, x, y, w, h = int(f[0]), *map(float, f[1:5])
+                    boxes.append((DSP_CLASSES[c], [ox + (x - w / 2) * DSP_CELL, oy + (y - h / 2) * DSP_CELL,
+                                                   ox + (x + w / 2) * DSP_CELL, oy + (y + h / 2) * DSP_CELL]))
+            d = mos_dir / split
+            d.mkdir(parents=True, exist_ok=True)
+            path = d / f"dsp_{theirs}_{gi:05d}.jpg"
+            cv2.imwrite(str(path), canvas, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            out[split].append(board_item(path, boxes, "dspcbsd"))
+    return out
+
+
+DD_CODES = {"MP": "missing_pad", "OC": "open", "SC": "short", "SP": "spur", "SPC": "spurious_copper"}
+
+
+def load_defectdet(root: Path, rng: random.Random):
+    """DefectDet (Mendeley t9d9zs3bmb, CC BY 4.0, 2026): 268 photos of REAL manufactured double-layer boards
+    whose defects were introduced in the Gerber, so real copper, mask and optics. Split BY PHYSICAL BOARD
+    (the leading number of the original file name, e.g. '22_2_BOTTOM_H.png' -> board 22): half of the boards
+    train (with a 10% val slice), half are TEST only, so the test boards are designs the model never saw.
+    Note: its 'SC' is short circuit (DsPCBSD+'s 'SC' is spurious copper)."""
+    js = next(iter(sorted(root.rglob("defect_annotations.json"))), None)
+    if js is None:
+        return {}
+    d = json.loads(js.read_text())
+    img_dir = js.parent.parent / "images"
+    cats = {c["id"]: DD_CODES.get(c["name"].upper()) for c in d["categories"]}
+    by_img = defaultdict(list)
+    for a in d["annotations"]:
+        cls = cats.get(a["category_id"])
+        if cls is None:
+            continue
+        x, y, w, h = a["bbox"]
+        by_img[a["image_id"]].append((cls, [x, y, x + w, y + h]))
+    board_of = {}
+    for im in d["images"]:
+        orig = (im.get("extra") or {}).get("name") or im["file_name"]
+        board_of[im["id"]] = orig.split("_")[0]
+    boards = sorted(set(board_of.values()))
+    rng.shuffle(boards)
+    test_boards = set(boards[: len(boards) // 2])
+    out = defaultdict(list)
+    for im in d["images"]:
+        p = img_dir / im["file_name"]
+        if not p.exists():
+            continue
+        if board_of[im["id"]] in test_boards:
+            split = "test"
+        else:
+            split = "val" if rng.random() < 0.1 else "train"
+        it = board_item(p, by_img.get(im["id"], []), "defectdet")
+        it["board"] = board_of[im["id"]]
+        out[split].append(it)
+    return out
+
+
 # ---------------------------------------------------------------- writers
 def write_tiles(items, split: str, out_root: Path, rng: random.Random, neg_keep: float) -> Counter:
     img_dir = out_root / "images" / split
@@ -199,6 +293,8 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--neg-keep", type=float, default=0.25,
                     help="fraction of defect-free tiles to keep (train/val)")
+    ap.add_argument("--no-dspcbsd", action="store_true", help="leave out DsPCBSD+ (reproduces the earlier split)")
+    ap.add_argument("--defectdet", default="", help="DefectDet root (split by physical board, half train / half test)")
     args = ap.parse_args()
     data, out = Path(args.data), Path(args.out)
     rng = random.Random(args.seed)
@@ -209,6 +305,11 @@ def main():
     loaders = [("deeppcb", lambda: load_deeppcb(data / "DeepPCB", rng)),
                ("hripcb", lambda: load_hripcb(data / "HRIPCB", rng)),
                ("mendeley", lambda: load_mendeley(data / "mendeley" / "PCB_Defect", rng))]
+    if args.defectdet:
+        loaders.append(("defectdet", lambda: load_defectdet(Path(args.defectdet), random.Random(args.seed + 202))))
+    if not args.no_dspcbsd:
+        # its own RNG: the earlier sources keep exactly the same split as before
+        loaders.append(("dspcbsd", lambda: load_dspcbsd(data / "dspcbsd", random.Random(args.seed + 101), data)))
     for name, fn in loaders:
         print(f"loading {name}")
         for split, items in fn().items():
