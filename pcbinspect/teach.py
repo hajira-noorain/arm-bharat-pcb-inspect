@@ -128,7 +128,7 @@ class TeachResult:
 
 
 def calibrate_bare(score_fn, golden: np.ndarray, goods: list[np.ndarray], px_per_mm: float,
-                   rng: np.random.Generator, n_windows: int = 80, n_good: int = 24,
+                   rng: np.random.Generator, n_windows: int = 120, n_good: int = 24,
                    sizes_mm: tuple[float, float] = (0.2, 1.0), progress=None) -> TeachResult:
     """score_fn(test_bgr, golden_bgr, aligned) -> list of (bbox, conf): the station's own evidence for a
     capture (golden-first). `goods` are good captures other than the golden one (>= 1)."""
@@ -146,7 +146,7 @@ def calibrate_bare(score_fn, golden: np.ndarray, goods: list[np.ndarray], px_per
         raise ValueError("no good capture aligns with the golden image: same board, same position?")
 
     lo, hi = sizes_mm
-    levels = np.round(np.geomspace(lo, hi, 7), 3)       # discrete sizes, so each has enough trials
+    levels = np.round(np.geomspace(lo, hi, 5), 3)       # discrete sizes, so each has enough trials
     per_board, trials = [], []
     tries = 0
     while len(per_board) < n_windows and tries < 6 * n_windows:

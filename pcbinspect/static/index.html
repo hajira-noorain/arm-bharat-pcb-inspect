@@ -282,13 +282,27 @@ textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding
   <section id="tab-teach" hidden>
     <div class="panel" style="max-width:640px">
       <h2>Teach a new board design</h2>
-      <p class="sub">Put good boards of the new design under the camera one after another. The station learns what good looks like from them, with no training run.</p>
+      <p class="sub">Show the station good boards of the new design. It learns what good looks like from them, with no training run.</p>
       <form id="teach-form">
         <div class="field"><label for="t-name">Design name</label><input id="t-name" required pattern="[A-Za-z0-9_-]{2,40}" placeholder="for example motor-driver-v2"></div>
-        <div class="field"><label for="t-kind">Board type</label><select id="t-kind"><option value="assembled">Assembled (with components)</option><option value="bare">Bare board</option></select></div>
-        <div class="field"><label for="t-n">Number of good boards</label><select id="t-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></div>
-        <button class="btn solid" id="teach-btn">Capture good boards and learn</button>
+        <div class="field"><label for="t-kind">Board type</label><select id="t-kind"><option value="bare">Bare board</option><option value="assembled">Assembled (with components)</option></select></div>
+        <div id="t-assembled" hidden>
+          <div class="field"><label for="t-n">Number of good boards</label><select id="t-n"><option>5</option><option selected>8</option><option>10</option><option>15</option></select></div>
+          <button class="btn solid" id="teach-btn">Capture good boards and learn</button>
+        </div>
       </form>
+      <div id="t-bare">
+        <ol class="sub" style="padding-left:20px;margin:0 0 12px">
+          <li>Put a good board against the corner stops, with the printed 20 mm marker beside it. Press Capture.</li>
+          <li>Lift the board and put it down again (or use another good board). Capture again. Three captures or more work best.</li>
+          <li>Press Finish. The station draws test defects of known size onto these pictures to set its own pass and fail thresholds. This takes a few minutes.</li>
+        </ol>
+        <div class="field"><label for="t-mm">Millimetres per pixel, only if there is no marker</label><input id="t-mm" inputmode="decimal" placeholder="for example 0.025"></div>
+        <button class="btn solid" id="tb-capture" type="button">Capture a good board</button>
+        <button class="btn" id="tb-finish" type="button" disabled>Finish teaching</button>
+        <button class="btn" id="tb-cancel" type="button" hidden>Start again</button>
+        <progress id="tb-progress" max="1" value="0" hidden style="width:100%;margin-top:12px"></progress>
+      </div>
       <p id="teach-out" class="answer"></p>
     </div>
     <div class="panel" style="max-width:640px;margin-top:20px">
@@ -392,7 +406,7 @@ function showInspection(r, fresh) {
   v.innerHTML = `<div class="word">${t.word}</div><div class="what">${t.what}</div><div class="board">Board ${esc(r.board_id)}<br>${esc(r.design)}</div>`;
   const L = r.latency || {};
   const vis = (L.detector_tiles || 0) + (L.anomaly_backbone || 0) + (L.anomaly_knn || 0);
-  $("#timing").textContent = `Verdict in ${Math.round(L.total_to_verdict || 0)} ms on this device (vision ${Math.round(vis)} ms${L.n_tiles ? ` over ${L.n_tiles} tiles` : ""}). Allowed miss rate ${Math.round(r.alpha * 100)}%${r.gate ? `, calibrated on ${r.gate.n_defective} defective and ${r.gate.n_good} good boards` : ""}.`;
+  $("#timing").textContent = `Verdict in ${Math.round(L.total_to_verdict || 0)} ms on this device (vision ${Math.round(vis)} ms${L.n_tiles ? ` over ${L.n_tiles} tiles` : ""}). Allowed miss rate ${Math.round(r.alpha * 100)}%${r.gate ? (r.gate.planted ? `, set from ${r.gate.n_defective} pictures with drawn test defects and ${r.gate.n_good} good captures of this board` : `, calibrated on ${r.gate.n_defective} defective and ${r.gate.n_good} good boards`) : ""}.`;
   $("#board-img").innerHTML = `<img alt="Inspected board with defects marked" src="/api/overlay/${r.id}.jpg?t=${Date.now()}">`;
   $("#review").innerHTML = r.verdict === "REVIEW" && !r.final_verdict ? `<div class="review-bar"><span>Your decision for this board:</span><button class="btn solid" data-review="PASS">Pass board</button><button class="btn" data-review="FAIL">Fail board</button></div>`
     : r.final_verdict ? `<p class="done">You decided: ${r.final_verdict === "PASS" ? "pass" : "fail"}.</p>` : "";
@@ -548,6 +562,50 @@ $("#teach-form").addEventListener("submit", async (e) => {
   finally { b.disabled = false; }
 });
 
+// ---------------- teach a bare board ----------------
+const tKind = () => { const bare = $("#t-kind").value === "bare"; $("#t-bare").hidden = !bare; $("#t-assembled").hidden = bare; };
+$("#t-kind").addEventListener("change", tKind); tKind();
+const tName = () => { const n = $("#t-name").value.trim(); if (!/^[A-Za-z0-9_-]{2,40}$/.test(n)) { $("#teach-out").textContent = "Give the design a name first: letters, digits, - and _."; return null; } return n; };
+$("#tb-capture").addEventListener("click", async () => {
+  const name = tName(); if (!name) return;
+  const b = $("#tb-capture"); b.disabled = true;
+  try {
+    const r = await api("/api/teach/capture", { method: "POST", body: JSON.stringify({ name }) });
+    $("#tb-cancel").hidden = false;
+    if (!r.ok) $("#teach-out").textContent = `Not saved: ${r.reason}`;
+    else $("#teach-out").textContent = r.golden ? "Saved as the reference picture. Now lift the board, put it down again and capture once more."
+      : `${r.captures} good captures saved. Capture another, or finish.`;
+    $("#tb-finish").disabled = !(r.captures >= 2);
+  } catch (err) { $("#teach-out").textContent = `Could not capture: ${err.message}`; }
+  finally { b.disabled = false; }
+});
+$("#tb-cancel").addEventListener("click", async () => {
+  const name = tName(); if (!name) return;
+  await api("/api/teach/cancel", { method: "POST", body: JSON.stringify({ name }) });
+  $("#teach-out").textContent = "Cleared. Start with a good board."; $("#tb-finish").disabled = true; $("#tb-cancel").hidden = true;
+});
+$("#tb-finish").addEventListener("click", async () => {
+  const name = tName(); if (!name) return;
+  const mm = parseFloat($("#t-mm").value);
+  try {
+    await api("/api/teach/finish", { method: "POST", body: JSON.stringify({ name, mm_per_px: isFinite(mm) && mm > 0 ? mm : null }) });
+  } catch (err) { $("#teach-out").textContent = err.message; return; }
+  $("#tb-capture").disabled = $("#tb-finish").disabled = true; $("#tb-progress").hidden = false;
+  $("#teach-out").textContent = "Drawing test defects on your pictures and checking which ones the station finds";
+  const poll = async () => {
+    const r = await api(`/api/teach/${encodeURIComponent(name)}`);
+    if (r.running) { $("#tb-progress").value = r.progress || 0; setTimeout(poll, 1500); return; }
+    $("#tb-progress").hidden = true; $("#tb-capture").disabled = false; $("#tb-cancel").hidden = true;
+    if (!r.done) { $("#teach-out").textContent = `Teaching did not finish: ${r.reason}`; $("#tb-finish").disabled = false; return; }
+    const lims = Object.values(r.limits || {}).map((x) => `<li>${esc(x)}</li>`).join("");
+    $("#teach-out").innerHTML = `Learned <b>${esc(r.design)}</b> from ${r.captures} good captures in ${r.seconds} s (scale from ${esc(r.scale_from)}). ` +
+      (r.can_fail ? "It can now pass and fail this board on its own. " : "It will send boards with a difference to a person: capture more good boards to let it fail them itself. ") +
+      `Measured on test defects drawn onto your own board, not on real defects:<ul>${lims}</ul>` + (r.notes || []).map(esc).join(" ");
+    await loadState(); $("#design").value = r.design;
+  };
+  setTimeout(poll, 1000);
+});
+
 // ---------------- learning ----------------
 async function loadLearn() {
   const d = $("#design").value;
@@ -588,7 +646,7 @@ async function loadEyetest() {
   if (!L) { $("#et-result").innerHTML = `<h2>Measured limit</h2><p class="sub">No eye test has been run for this design yet.</p>`; return; }
   const when = new Date(L.ts * 1000).toLocaleString();
   $("#et-result").innerHTML = `<h2>Measured limit</h2>
-    <p class="sub">${esc(when)}. ${L.n_trials} planted defects on ${L.sheets_read.length} sheets, judged as the station judges boards (${esc(L.evidence)}, ${Math.round(L.alpha * 100)}% miss setting). False calls: ${L.false_calls_per_coupon.toFixed(2)} per pattern. Each cell: found / planted at that size; green = shown to be at least 90% at 95% confidence.</p>
+    ${L.source === "simulated photos" ? '<p class="say no"><b>Simulated photos, not this camera.</b> These sheets were read from demo files made by a print-and-camera model. Photograph the printed card to measure this station.</p>' : ""}${L.calibrated_on ? '<p class="say"><b>Measured on test defects drawn onto pictures of this board</b> when it was taught, not on the printed card and not on real defects.</p>' : ""}<p class="sub">${esc(when)}. ${L.n_trials} planted defects${L.calibrated_on ? ` in ${L.n_windows} picture windows` : ` on ${L.sheets_read.length} sheets`}, judged as the station judges boards (${esc(L.evidence)}, ${Math.round(L.alpha * 100)}% miss setting).${L.false_calls_per_coupon == null ? "" : ` False calls: ${L.false_calls_per_coupon.toFixed(2)} per pattern.`} Each cell: found / planted at that size; green = shown to be at least 90% at 95% confidence.</p>
     ${Object.entries(L.types).map(([t, v]) => renderLimit(t, v)).join("")}`;
 }
 async function etCapture(path) {

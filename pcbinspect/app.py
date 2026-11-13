@@ -237,7 +237,10 @@ class Station:
         if design not in self.designs:
             raise HTTPException(404, f"unknown design {design}")
         if path:
-            bgr = cv2.imread(str(self.root / path))
+            fp = (self.root / path).resolve()
+            if self.root not in fp.parents:
+                raise HTTPException(400, "the photo must be inside the station folder")
+            bgr = cv2.imread(str(fp))
             if bgr is None:
                 raise HTTPException(404, f"cannot read {path}")
         else:
@@ -251,6 +254,8 @@ class Station:
             return {"ok": False, "reason": r.reason or "sheet number marker not visible",
                     "captured": sorted(int(x.stem.split("_")[1]) for x in d.glob("sheet_*.png"))}
         cv2.imwrite(str(d / f"sheet_{r.sheet:02d}.png"), r.img)
+        # where this sheet came from, so a result read from demo files is never shown as a camera result
+        (d / f"sheet_{r.sheet:02d}.src").write_text("file" if path else "camera")
         man = self._eyetest_manifest()
         have = sorted(int(x.stem.split("_")[1]) for x in d.glob("sheet_*.png"))
         need = [s["sheet"] for s in man["sheets"]]
@@ -281,6 +286,9 @@ class Station:
         res = summarise(trials, float(th.lam))
         res.update({"design": design, "alpha": th.alpha, "evidence": "detector+golden" if use_golden else "detector",
                     "sheets_read": [s["sheet"] for s in tests], "sheets_total": len(man["sheets"]) - 1,
+                    "source": ("simulated photos" if any(
+                        (d / f"sheet_{k:02d}.src").exists() and (d / f"sheet_{k:02d}.src").read_text() == "file"
+                        for k in [0] + [s["sheet"] for s in tests]) else "camera"),
                     "seconds": round(time.perf_counter() - t0, 1)})
         res["id"] = self.store.log_eyetest(design, res, rig=str(self.camera.name if self.camera else ""))
         return res
@@ -415,7 +423,9 @@ class Station:
         th = self.inspector.thresholds(r["design"], r["alpha"], golden=versions.get("gate") == "golden")
         r["gate"] = None if th is None else {
             "alpha": th.alpha, "beta": th.beta, "lam": th.lam, "tau": th.tau,
-            "n_defective": th.n_defective, "n_good": th.n_good}
+            "n_defective": th.n_defective, "n_good": th.n_good,
+            "planted": "planted defects" in (self.designs[r["design"]].description or "")
+            if r["design"] in self.designs else False}
         r["advice_pending"] = bool(r["defects"]) and not r["advice"]
         return r
 
@@ -567,9 +577,9 @@ class Station:
         from .calib import detect_scale
         sc = detect_scale(caps[0], 20.0)
         if sc is not None and sc.source == "aruco":
-            mmpp, scale_src = float(sc.mm_per_px), "printed marker"
+            mmpp, scale_src = float(sc.mm_per_px), "the printed marker"
         elif mm_per_px:
-            mmpp, scale_src = float(mm_per_px), "entered by hand"
+            mmpp, scale_src = float(mm_per_px), "the value you entered"
         else:
             raise HTTPException(409, "no scale: put the printed 20 mm marker beside the board for the first "
                                      "capture, or enter millimetres per pixel")
@@ -586,7 +596,7 @@ class Station:
                     self.teach_status[name]["progress"] = round(float(f), 3)
                 t0 = time.perf_counter()
                 res = calibrate_bare(score, caps[0], caps[1:], 1.0 / mmpp, np.random.default_rng(), progress=progress,
-                                     n_windows=int(self.cfg.get("teach_windows", 80)),
+                                     n_windows=int(self.cfg.get("teach_windows", 120)),
                                      n_good=int(self.cfg.get("teach_good", 24)))
                 gdir, gate_dir = self.root / "models" / "golden", self.root / "models" / "gate"
                 gdir.mkdir(parents=True, exist_ok=True)
@@ -697,6 +707,10 @@ class AskReq(BaseModel):
     question: str
 
 
+def _gate_of(st, name):
+    return st.inspector.gates.get(name) or st.inspector.gates_golden.get(name)
+
+
 def create_app(cfg: dict) -> FastAPI:
     st = Station(cfg)
     app = FastAPI(title="PCB inspection station")
@@ -711,9 +725,10 @@ def create_app(cfg: dict) -> FastAPI:
     @app.get("/api/state")
     def state():
         designs = [{"name": n, "kind": d.kind, "alpha": d.alpha, "description": d.description,
-                    "calibrated": n in st.inspector.gates,
-                    "n_defective": len(st.inspector.gates[n].defective) if n in st.inspector.gates else 0,
-                    "n_good": len(st.inspector.gates[n].good) if n in st.inspector.gates else 0,
+                    "calibrated": n in st.inspector.gates or n in st.inspector.gates_golden,
+                    "taught": "planted defects" in (d.description or ""),
+                    "n_defective": len(_gate_of(st, n).defective) if _gate_of(st, n) else 0,
+                    "n_good": len(_gate_of(st, n).good) if _gate_of(st, n) else 0,
                     "customer_class": d.rules.customer_class,
                     "rules_from_design": d.rules.rules_from_design,
                     "detector": d.use_detector and st.detector is not None,
@@ -876,7 +891,7 @@ def create_app(cfg: dict) -> FastAPI:
 
     @app.post("/api/eyetest/reset/{design}")
     def eyetest_reset(design: str):
-        for x in st._eyetest_dir(design).glob("sheet_*.png"):
+        for x in st._eyetest_dir(design).glob("sheet_*.*"):
             x.unlink()
         return {"ok": True}
 
