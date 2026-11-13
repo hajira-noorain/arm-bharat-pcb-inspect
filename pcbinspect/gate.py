@@ -56,6 +56,20 @@ def miss_threshold(defective_scores: np.ndarray, alpha: float) -> float:
     return float(s[k - 1])
 
 
+def miss_rate_bound(n: int, alpha: float, delta: float = 0.05) -> float | None:
+    """What one calibration actually promises. The split-conformal threshold is the k-th smallest of n
+    calibration scores, k = floor(alpha (n + 1)). Averaged over calibration draws the miss rate is at most
+    alpha, but for the ONE calibration set a station has, the miss rate is itself random:
+    Beta(k, n + 1 - k) for continuous scores (Vovk 2012, conditional validity of inductive conformal
+    predictors). This returns its (1 - delta) quantile: "with 95% confidence over the calibration boards,
+    at most this share of defects is missed". None when the calibration set is too small for alpha."""
+    from scipy.stats import beta as _beta
+    k = math.floor(alpha * (n + 1))
+    if n <= 0 or k < 1:
+        return None
+    return float(_beta.ppf(1 - delta, k, n + 1 - k))
+
+
 def false_reject_threshold(good_scores: np.ndarray, beta: float) -> float:
     s = np.sort(np.asarray(good_scores, dtype=float))
     m = len(s)

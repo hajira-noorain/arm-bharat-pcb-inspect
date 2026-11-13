@@ -109,3 +109,22 @@ def test_miss_rate_setting_is_validated():
     for bad in (0.0, -0.1, 0.9, 1.0, 1.5):
         with pytest.raises(ValueError):
             miss_threshold(np.linspace(0, 1, 50), bad)
+
+
+def test_miss_rate_bound_covers_the_miss_rate_of_a_single_calibration():
+    """Monte Carlo: calibrate on n defect scores, measure the true miss rate of that threshold on the
+    population; it must be under the bound in about 95% of calibrations (and well above alpha itself)."""
+    from pcbinspect.gate import miss_rate_bound, miss_threshold
+    rng = np.random.default_rng(0)
+    n, alpha = 250, 0.05
+    bound = miss_rate_bound(n, alpha)
+    assert 0.06 < bound < 0.09
+    miss = []
+    for _ in range(4000):
+        lam = miss_threshold(rng.beta(5, 2, n), alpha)
+        from scipy.stats import beta
+        miss.append(beta.cdf(lam, 5, 2))                # exact P(score < lam) for this threshold
+    miss = np.array(miss)
+    assert abs(miss.mean() - 12 / 251) < 0.002          # on average: k / (n + 1), just under alpha
+    assert 0.94 < (miss <= bound).mean() < 0.96
+    assert miss_rate_bound(10, 0.05) is None            # too few calibration boards for 5%
