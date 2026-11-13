@@ -203,7 +203,8 @@ def advice_section(r: Path) -> list[str]:
 
 
 def learning_section(r: Path) -> list[str]:
-    e = load(r / "exp_learning_executorch.json") or load(r / "exp_learning_ultralytics.json")
+    e = (load(r / "exp_learning_v3.json") or load(r / "exp_learning_executorch.json")
+         or load(r / "exp_learning_ultralytics.json"))
     if not e:
         return []
     rows = []
