@@ -135,13 +135,25 @@ def time_method(pte: Path, x: np.ndarray, warmup: int, reps: int) -> dict:
             "p90_ms": round(float(np.percentile(ts, 90)), 2), "min_ms": round(min(ts), 2), "reps": reps}
 
 
+try:
+    from pcbinspect.anomaly import INPUT as BACKBONE_INPUT
+except Exception:   # noqa: BLE001
+    BACKBONE_INPUT = 320
+
+
 def bench_vision(root: Path, threads: list[int], quick: bool) -> dict:
     out = {}
     rng = np.random.default_rng(0)
     cases = [("detector_fp32", "models/vision/pcb_y26n_xnnpack.pte", (1, 3, 640, 640)),
              ("detector_int8", "models/vision/pcb_y26n_xnnpack_int8.pte", (1, 3, 640, 640)),
-             ("backbone_fp32", "models/vision/resnet18_patch_xnnpack.pte", (1, 3, 256, 256)),
-             ("backbone_int8", "models/vision/resnet18_patch_xnnpack_int8.pte", (1, 3, 256, 256))]
+             # the retrained larger detectors: which one ships is decided by these timings
+             ("detector_s_fp32", "models/vision/pcb_y26s_xnnpack.pte", (1, 3, 640, 640)),
+             ("detector_s_int8", "models/vision/pcb_y26s_xnnpack_int8.pte", (1, 3, 640, 640)),
+             ("detector_m_fp32", "models/vision/pcb_y26m_xnnpack.pte", (1, 3, 640, 640)),
+             ("detector_m_int8", "models/vision/pcb_y26m_xnnpack_int8.pte", (1, 3, 640, 640)),
+             # the backbone is exported at the anomaly model's input size (320 px), not a fixed 256
+             ("backbone_fp32", "models/vision/resnet18_patch_xnnpack.pte", (1, 3, BACKBONE_INPUT, BACKBONE_INPUT)),
+             ("backbone_int8", "models/vision/resnet18_patch_xnnpack_int8.pte", (1, 3, BACKBONE_INPUT, BACKBONE_INPUT))]
     for name, rel, shape in cases:
         p = root / rel
         if not p.exists():
@@ -151,7 +163,12 @@ def bench_vision(root: Path, threads: list[int], quick: bool) -> dict:
         out[name] = {}
         for n in threads:
             got = set_threads(n)
-            out[name][f"threads_{got}"] = time_method(p, x, 2 if quick else 5, 5 if quick else 30)
+            try:
+                out[name][f"threads_{got}"] = time_method(p, x, 2 if quick else 5, 5 if quick else 30)
+            except Exception as exc:    # noqa: BLE001  (one model failing must not lose the others' numbers)
+                out[name][f"threads_{got}"] = {"error": repr(exc)[:300]}
+                print(name, "FAILED", repr(exc)[:300], flush=True)
+                break
             out[name][f"threads_{got}"]["temp_c"] = temp_c()
             print(name, got, out[name][f"threads_{got}"], flush=True)
     return out

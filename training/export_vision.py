@@ -55,6 +55,7 @@ def main():
     ap.add_argument("--yolo", default="/work/runs/y26n/weights/best.pt")
     ap.add_argument("--calib-glob", default="/work/data/VisA/pcb*/Data/Images/Normal/*.JPG")
     ap.add_argument("--only", default="backbone,detector")
+    ap.add_argument("--name", default="pcb_y26n", help="detector file names: <name>.pt, <name>_xnnpack[_int8].pte")
     args = ap.parse_args()
     work = Path(args.work)
     out_dir = work / "models" / "vision"
@@ -86,7 +87,7 @@ def main():
     if "detector" in args.only:
         from ultralytics import YOLO
         yolo = Path(args.yolo)
-        local = out_dir / "pcb_y26n.pt"
+        local = out_dir / f"{args.name}.pt"
         shutil.copy(yolo, local)
         # INT8 calibration reads the val tiles: point a container-local data yaml at them
         import yaml
@@ -102,7 +103,7 @@ def main():
                     kw["data"] = str(cyaml)
                 exported = Path(YOLO(str(local)).export(**kw))
                 pte = next(exported.rglob("*.pte")) if exported.is_dir() else exported
-                name = "pcb_y26n_xnnpack_int8.pte" if int8 else "pcb_y26n_xnnpack.pte"
+                name = f"{args.name}_xnnpack_int8.pte" if int8 else f"{args.name}_xnnpack.pte"
                 shutil.copy(pte, out_dir / name)
                 x = np.random.default_rng(0).random((1, 3, 640, 640), dtype=np.float32)
                 o = run_pte(out_dir / name, x)
@@ -114,7 +115,7 @@ def main():
                 print("detector export failed", int8, repr(exc)[:500], flush=True)
 
     (work / "results").mkdir(exist_ok=True)
-    (work / "results" / "export_vision.json").write_text(json.dumps(report, indent=1))
+    (work / "results" / f"export_vision_{args.name}.json").write_text(json.dumps(report, indent=1))
 
 
 if __name__ == "__main__":
