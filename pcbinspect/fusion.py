@@ -4,8 +4,9 @@ Each golden difference that overlaps a detection (IoU >= 0.1, or either box's ce
 other) is merged with it: evidence = max(detector confidence, difference score); the detector's
 class name is kept (it was trained on labelled defects), the topology class is kept alongside.
 Differences the detector did not see become candidates of their own (source "golden"), named by
-topology. Detections with no difference stay as they are: on a board whose golden comparison is
-unavailable or refused, the station is exactly the detector-only station.
+topology. Detections with no difference under them are kept but trusted less (UNSUPPORTED_SCALE):
+the golden board saw no copper change there. On a board whose golden comparison is unavailable or
+refused, fuse() is not called and the station is exactly the detector-only station.
 """
 from __future__ import annotations
 
@@ -33,7 +34,7 @@ def _overlap(a, b) -> bool:
 # When the golden comparison ran and found NO copper change under a detection, the detection is less
 # credible: its confidence is multiplied by this (1.0 = unchanged). The gate is calibrated with the same
 # value, so the miss-rate target still holds; what changes is how many false calls sit above the threshold.
-UNSUPPORTED_SCALE = float(os.environ.get("PCB_UNSUPPORTED_SCALE", "1.0"))
+UNSUPPORTED_SCALE = float(os.environ.get("PCB_UNSUPPORTED_SCALE", "0.7"))   # chosen on DeepPCB + the simulated card: 0.7 and 0.5 gave the same result
 
 
 def fuse(dets: list[dict], diffs, unsupported_scale: float | None = None) -> list[dict]:

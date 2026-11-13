@@ -116,7 +116,9 @@ def test_fusion_merges_and_keeps_both_sources():
     fz = fuse(dets, cands)
     merged = [f for f in fz if f["source"] == "detector+golden"]
     assert merged and merged[0]["conf"] >= max(0.4, merged[0]["diff_score"]) and merged[0]["cls"] == "spurious_copper"
-    assert any(f["source"] == "detector" and f["conf"] == 0.3 for f in fz)
+    # the detection the golden board does not support is kept, but trusted less (fusion.UNSUPPORTED_SCALE)
+    from pcbinspect.fusion import UNSUPPORTED_SCALE
+    assert any(f["source"] == "detector" and f["conf"] == pytest.approx(0.3 * UNSUPPORTED_SCALE) for f in fz)
 
 
 def test_alignment_recovers_a_board_put_down_off_position_and_turned():
