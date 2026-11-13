@@ -142,7 +142,10 @@ class Store:
         for table, col, typ in (("inspections", "disposition", "TEXT"),
                                 ("inspections", "customer_class", "INTEGER"),
                                 ("defects", "disposition", "TEXT"),
-                                ("defects", "uncertainty_mm", "REAL")):
+                                ("defects", "uncertainty_mm", "REAL"),
+                                ("inspections", "decided_by", "TEXT"),
+                                ("inspections", "decision_reason", "TEXT"),
+                                ("inspections", "decided_ts", "REAL")):
             cols = {r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")}
             if col not in cols:
                 self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
@@ -221,10 +224,16 @@ class Store:
         return [dict(r) for r in self.conn.execute(
             "SELECT * FROM inspections WHERE board_id=? ORDER BY id", (board_id,))]
 
-    def set_final_verdict(self, iid: int, verdict: str) -> None:
+    def set_final_verdict(self, iid: int, verdict: str, operator: str | None = None,
+                          reason: str | None = None) -> None:
+        """A person's decision on a board (CHECK boards, or an override), with who decided and why."""
         if verdict not in ("PASS", "FAIL"):
-            raise ValueError(verdict)
-        self.conn.execute("UPDATE inspections SET final_verdict=? WHERE id=?", (verdict, iid))
+            raise ValueError(f"a decision is PASS or FAIL, not {verdict!r}")
+        cur = self.conn.execute(
+            "UPDATE inspections SET final_verdict=?, decided_by=?, decision_reason=?, decided_ts=? WHERE id=?",
+            (verdict, (operator or "").strip()[:60] or None, (reason or "").strip()[:200] or None, time.time(), iid))
+        if cur.rowcount == 0:
+            raise KeyError(f"inspection {iid} does not exist")
 
     # ---------- advice ----------
     def log_advice(self, iid: int, backend: str, model: str | None, advice: dict, grounded: bool,
@@ -347,14 +356,15 @@ class Store:
     def export_csv(self, path: Path, since_ts: float = 0.0) -> int:
         rows = self.conn.execute(
             "SELECT i.id, datetime(i.ts,'unixepoch','localtime') AS time, i.board_id, i.design, "
-            "i.verdict, i.final_verdict, i.board_score, i.alpha, d.defect_key, d.cls, d.severity, "
+            "i.verdict, i.final_verdict, i.decided_by, i.decision_reason, i.board_score, i.alpha, d.defect_key, d.cls, d.severity, "
             "d.size_mm, d.location, d.confidence, d.operator_label "
             "FROM inspections i LEFT JOIN defects d ON d.inspection_id=i.id "
             "WHERE i.ts>=? ORDER BY i.id, d.id", (since_ts,)).fetchall()
         with open(path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(rows[0].keys() if rows else [
-                "id", "time", "board_id", "design", "verdict", "final_verdict", "board_score",
+                "id", "time", "board_id", "design", "verdict", "final_verdict", "decided_by",
+                "decision_reason", "board_score",
                 "alpha", "defect_key", "cls", "severity", "size_mm", "location", "confidence",
                 "operator_label"])
             for r in rows:

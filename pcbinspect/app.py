@@ -691,6 +691,8 @@ class FeedbackReq(BaseModel):
 class ReviewReq(BaseModel):
     inspection_id: int
     verdict: str
+    operator: str | None = None
+    reason: str | None = None
 
 
 class EnrolReq(BaseModel):
@@ -811,7 +813,14 @@ def create_app(cfg: dict) -> FastAPI:
 
     @app.post("/api/review")
     def review(req: ReviewReq):
-        st.store.set_final_verdict(req.inspection_id, req.verdict)
+        if not (req.operator or "").strip():
+            raise HTTPException(400, "enter your name (top of the screen) before deciding a board")
+        try:
+            st.store.set_final_verdict(req.inspection_id, req.verdict, req.operator, req.reason)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+        except KeyError as exc:
+            raise HTTPException(404, str(exc))
         st.light.show(req.verdict)
         return {"ok": True}
 

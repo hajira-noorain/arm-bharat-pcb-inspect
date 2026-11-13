@@ -71,3 +71,30 @@ def test_csv_export(tmp_path):
     rows = list(csv.DictReader(open(tmp_path / "out.csv", encoding="utf-8")))
     assert n == 3 and len(rows) == 3
     assert {r["verdict"] for r in rows} == {"FAIL", "PASS"}
+
+
+def test_a_persons_decision_records_who_and_why_and_reaches_the_export(tmp_path):
+    s = Store(tmp_path)
+    iid = s.log_inspection(make_insp(verdict="REVIEW", n=1), None)
+    s.set_final_verdict(iid, "PASS", operator="  Asha  ", reason="dust on the lens, board is clean")
+    got = s.inspection(iid)
+    assert (got["final_verdict"], got["decided_by"], got["decision_reason"]) == \
+        ("PASS", "Asha", "dust on the lens, board is clean") and got["decided_ts"] > 0
+    with pytest.raises(ValueError):
+        s.set_final_verdict(iid, "REVIEW")
+    with pytest.raises(KeyError):
+        s.set_final_verdict(iid + 99, "FAIL", operator="Asha")
+    out = tmp_path / "log.csv"
+    s.export_csv(out)
+    rows = list(csv.DictReader(open(out, encoding="utf-8")))
+    assert rows[0]["decided_by"] == "Asha" and rows[0]["decision_reason"].startswith("dust")
+
+
+def test_a_database_made_before_decisions_had_names_is_upgraded(tmp_path):
+    s = Store(tmp_path)
+    s.conn.execute("ALTER TABLE inspections DROP COLUMN decided_by")
+    s.conn.close()
+    s2 = Store(tmp_path)                                    # _migrate() adds the column back
+    iid = s2.log_inspection(make_insp(verdict="REVIEW", n=1), None)
+    s2.set_final_verdict(iid, "FAIL", operator="Ravi")
+    assert s2.inspection(iid)["decided_by"] == "Ravi"

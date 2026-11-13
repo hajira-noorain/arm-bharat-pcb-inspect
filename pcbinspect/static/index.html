@@ -39,6 +39,10 @@ button, select, input { font: inherit; color: inherit; }
 header { background: var(--mask); color: var(--silk); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 10px 20px; }
 header h1 { font: 700 26px/1 var(--display); letter-spacing: .02em; margin: 0 12px 0 0; }
 header label { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+header input { background: var(--mask-2); color: var(--silk); border: 1px solid #3B6E5C; border-radius: 6px; padding: 6px 10px; font: inherit; }
+header input::placeholder { color: #8FB3A5; }
+.live-bar { display: flex; align-items: center; gap: 12px; margin-top: 8px; color: var(--ink-2, #4a5a54); font-size: 15px; }
+.review-bar input { font: inherit; padding: 8px 10px; border: 1px solid #b8c4bf; border-radius: 6px; min-width: 22ch; }
 header select { background: var(--mask-2); color: var(--silk); border: 1px solid #3B6E5C; border-radius: 6px; padding: 6px 10px; }
 .status { margin-left: auto; display: flex; gap: 14px; font-size: 14px; color: #CFE3DA; }
 .status span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #7FA898; margin-right: 6px; vertical-align: 1px; }
@@ -186,6 +190,7 @@ textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding
   <label title="The share of defective boards you accept being passed by mistake. Lower sends more boards to a person.">Allowed miss rate
     <select id="alpha"><option value="0.01">1%</option><option value="0.05" selected>5%</option><option value="0.10">10%</option></select>
   </label>
+  <label>Operator <input id="operator" autocomplete="off" maxlength="60" placeholder="your name" style="width:11ch"></label>
   <div class="status" aria-live="polite">
     <span id="st-camera">Camera</span><span id="st-vision">Vision</span><span id="st-llm">Llama</span>
   </div>
@@ -211,7 +216,8 @@ textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding
     </div>
     <div class="timing" id="timing"></div>
     <div class="work">
-      <div class="board-img" id="board-img"><div class="empty">The inspected board appears here with each defect marked.</div></div>
+      <div><div class="board-img" id="board-img"><div class="empty">The inspected board appears here with each defect marked.</div></div>
+      <div class="live-bar"><button class="btn" id="live-toggle" type="button" aria-pressed="false">Show camera view</button><span id="live-note"></span></div></div>
       <div class="side">
         <div id="review"></div>
         <div id="defects"></div>
@@ -432,9 +438,10 @@ function showInspection(r, fresh) {
   const L = r.latency || {};
   const vis = (L.detector_tiles || 0) + (L.anomaly_backbone || 0) + (L.anomaly_knn || 0);
   $("#timing").textContent = `Verdict in ${Math.round(L.total_to_verdict || 0)} ms on this device (vision ${Math.round(vis)} ms${L.n_tiles ? ` over ${L.n_tiles} tiles` : ""}). Allowed miss rate ${Math.round(r.alpha * 100)}%${r.gate ? (r.gate.planted ? `, set from ${r.gate.n_defective} pictures with drawn test defects and ${r.gate.n_good} good captures of this board` : `, calibrated on ${r.gate.n_defective} defective and ${r.gate.n_good} good boards`) : ""}.`;
+  setLive(false);
   $("#board-img").innerHTML = `<img alt="Inspected board with defects marked" src="/api/overlay/${r.id}.jpg?t=${Date.now()}">`;
-  $("#review").innerHTML = r.verdict === "REVIEW" && !r.final_verdict ? `<div class="review-bar"><span>Your decision for this board:</span><button class="btn solid" data-review="PASS">Pass board</button><button class="btn" data-review="FAIL">Fail board</button></div>`
-    : r.final_verdict ? `<p class="done">You decided: ${r.final_verdict === "PASS" ? "pass" : "fail"}.</p>` : "";
+  $("#review").innerHTML = r.verdict === "REVIEW" && !r.final_verdict ? `<div class="review-bar"><span>Your decision for this board:</span><input id="review-reason" maxlength="200" placeholder="reason (optional)" aria-label="Reason for the decision"><button class="btn solid" data-review="PASS">Pass board</button><button class="btn" data-review="FAIL">Fail board</button></div>`
+    : r.final_verdict ? `<p class="done">Decided by ${esc(r.decided_by || "a person")}: ${r.final_verdict === "PASS" ? "pass" : "fail"}${r.decision_reason ? ` (${esc(r.decision_reason)})` : ""}.</p>` : "";
   $("#defects").innerHTML = r.defects.length ? `<h2>What is wrong</h2>` + r.defects.map(defectRow).join("") : "";
   renderAdvice(r);
 }
@@ -486,7 +493,9 @@ document.addEventListener("click", async (e) => {
       toast(`${fb.dataset.fb === "false_alarm" ? "Marked as false alarm" : "Confirmed"}. ${res.learned ? res.learned[0].toUpperCase() + res.learned.slice(1) + "." : ""}`, res.event_id);
       current = await api(`/api/inspection/${current.id}`); showInspection(current, false);
     } else if (rv) {
-      await api("/api/review", { method: "POST", body: JSON.stringify({ inspection_id: current.id, verdict: rv.dataset.review }) });
+      const who = $("#operator").value.trim();
+      if (!who) { toast("Enter your name at the top of the screen first."); $("#operator").focus(); return; }
+      await api("/api/review", { method: "POST", body: JSON.stringify({ inspection_id: current.id, verdict: rv.dataset.review, operator: who, reason: ($("#review-reason") || {}).value || null }) });
       current = await api(`/api/inspection/${current.id}`); showInspection(current, false);
     } else if (rt) {
       await api(`/api/advice/${rt.dataset.a}/rate/${rt.dataset.rate}`, { method: "POST" });
@@ -505,6 +514,32 @@ function toast(text, undoEvent) {
   u.onclick = async () => { await api(`/api/undo/${undoEvent}`, { method: "POST" }).catch((e) => toast(e.message)); t.style.display = "none"; if (current) { current = await api(`/api/inspection/${current.id}`); showInspection(current, false); } };
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = "none", 7000);
 }
+
+// ---------------- operator name + live camera view ----------------
+try { $("#operator").value = localStorage.getItem("pcb-operator") || ""; } catch (e) { /* not remembered */ }
+$("#operator").addEventListener("change", () => { try { localStorage.setItem("pcb-operator", $("#operator").value.trim()); } catch (e) { /* ignore */ } });
+// Live view for placing and focusing a board before Inspect. One frame at a time (the next is requested
+// only after the last arrived), paused when this tab or the Inspect screen is not visible.
+let liveOn = false, liveTimer = null;
+function setLive(on) {
+  liveOn = on; clearTimeout(liveTimer);
+  const t = $("#live-toggle"); if (!t) return;
+  t.setAttribute("aria-pressed", on ? "true" : "false");
+  t.textContent = on ? "Hide camera view" : "Show camera view";
+  $("#live-note").textContent = on ? "Live camera view: place the board against the corner stops, then press Inspect." : "";
+  if (on) { $("#board-img").innerHTML = '<img id="live-img" alt="Live camera view">'; liveTick(); }
+  else if ($("#live-img")) $("#board-img").innerHTML = current ? `<img alt="Inspected board with defects marked" src="/api/overlay/${current.id}.jpg">` : '<div class="empty">The inspected board appears here with each defect marked.</div>';
+}
+function liveTick() {
+  if (!liveOn) return;
+  const img = $("#live-img");
+  if (!img || document.hidden || $("#tab-inspect").hidden) { liveTimer = setTimeout(liveTick, 1000); return; }
+  const next = new Image();
+  next.onload = () => { if (liveOn && $("#live-img")) $("#live-img").src = next.src; liveTimer = setTimeout(liveTick, 400); };
+  next.onerror = () => { $("#live-note").textContent = "The camera is not giving a picture."; liveTimer = setTimeout(liveTick, 2500); };
+  next.src = `/api/preview.jpg?t=${Date.now()}`;
+}
+$("#live-toggle").addEventListener("click", () => setLive(!liveOn));
 
 $("#inspect").addEventListener("click", inspect);
 document.addEventListener("keydown", (e) => {
@@ -743,7 +778,7 @@ $("#rule-list").addEventListener("click", async (ev) => {
 
 async function loadLog() {
   await loadState();
-  $("#log-body").innerHTML = state.recent.map((r) => `<tr><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? (r.final_verdict === "PASS" ? "passed" : "failed") : ""}</td></tr>`).join("");
+  $("#log-body").innerHTML = state.recent.map((r) => `<tr><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? `${r.final_verdict === "PASS" ? "passed" : "failed"}${r.decided_by ? ` by ${esc(r.decided_by)}` : ""}${r.decision_reason ? `: ${esc(r.decision_reason)}` : ""}` : ""}</td></tr>`).join("");
 }
 
 loadState().catch((e) => toast(`Station not reachable: ${e.message}`));

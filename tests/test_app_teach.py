@@ -55,3 +55,26 @@ def test_teach_then_inspect_through_the_api(tmp_path):
     assert opens and opens[0]["x1"] <= 705 and opens[0]["x2"] >= 695
     lim = c.get("/api/eyetest/demo-board").json()
     assert lim and "planted" in str(lim)
+
+
+def test_live_view_and_named_decisions_through_the_api(tmp_path):
+    from fastapi.testclient import TestClient
+
+    from pcbinspect.app import create_app
+    boards = tmp_path / "demo" / "boards"
+    boards.mkdir(parents=True)
+    cv2.imwrite(str(boards / "b0.png"), photo(size=1600))
+    (tmp_path / "designs").mkdir()
+    cfg = {"root": str(tmp_path), "data_dir": "var", "designs_dir": "designs", "camera": "replay",
+           "replay_glob": "demo/boards/*.png", "vision_backend": "executorch", "detector_pte": "none.pte",
+           "detector_pt": "none.pt", "backbone_pte": "none.pte", "llm_pte": "none.pte",
+           "llm_tokenizer": "none.model", "gpio": False}
+    c = TestClient(create_app(cfg))
+    r = c.get("/api/preview.jpg")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    im = cv2.imdecode(np.frombuffer(r.content, np.uint8), cv2.IMREAD_COLOR)
+    assert max(im.shape[:2]) == 960                         # downsized for the screen, not the full frame
+    # a decision needs a name, a valid verdict and an existing inspection
+    assert c.post("/api/review", json={"inspection_id": 1, "verdict": "PASS"}).status_code == 400
+    assert c.post("/api/review", json={"inspection_id": 1, "verdict": "REVIEW", "operator": "Asha"}).status_code == 400
+    assert c.post("/api/review", json={"inspection_id": 1, "verdict": "PASS", "operator": "Asha"}).status_code == 404
