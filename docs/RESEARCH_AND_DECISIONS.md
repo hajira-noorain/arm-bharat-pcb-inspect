@@ -81,3 +81,35 @@
   - a known-good golden board and seeded defects checked under magnification
   - a repeatability run of the same board 30 times, reporting the mean and standard deviation of one measured nick
   - per-defect recall and false alarms per board with confidence intervals, and seconds per board on the Pi
+
+## 5. Assembled boards: the parts check (research of 13 Nov 2026, and what it changed)
+
+Three literature and practice reviews were run before and while building `pcbinspect/parts.py`. Sources that could not be opened are marked so; nothing below is quoted from a source we did not reach.
+
+**What the evidence says**
+
+- **"Unusual area" models are weak on absent or swapped parts.** On MVTec LOCO AD, PatchCore scores 74.0 image AUROC on logical anomalies (a required object missing, or one in the wrong place) against 89.3 on structural ones; a component-aware method reaches 98.1 on the logical ones (Kim et al., "Few Shot Part Segmentation Reveals Compositional Logic for Industrial Anomaly Detection", 2024, arXiv 2312.13783; the benchmark is Bergmann et al., IJCV 2022). Comparing a board part by part with the good board is the published remedy, and it is what the parts check does. Neither paper reports numbers on PCBs.
+- **Classic optical inspection compares each component's window with a taught good board**, and early top-down 2D machines "mainly checked component presence, orientation, and solder presence" and "gave too many false calls" (P. Starkey, seminar report, I-Connect007, 2014). False calls, not misses, are the practical problem of this kind of check.
+- **Appearance changes that are not faults are a known false-call source:** markings, package colours and finishes vary between lots and suppliers, and 2D comparison is sensitive to lighting and reflections (Koh Young America, "3D AOI vs 2D AOI"). A re-teach after a supplier change is normal practice.
+- **A single top camera sees tall parts lean** with their distance from the optical axis; machines use telecentric lenses, side cameras or 3D for this (vendor documentation; the telecentric claim was read in search summaries only).
+- **Resolution.** Inspection machines state 7 to 15 micrometres per pixel for the smallest parts (Yamaha YSi-V product page: 12 or 7 micrometre lens options). A 12-megapixel camera covering a 120 mm field gives about 30 micrometres per pixel: an 0402 part is about 34 by 17 pixels and an 0201 about 20 by 10. Our own arithmetic, not a published limit.
+- **Component detection is hardest on the smallest and rarest parts** (Kuo et al., "Data-Efficient Graph Embedding Learning for PCB Component Detection", WACV 2019: 0.653 mAP on 48 images, with tiny parts the stated bottleneck). FPIC (Jessurun et al., 2023) labels parts by their printed designator and publishes no detector accuracy and no pixels-per-mm guidance.
+- **Real test photos.** VisA pcb1 to pcb4 (Zou et al., 2022, CC BY 4.0) is the public set with good photos of the same design plus faults labelled missing, extra and wrong place. Its faults were made by hand on real boards, about 100 faulty photos per design. RobustAD's PCB subset (Amazon, 2025, CC BY 4.0) and Real-IAD's `pcb` object (Wang et al., 2024, non-commercial) also carry a missing-parts label. PCB-MC (2026, CC BY 4.0) has 9,435 labelled empty footprints but no good photo of each design.
+- **No published accuracy to compare with.** We found no verified result for reference-based missing-part detection on real assembled boards, no per-fault-type PatchCore result on VisA pcb4, and no measured result for checking a part's identity from its marking.
+
+**What it changed in the design**
+
+1. Two independent cues instead of one: the part detector, and a direct comparison of each part's picture with the good board (the classic component-window comparison). A part is called missing only when both agree.
+2. The map is taught from several good boards: parts the detector does not find every time are left off, and each part's normal board-to-board variation sets its own comparison threshold.
+3. Every parts finding that calibrated evidence does not back sends the board to a person; it never fails a board by itself. A board that cannot be lined up with the taught one is not passed.
+4. A third finding, "part looks different", covers a part that is present but clearly unlike the good one. Its advice includes the approved-alternative case and the re-teach.
+5. The first real test is VisA, reported by fault type, with the result of each cue shown separately.
+
+**What the documentation must not claim**
+
+- That the station inspects solder joints, polarity, part value or lifted leads, or that it meets an IPC or NASA workmanship class.
+- Any IPC-A-610 placement limit: we could not open the standard, and the secondary sources disagree.
+- That 0201 parts are within reach of the camera, or that any pixels-per-mm figure is "validated".
+- A share of real assembly defects covered: no citable breakdown was found.
+- That the FPIC detector numbers are comparable with other papers' numbers (different data, classes and metrics), or that they hold on other boards and cameras before the VisA result says so.
+- Knowledge-base causes for missing and tombstoned parts follow published troubleshooting notes (nozzle, vacuum, feeder, programme coordinates; paste, pad geometry and heating for tombstones: G. Smith, "SMT Stencils 101", I-Connect007, 2019). The causes listed for an unexpected part and for a part that looks different are our own engineering judgement: no source was found for them.
