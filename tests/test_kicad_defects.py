@@ -441,3 +441,25 @@ def test_sources_are_permissive_and_complete():
         assert s["path"].endswith(".kicad_pcb") and len(s["commit"]) == 40 and s["why"]
         assert S.url(s).startswith("https://raw.githubusercontent.com/")
     assert not any("kicad/kicad" in s["repo"].lower() or "kicad-demos" in s["repo"].lower() for s in S.SOURCES)
+
+
+def test_exact_calibration_from_outline_recovers_page_offset():
+    """The SVG page origin depends on every board item (not just the outline), so it is measured from the
+    outline primitives, which appear in both files in mm. Shift a known outline and recover the offset."""
+    from training.kicad.render import calibrate_from_edges
+    board = """(kicad_pcb (version 20221018) (generator pcbnew)
+  (gr_line (start 10 20) (end 60 20) (layer "Edge.Cuts") (width 0.1))
+  (gr_line (start 60 20) (end 60 50) (layer "Edge.Cuts") (width 0.1))
+  (gr_line (start 60 50) (end 10 50) (layer "Edge.Cuts") (width 0.1))
+  (gr_line (start 10 50) (end 10 20) (layer "Edge.Cuts") (width 0.1))
+)"""
+    dx, dy = -9.2063, -18.75   # page offset as KiCad would place it
+    pts = [(10, 20), (60, 20), (60, 50), (10, 50)]
+    paths = "".join(f'<path d="M{a[0] + dx:.4f} {a[1] + dy:.4f}\nL{b[0] + dx:.4f} {b[1] + dy:.4f}\n" />\n'
+                    for a, b in zip(pts, pts[1:] + pts[:1]))
+    svg = f'<svg width="52mm" height="32mm" viewBox="0 0 52 32"><g>{paths}</g></svg>'
+    x0, y0, score = calibrate_from_edges(svg, board)
+    assert score == 1.0 and abs(x0 + dx) < 1e-6 and abs(y0 + dy) < 1e-6
+    # an outline that does not match (different size) must not be trusted
+    bad = svg.replace("M", "M").replace(f"{60 + dx:.4f}", f"{61 + dx:.4f}")
+    assert calibrate_from_edges(bad, board) is None

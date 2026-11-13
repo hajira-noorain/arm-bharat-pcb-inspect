@@ -344,6 +344,66 @@ def svg_to_cov(svg_path: Path, w: int, h: int) -> np.ndarray:
     return (im[..., 3] * (1.0 - lum)).astype(np.float32)
 
 
+_SVG_TOK = re.compile(r"[MLA]|-?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?")
+
+
+def svg_edge_points(svg_text: str) -> list[tuple[float, float]]:
+    """End points of every Edge.Cuts path in the SVG (mm, page coordinates): M/L points and arc end points."""
+    pts = []
+    for d in re.findall(r'\sd="([^"]+)"', svg_text):
+        toks, i, cmd = _SVG_TOK.findall(d), 0, None
+        while i < len(toks):
+            t = toks[i]
+            if t in ("M", "L", "A"):
+                cmd, i = t, i + 1
+                continue
+            try:
+                if cmd in ("M", "L"):
+                    pts.append((float(toks[i]), float(toks[i + 1])))
+                    i += 2
+                elif cmd == "A":                      # rx ry rotation large-arc sweep x y
+                    pts.append((float(toks[i + 5]), float(toks[i + 6])))
+                    i += 7
+                else:
+                    i += 1
+            except (IndexError, ValueError):
+                break
+    return pts
+
+
+def board_edge_points(board_text: str) -> list[tuple[float, float]]:
+    """The same primitives from the board file: Edge.Cuts line/arc start+end, rectangle corners, polygon points."""
+    root = I.Board(board_text).root
+    pts = []
+    for k in root.nodes():
+        if not k.name.startswith("gr_") or k.val("layer", "") != "Edge.Cuts":
+            continue
+        st, en = k.floats("start"), k.floats("end")
+        if k.name in ("gr_line", "gr_arc") and len(st) >= 2 and len(en) >= 2 and not k.floats("angle"):
+            pts += [(st[0], st[1]), (en[0], en[1])]
+        elif k.name == "gr_rect" and len(st) >= 2 and len(en) >= 2:
+            pts += [(st[0], st[1]), (en[0], st[1]), (en[0], en[1]), (st[0], en[1])]
+        elif k.name == "gr_poly":
+            pts += list(I._poly_pts(k))
+    return pts
+
+
+def calibrate_from_edges(svg_edge_text: str, board_text: str, tol: float = 0.02) -> tuple[float, float, float] | None:
+    """Exact page offset from the board outline: the SVG page is the board area plus a margin that depends on
+    every item on the board (so it cannot be predicted), but the outline primitives appear in both files in
+    millimetres with no rotation or scale. Returns (x0, y0, 1.0) = board mm of the page's top-left corner, or None
+    when the two outlines do not agree (e.g. circle outlines, v5 arcs) so the caller can fall back."""
+    ps, pb = svg_edge_points(svg_edge_text), board_edge_points(board_text)
+    if len(ps) < 2 or len(pb) < 2:
+        return None
+    sx, sy = zip(*ps)
+    bx, by = zip(*pb)
+    tx, ty = min(sx) - min(bx), min(sy) - min(by)
+    if abs((max(sx) - max(bx)) - tx) > tol or abs((max(sy) - max(by)) - ty) > tol:
+        return None
+    return -tx, -ty, 1.0
+
+
 def calibrate(svg_cu: np.ndarray, own: np.ndarray, ppm: float, gx: float, gy: float) -> tuple[float, float, float]:
     """Find x0,y0 (board mm of the SVG raster's top-left corner) by correlating it with the independent raster
     ``own`` (same shape, built with origin gx,gy).  Returns (x0, y0, correlation score 0..1)."""
@@ -426,8 +486,12 @@ def render_2d(board_text: str, work: Path, name: str, ppm: float, max_mpx: float
     b = I.Board(board_text)
     e = b.edge or (0, 0, wmm, hmm)
     m0 = Mapping(ppm_x, ppm_y, e[0], e[1], W, H)
-    own = raster_copper(b, m0)
-    x0, y0, score = calibrate(cu, own, ppm_x, e[0], e[1])
+    exact = calibrate_from_edges(files["Edge.Cuts"].read_text(encoding="utf8", errors="replace"), board_text)
+    if exact is not None:    # primary: exact offset from the outline (copper pours make correlation unreliable)
+        x0, y0, score = exact
+    else:                    # fallback: correlate the copper layer with an independent rasterisation
+        own = raster_copper(b, m0)
+        x0, y0, score = calibrate(cu, own, ppm_x, e[0], e[1])
     m = Mapping(ppm_x, ppm_y, x0, y0, W, H)
     from scipy.ndimage import binary_fill_holes
     edge = svg_to_cov(files["Edge.Cuts"], W, H)
