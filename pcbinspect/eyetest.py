@@ -133,8 +133,14 @@ def read_sheet(test_rect: np.ndarray, golden_rect: np.ndarray | None, manifest_s
     k = RECT_PX_PER_MM
     for cp in manifest_sheet["coupons"]:
         crop, (ox, oy) = coupon_crop(test_rect, cp["idx"])
-        dets, _ = detector.detect(crop)
-        cands = [{"bbox": d.bbox, "conf": d.conf, "cls": d.cls} for d in dets]
+        # The detector sees the pattern alone, as ONE tile (a coupon is exactly a 640 px pattern): the padded
+        # crop is larger than a tile, and cutting binarised artwork at tile seams and at the white frame made
+        # the detector report "defects" on defect-free coupons (17 on 21, most of them at those two lines).
+        inner, (ix, iy) = coupon_crop(test_rect, cp["idx"], pad_mm=0.0)
+        dets, _ = detector.detect(inner)
+        dx, dy = ix - ox, iy - oy
+        cands = [{"bbox": (d.bbox[0] + dx, d.bbox[1] + dy, d.bbox[2] + dx, d.bbox[3] + dy),
+                  "conf": d.conf, "cls": d.cls} for d in dets]
         if use_golden and golden_rect is not None:
             gcrop, _ = coupon_crop(golden_rect, cp["idx"])
             dc, _ = diff_candidates(crop, gcrop)

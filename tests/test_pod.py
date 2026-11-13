@@ -112,3 +112,30 @@ def test_uncovered_defects_are_misses_even_with_a_degenerate_threshold():
     for lam in (float("-inf"), 0.0):
         r = summarise(trials, lam)["types"]["open"]
         assert all(row["hits"] == 0 for row in r["table"]) and r["limit_mm"] is None
+
+
+def test_card_reader_shows_the_detector_one_pattern_as_one_tile():
+    """A coupon is a 640 px pattern: the detector must get exactly that (no padded crop cut into tiles),
+    and its boxes must come back in the padded-crop frame the planted positions are checked in."""
+    from types import SimpleNamespace
+
+    from pcbinspect.eyetest import (COUPON_MM, FRAME_H, FRAME_W, RECT_PX_PER_MM, coupon_origin_mm, read_sheet)
+    k = RECT_PX_PER_MM
+    rect = np.full((int(FRAME_H * k) + 2, int(FRAME_W * k) + 2, 3), 240, np.uint8)
+    idx = 4
+    x0, y0 = coupon_origin_mm(idx)
+    centre_mm = (x0 + COUPON_MM / 2, y0 + COUPON_MM / 3)
+    seen = []
+
+    class Det:
+        def detect(self, img, only_near=None):
+            seen.append(img.shape[:2])
+            cx, cy = COUPON_MM / 2 * k, COUPON_MM / 3 * k          # the planted spot, in pattern pixels
+            return [SimpleNamespace(bbox=(cx - 10, cy - 10, cx + 10, cy + 10), conf=0.9, cls="open")], {}
+
+    sheet = {"coupons": [{"idx": idx, "defects": [{"type": "open", "size_mm": 0.4, "center_mm": list(centre_mm)}]}]}
+    trials = read_sheet(rect, None, sheet, Det(), use_golden=False)
+    assert seen == [(640, 640)]
+    hit = [t for t in trials if t.get("type") == "open"][0]
+    assert hit["covered"] and hit["conf"] == 0.9
+    assert [t for t in trials if "false_calls" in t][0]["false_calls"] == []
