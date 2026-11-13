@@ -86,17 +86,33 @@ def history_numbers(history: dict[str, int] | None, window: int = 20) -> list[fl
     return [float(window)] + [float(v) for v in history.values() if v]
 
 
-def option_orders(record: dict, kb: KnowledgeBase, shuffle: bool = True) -> dict[str, tuple[list, list]]:
-    """Per-defect order in which cause/action options are shown (seeded by board + defect)."""
+OPTION_ORDER = "evidence"   # production: 'evidence'; evaluation of the model itself: 'shuffle'
+
+
+def option_orders(record: dict, kb: KnowledgeBase, shuffle: bool = True,
+                  history: dict[str, int] | None = None, mode: str | None = None) -> dict[str, tuple[list, list]]:
+    """Per-defect order in which cause/action options are shown.
+
+    'shuffle'  seeded random order: used to MEASURE the model, so a first-option habit cannot look
+               like reasoning (measured: Llama 3.2 1B/3B choose causes at about chance level)
+    'evidence' the process rule ranks causes: a defect repeating on the line puts process causes
+               (etching, imaging, drilling, plating) first, a one-off puts handling causes first.
+               Used in production, because the model alone does not rank causes better than chance.
+    'kb'       knowledge-base order
+    """
+    mode = mode or ("shuffle" if shuffle else "kb")
     out = {}
     for d in _sorted_defects(record)[:MAX_LLM_DEFECTS]:
         e = kb.entry(d["type"])
-        c, a = [x["id"] for x in e["causes"]], [x["id"] for x in e["actions"]]
-        if shuffle:
+        causes, a = list(e["causes"]), [x["id"] for x in e["actions"]]
+        if mode == "shuffle":
             rng = random.Random(f"{record.get('board_id')}|{d['id']}")
-            rng.shuffle(c)
+            rng.shuffle(causes)
             rng.shuffle(a)
-        out[d["id"]] = (c, a)
+        elif mode == "evidence":
+            repeating = bool(history) and history.get(d["type"], 0) >= 3
+            causes.sort(key=lambda c: (c.get("step") == "handling") == repeating)   # stable sort
+        out[d["id"]] = ([c["id"] for c in causes], a)
     return out
 
 
@@ -238,8 +254,10 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
 
 class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
-                 max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None):
+                 max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
+                 option_order: str | None = None):
         self.fewshot = fewshot
+        self.option_order = option_order or OPTION_ORDER
         self.backend = backend
         self.kb = kb or default_kb()
         self.max_new_tokens = max_new_tokens
@@ -267,7 +285,7 @@ class Advisor:
     def _advise_stepwise(self, record: dict, history: dict[str, int] | None) -> Advice:
         be, kb = self.backend, self.kb
         defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
-        orders = option_orders(record, kb, shuffle=True)
+        orders = option_orders(record, kb, history=history, mode=self.option_order)
         start = '{"steps": ['
         prompt = build_prompt(record, history, kb, style="numbered", orders=orders, prefix=start,
                               fewshot=self.fewshot)

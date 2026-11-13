@@ -86,6 +86,7 @@ def advice_section(r: Path) -> list[str]:
     rows = []
     for name, label in (("advice_eval_1b_v2.json", "1B, single-shot, numbered"),
                         ("advice_eval_1b_v3.json", "1B, step-wise, shuffled"),
+                        ("advice_eval_1b_v4_fewshot.json", "1B, step-wise, shuffled, worked example"),
                         ("advice_eval_3b_v3.json", "3B, step-wise, shuffled")):
         s = (load(r / name) or {}).get("summary")
         if not s:

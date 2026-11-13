@@ -72,7 +72,7 @@ def main():
     from pcbinspect.llm import ExecuTorchLlama
     kb = default_kb()
     llm = ExecuTorchLlama(args.pte, args.tok)
-    adv = Advisor(llm, kb, fewshot=args.fewshot)
+    adv = Advisor(llm, kb, fewshot=args.fewshot, option_order="shuffle")   # measure the model itself
     rows = []
     t0 = time.time()
     for i, (rec, hist) in enumerate(make_records(args.n)):

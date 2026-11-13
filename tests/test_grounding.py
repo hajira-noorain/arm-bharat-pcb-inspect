@@ -183,7 +183,7 @@ def test_stepwise_maps_shuffled_numbers_and_covers_all_defects(kb):
     from pcbinspect.advisor import option_orders
     be = FakeStepwise(['2, "action": 1}', '1, "action": 3},',
                        'Short circuit at top-left; the board fails."}'])
-    adv = Advisor(be, kb).advise(RECORD, {"short": 4})
+    adv = Advisor(be, kb, option_order="shuffle").advise(RECORD, {"short": 4})
     assert adv.backend == "llama-executorch", adv.rejected_reasons
     orders = option_orders(RECORD, kb)
     assert adv.steps[0]["cause_id"] == orders["D1"][0][1] and adv.steps[0]["action_id"] == orders["D1"][1][0]
@@ -217,6 +217,14 @@ def test_stepwise_bad_choice_falls_back_to_template(kb):
     be = FakeStepwise(['under-etching", "action": 1}'])
     adv = Advisor(be, kb).advise(RECORD, None)
     assert adv.backend == "template" and "expected form" in adv.rejected_reasons[0]
+
+
+def test_evidence_order_puts_process_causes_first_for_repeats(kb):
+    from pcbinspect.advisor import option_orders
+    rep = option_orders(RECORD, kb, history={"short": 5}, mode="evidence")["D1"][0]
+    one = option_orders(RECORD, kb, history=None, mode="evidence")["D1"][0]
+    assert kb.by_id[rep[0]]["step"] != "handling"
+    assert kb.by_id[one[0]]["step"] == "handling"
 
 
 def test_option_order_is_shuffled_but_stable(kb):
