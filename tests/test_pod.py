@@ -101,3 +101,14 @@ def test_misses_at_a_size_block_pooling_through_it():
     r = fit_pod(s, y)
     assert r.demonstrated == pytest.approx(0.4)
     assert r.limit_mm >= 0.4
+
+
+def test_uncovered_defects_are_misses_even_with_a_degenerate_threshold():
+    """With too few calibration boards lam is -inf (or 0): a defect nothing covered has conf 0.0 and must
+    still be a miss, or the stated detection limit would be a perfect score the station never earned."""
+    from pcbinspect.eyetest import summarise
+    trials = [{"type": "open", "size_mm": s, "conf": 0.0, "covered": False, "cls": None, "coupon": i}
+              for i, s in enumerate([0.2, 0.3, 0.4, 0.5, 0.7, 1.0] * 10)]
+    for lam in (float("-inf"), 0.0):
+        r = summarise(trials, lam)["types"]["open"]
+        assert all(row["hits"] == 0 for row in r["table"]) and r["limit_mm"] is None

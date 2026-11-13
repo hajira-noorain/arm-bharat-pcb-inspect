@@ -257,6 +257,10 @@ class Store:
                                   (action, defect_id))
         return cur.lastrowid
 
+    def feedback_event(self, event_id: int) -> dict | None:
+        r = self.conn.execute("SELECT * FROM feedback_events WHERE id=?", (event_id,)).fetchone()
+        return dict(r) if r is not None else None
+
     def undo_feedback(self, event_id: int) -> dict:
         with self.conn:
             self.conn.execute("BEGIN")

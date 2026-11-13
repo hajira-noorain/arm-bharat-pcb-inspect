@@ -147,6 +147,7 @@ def read_sheet(test_rect: np.ndarray, golden_rect: np.ndarray | None, manifest_s
             if best:
                 used.add(best[0])
             trials.append({"type": d["type"], "size_mm": d["size_mm"], "conf": best[1]["conf"] if best else 0.0,
+                           "covered": best is not None,
                            "cls": best[1]["cls"] if best else None, "coupon": cp["idx"]})
         trials.append({"false_calls": [x["conf"] for i, x in enumerate(cands) if i not in used], "coupon": cp["idx"]})
     return trials
@@ -161,7 +162,10 @@ def summarise(trials: list[dict], lam: float) -> dict:
         tr = [t for t in trials if t.get("type") == cls]
         if not tr:
             continue
-        r = fit_pod(np.array([t["size_mm"] for t in tr]), np.array([t["conf"] >= lam for t in tr], int))
+        # a hit needs a detection ON the defect; with a degenerate threshold (lam <= 0 or -inf, i.e. too few
+        # calibration boards) an uncovered defect must still count as a miss
+        hits = [bool(t.get("covered", t["conf"] > 0)) and t["conf"] >= lam for t in tr]
+        r = fit_pod(np.array([t["size_mm"] for t in tr]), np.array(hits, int))
         d = r.to_dict()
         d["sentence"] = r.sentence(NOUN[cls])
         out["types"][cls] = d

@@ -102,3 +102,10 @@ def test_random_defect_miss_interval_covers_the_estimate_and_narrows_with_boards
         assert lo <= random_defect_miss(boards) <= hi
     assert (lambda c: c[1] - c[0])(random_defect_miss_ci(big)) < (lambda c: c[1] - c[0])(random_defect_miss_ci(small))
     assert random_defect_miss_ci([[], []]) is None
+
+
+def test_miss_rate_setting_is_validated():
+    from pcbinspect.gate import miss_threshold
+    for bad in (0.0, -0.1, 0.9, 1.0, 1.5):
+        with pytest.raises(ValueError):
+            miss_threshold(np.linspace(0, 1, 50), bad)

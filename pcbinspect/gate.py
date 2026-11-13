@@ -44,6 +44,8 @@ def defect_level_scores(per_board: list[list[float]], seed: int = 0) -> list[flo
 
 
 def miss_threshold(defective_scores: np.ndarray, alpha: float) -> float:
+    if not 0.0 < alpha <= 0.5:
+        raise ValueError(f"allowed miss rate must be above 0 and at most 0.5, got {alpha}")
     s = np.sort(np.asarray(defective_scores, dtype=float))
     n = len(s)
     if n == 0:

@@ -162,8 +162,8 @@ class Inspector:
             lat.update(anomaly_res.latency_ms)
             for i, r in enumerate(anomaly_res.regions):
                 if any(_overlaps(r.bbox, c.bbox) for c in cands if c.source == "detector"
-                       and c.conf >= 0.25):
-                    continue  # the detector already names this area
+                       and c.conf >= max(0.25, r.norm)):
+                    continue  # the detector already names this area at least as confidently
                 cands.append(Candidate(ANOMALY_CLASS, "anomaly", r.bbox, r.norm, r.norm,
                                        region_idx=i))
             if not anomaly_res.regions:
@@ -224,6 +224,10 @@ class Inspector:
         d = self.designs[design]
         golden = golden if golden is not None else self.golden_for(design)
         a = self.analyse(bgr, design, golden=golden)
+        if golden is not None and not a.golden_used and design in self.gates_golden:
+            # This design is judged WITH its golden board. If the comparison was refused (board shifted,
+            # rotated, wrong board), the detector alone must not clear it: a person looks instead.
+            force_review = force_review or f"golden comparison refused: {a.golden_note or 'no alignment'}"
         th = self.thresholds(design, alpha, golden=a.golden_used)
         if th is not None:
             verdict = th.verdict(a.board_score)
@@ -239,6 +243,7 @@ class Inspector:
         t = time.perf_counter()
         h, w = bgr.shape[:2]
         gm = None
+        insp_golden_used = a.golden_used
         if golden is not None and a.mm_per_px and any(c.source in ("detector", "golden") for c in shown):
             gm = GoldenMeasurer(bgr, golden, a.mm_per_px, d.rules.min_spacing_mm)
             a.latency_ms["golden_align"] = (time.perf_counter() - t) * 1e3
@@ -277,6 +282,7 @@ class Inspector:
             customer_class=d.rules.customer_class)
         if force_review:
             insp.model_versions["capture_check"] = force_review
+        insp.model_versions["gate"] = "golden" if insp_golden_used else "detector"
         if capture_info:
             insp.model_versions["capture"] = json.dumps(capture_info, default=str)[:500]
         parts = (["detector"] if d.use_detector and self.detector is not None else []) +                 (["golden"] if a.golden_used else []) + (["anomaly memory"] if a.anomaly is not None else [])

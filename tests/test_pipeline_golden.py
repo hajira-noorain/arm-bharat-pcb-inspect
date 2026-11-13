@@ -63,6 +63,9 @@ def test_refused_alignment_falls_back_and_says_why(tmp_path):
     cv2.circle(other, (320, 320), 200, (20, 20, 20), -1)
     insp, a, _ = ins.inspect(other, "t", log=False, golden=g)
     assert not a.golden_used and "alignment" in insp.model_versions["evidence"]
+    # the detector saw nothing, so its own gate would PASS: a refused golden must send the board to a person
+    assert insp.verdict == "REVIEW" and "golden comparison refused" in insp.model_versions["capture_check"]
+    assert insp.model_versions["gate"] == "detector"
 
 
 def test_confirmed_customer_rule_sets_disposition_and_says_which_rule(tmp_path):
@@ -118,3 +121,4 @@ def test_arm_runtime_paths_are_found_by_name(tmp_path):
     other.mkdir()
     (other / "model.bin").write_bytes(b"")
     assert resolve_arm_runtime(tmp_path, model_cfg="elsewhere") == (lib, other)
+

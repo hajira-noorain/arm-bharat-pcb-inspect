@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import re
 import logging
 import queue
 import threading
@@ -35,6 +36,7 @@ from .spec import Rule, capability, keyword_compile, render as render_rule, same
 from .store import Store
 
 log = logging.getLogger("pcbinspect")
+CACHE_FRAMES = 6      # full frames kept for feedback/overlay (a 12 MP frame is ~36 MB; Llama needs the RAM)
 STATIC = Path(__file__).resolve().parent / "static"
 
 
@@ -182,6 +184,8 @@ class Station:
             raise HTTPException(503, "no camera or replay images available")
         if design not in self.designs:
             raise HTTPException(404, f"unknown design {design}")
+        if alpha is not None and not 0.0 < alpha <= 0.5:
+            raise HTTPException(400, "allowed miss rate must be above 0 and at most 50%")
         with self.lock:
             t0 = time.perf_counter()
             live = not isinstance(self.camera, ReplayCamera)
@@ -194,19 +198,21 @@ class Station:
             if board_id is None:
                 n = self.store.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM inspections").fetchone()[0]
                 board_id = f"B{n:05d}"
-            insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden,
-                                                         force_review=force_review, capture_info=capture_info)
+            try:
+                insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden,
+                                                             force_review=force_review, capture_info=capture_info)
+            finally:   # a frame that fails must not be served again on the next press
+                if isinstance(self.camera, ReplayCamera):
+                    self.camera.next()
+            self.cache[iid] = (insp, analysis, bgr)
+            while len(self.cache) > CACHE_FRAMES:
+                self.cache.popitem(last=False)
         insp.latency_ms = {"capture": round(cap_ms, 2), **insp.latency_ms}
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
                                 (json.dumps(insp.latency_ms), iid))
-        self.cache[iid] = (insp, analysis, bgr)
-        while len(self.cache) > 30:
-            self.cache.popitem(last=False)
         cv2.imwrite(str(self._overlay_path(iid)), render(bgr, insp, analysis))
         if insp.defects:
             self.jobs.put((iid, insp.to_llm_record(), design))
-        if isinstance(self.camera, ReplayCamera):
-            self.camera.next()
         return self.inspection_json(iid)
 
     # ---------------- detection-limit eye test ----------------
@@ -402,7 +408,8 @@ class Station:
         for a in r["advice"]:
             a["advice"] = json.loads(a["advice_json"])
         r["latency"] = json.loads(r["latency_json"] or "{}")
-        th = self.inspector.thresholds(r["design"], r["alpha"])
+        versions = json.loads(r.get("model_versions_json") or "{}") if isinstance(r, dict) else {}
+        th = self.inspector.thresholds(r["design"], r["alpha"], golden=versions.get("gate") == "golden")
         r["gate"] = None if th is None else {
             "alpha": th.alpha, "beta": th.beta, "lam": th.lam, "tau": th.tau,
             "n_defective": th.n_defective, "n_good": th.n_good}
@@ -450,6 +457,14 @@ class Station:
         return {**result, "event_id": ev}
 
     def undo(self, event_id: int) -> dict:
+        pre = self.store.feedback_event(event_id)
+        if pre is not None:   # refuse BEFORE touching the log, so a refusal leaves everything as it was
+            p0 = json.loads(pre["payload_json"] or "{}")
+            row0 = self.store.inspection(pre["inspection_id"]) if pre["inspection_id"] else None
+            am0 = self.inspector.anomaly.get(row0["design"]) if row0 else None
+            if "anomaly" in p0 and am0 is not None and not (
+                    am0.history and am0.history[-1]["version"] == p0["anomaly"]["version"]):
+                raise HTTPException(409, "only the most recent memory change can be undone")
         ev = self.store.undo_feedback(event_id)
         payload = json.loads(ev["payload_json"] or "{}")
         insp_row = self.store.inspection(ev["inspection_id"]) if ev["inspection_id"] else None
@@ -470,6 +485,10 @@ class Station:
             raise HTTPException(503, "vision backbone not loaded")
         if not 3 <= n_images <= 30:
             raise HTTPException(400, "use 3-30 good boards")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", name):
+            raise HTTPException(400, "design name: letters, digits, - and _ only")
+        if name in self.designs:   # its gate was calibrated for the old memory; never silently replace it
+            raise HTTPException(409, f"a design named {name} already exists; pick another name")
         imgs = []
         for _ in range(n_images):
             imgs.append(self.camera.capture())
