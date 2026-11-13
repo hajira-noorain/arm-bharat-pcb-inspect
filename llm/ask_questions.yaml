@@ -1,0 +1,54 @@
+# Operator questions with the query that answers them (pcbinspect/ask.py QUERIES).
+# tuning: used while developing the prompt.   heldout: written afterwards, run once.
+tuning:
+  - {q: "How many shorts did we get in the last 8 hours?", query: defect_counts}
+  - {q: "What defect types came up today?", query: defect_counts}
+  - {q: "Which defect is the most common this shift?", query: defect_counts}
+  - {q: "Count of each defect over the past 4 hours please", query: defect_counts}
+  - {q: "What kept going wrong on the boards this week?", query: defect_counts}
+  - {q: "Are we seeing more opens or more mouse bites?", query: defect_counts}
+  - {q: "Breakdown of what was found on the boards in the last 2 hours", query: defect_counts}
+  - {q: "How many boards did we inspect this shift?", query: yield}
+  - {q: "What is the pass rate today?", query: yield}
+  - {q: "How many boards failed in the last 3 hours?", query: yield}
+  - {q: "How many boards went to a person for checking today?", query: yield}
+  - {q: "Give me the yield for the past 12 hours", query: yield}
+  - {q: "Passed versus failed boards this week?", query: yield}
+  - {q: "How busy has the station been in the last hour?", query: yield}
+  - {q: "Show me the history of board B00042", query: board_history}
+  - {q: "What happened with serial B00017?", query: board_history}
+  - {q: "Was board B00101 inspected more than once?", query: board_history}
+  - {q: "Look up board id B00007 for me", query: board_history}
+  - {q: "When was board B00063 checked and what was the result?", query: board_history}
+  - {q: "How many critical defects in the last 8 hours?", query: severity_counts}
+  - {q: "Split the defects from today into critical, major and minor", query: severity_counts}
+  - {q: "Were most of the problems this shift serious or small?", query: severity_counts}
+  - {q: "How severe were the defects over the past 6 hours?", query: severity_counts}
+  - {q: "Number of minor findings this week", query: severity_counts}
+  - {q: "Any major defects in the last 2 hours?", query: severity_counts}
+  - {q: "Are there any open alerts?", query: open_alerts}
+  - {q: "Is the process drifting?", query: open_alerts}
+  - {q: "Any warnings I have not acknowledged yet?", query: open_alerts}
+  - {q: "Show the drift alerts", query: open_alerts}
+  - {q: "Did the station raise anything about the line that still needs attention?", query: open_alerts}
+heldout:
+  - {q: "Tally the kinds of faults found since this morning", query: defect_counts}
+  - {q: "Which fault shows up most on the boards over the last 5 hours?", query: defect_counts}
+  - {q: "Do we have a spur problem this shift, or is it something else?", query: defect_counts}
+  - {q: "List the defect types and how often each one occurred in the past 10 hours", query: defect_counts}
+  - {q: "How many boards went through the station in the last 6 hours and how many were good?", query: yield}
+  - {q: "What share of boards are we rejecting today?", query: yield}
+  - {q: "Total boards checked this week?", query: yield}
+  - {q: "How many boards needed a second look from an operator in the last 4 hours?", query: yield}
+  - {q: "Pull up everything recorded for board B00088", query: board_history}
+  - {q: "Has serial B00023 been through the station before?", query: board_history}
+  - {q: "What verdict did board B00054 get?", query: board_history}
+  - {q: "Trace board B00012 for me", query: board_history}
+  - {q: "How many of the defects from the last 3 hours were critical?", query: severity_counts}
+  - {q: "Give me the severity mix for this shift", query: severity_counts}
+  - {q: "Were there more minor or major findings today?", query: severity_counts}
+  - {q: "How bad were the defects in the past 24 hours?", query: severity_counts}
+  - {q: "Anything outstanding that the station has flagged about the process?", query: open_alerts}
+  - {q: "Do I have unacknowledged alerts?", query: open_alerts}
+  - {q: "Has the station warned about a trend on the line?", query: open_alerts}
+  - {q: "What alerts are still open right now?", query: open_alerts}

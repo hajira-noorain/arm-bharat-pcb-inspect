@@ -75,6 +75,41 @@ def keyword_route(q: str) -> tuple[str, dict]:
     return "defect_counts", {"hours": hours}
 
 
+def question_params(question: str, qid: str) -> dict:
+    """Parameters read from the question's own words (hours, board ID): never generated."""
+    if qid == "board_history":
+        b = re.search(r"\b(?:board|serial|id)\s*[:#]?\s*([A-Za-z0-9_-]*\d[A-Za-z0-9_-]*)", question)
+        return {"board_id": b.group(1) if b else ""}
+    if "hours" in QUERIES[qid]["params"]:
+        ql = question.lower()
+        hours = 8
+        m = re.search(r"(\d+)\s*(hours?|hrs?|h)\b", ql)
+        d = re.search(r"(\d+)\s*days?\b", ql)
+        if m:
+            hours = int(m.group(1))
+        elif d:
+            hours = 24 * int(d.group(1))
+        elif "week" in ql:
+            hours = 24 * 7
+        elif "today" in ql or "yesterday" in ql or "24" in ql:
+            hours = 24
+        return {"hours": hours}
+    return {}
+
+
+def route_scored(question: str, backend) -> tuple[str, list[float]]:
+    """Llama chooses the query by the score of each query NAME as the continuation (llm_logits): it can
+    only ever answer with one of the listed queries. Returns (query id, scores in QUERIES order)."""
+    menu = "\n".join(f"{k}: {v['desc']}" for k, v in QUERIES.items())
+    backend.reset()
+    backend.feed(_chat("You route a factory operator's question to one query from a fixed list. "
+                       "Answer with the query name only.",
+                       f"Queries:\n{menu}\n\nQuestion: {question}", "Query:"))
+    ids = list(QUERIES)
+    sc = [lp for lp, _ in backend.score([" " + k for k in ids], end="\n")]
+    return ids[max(range(len(ids)), key=lambda i: sc[i])], sc
+
+
 def run_query(conn, qid: str, params: dict) -> list[dict]:
     q = QUERIES[qid]
     if qid == "board_history":
@@ -97,7 +132,15 @@ def table_text(rows: list[dict]) -> str:
 def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
     out = {"question": question, "route": "keyword", "summary_by": "template"}
     qid, params = keyword_route(question)
-    if backend is not None:
+    scored = backend is not None and hasattr(backend, "score")
+    if scored:
+        try:
+            qid, _ = route_scored(question, backend)
+            params = {**QUERIES[qid]["params"], **question_params(question, qid)}
+            out["route"] = "llama"
+        except Exception as exc:    # noqa: BLE001  routing failure falls back to keywords
+            out["route_error"] = repr(exc)
+    elif backend is not None:
         menu = "\n".join(f"{k}: {v['desc']} (params: {json.dumps(v['params'])})" for k, v in QUERIES.items())
         p = _chat("You route questions from a factory operator to a fixed list of database queries. "
                   "Reply with JSON only.",
@@ -118,9 +161,14 @@ def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
                   "Use only numbers that appear in the rows.",
                   f"Question: {question}\nRows: {json.dumps(rows, default=str)}", "")
         try:
-            g = backend.generate(p, max_new_tokens)
-            text = g.text.strip().split("<|eot_id|>")[0].strip()
             allowed = {round(float(x), 2) for x in NUM_RE.findall(json.dumps(rows, default=str))}
+            if scored:      # a number that is not in the rows cannot be written at all
+                from .grounding import number_filter_values
+                backend.reset()
+                backend.feed(p)
+                text = backend.write(max_new_tokens, stop=("\n\n",), allow=number_filter_values(allowed)).strip()
+            else:
+                text = backend.generate(p, max_new_tokens).text.strip().split("<|eot_id|>")[0].strip()
             bad = [m for m in NUM_RE.findall(text) if round(float(m), 2) not in allowed]
             if text and not bad:
                 out["answer"], out["summary_by"] = text, "llama"

@@ -27,8 +27,14 @@ def number_filter(record: dict, extra_numbers: list[float] | None = None):
     """allow(text_so_far, piece) for LogitLlama.write(): a token is vetoed if it would complete, or start,
     a number that check() would reject (not in the record or the history given to the model). The checker
     still runs afterwards; this only stops the model from writing what the checker would throw away."""
-    allowed = _record_numbers(record) | {round(float(x), 2) for x in (extra_numbers or [])}
-    ints = {round(x) for x in allowed}
+    return number_filter_values(_record_numbers(record) | {round(float(x), 2) for x in (extra_numbers or [])},
+                                integers_may_round=True)
+
+
+def number_filter_values(allowed: set[float], integers_may_round: bool = False):
+    """The same decoding filter for any set of permitted numbers (e.g. the numbers in database rows)."""
+    allowed = {round(float(x), 2) for x in allowed}
+    ints = {round(x) for x in allowed} if integers_may_round else {x for x in allowed if float(x).is_integer()}
     forms = {f"{x:g}" for x in allowed} | {f"{x:.2f}" for x in allowed} | {f"{x:.1f}" for x in allowed} | \
         {str(int(i)) for i in ints}
 
