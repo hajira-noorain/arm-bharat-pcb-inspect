@@ -286,7 +286,7 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - The public datasets are scans or close-up photos. Accuracy on the live camera is reported separately and never merged with dataset accuracy. The eye test exists for exactly this reason.
 - The conformal guarantee is marginal and holds only for boards like the calibration boards.
 - On DeepPCB the detector-only gate missed slightly more than its target at 5% and 10% (6.5% and 11.6%); the fused golden channel met 5%.
-- On assembled boards (VisA) the anomaly gate at 5% sends about 60% of boards to a person, half of which are truly defective. It finds unknown problems; it does not yet replace a human for assembled boards.
+- On assembled boards (VisA) the anomaly gate at 5% sends about 60% of test boards to a person (about half of the VisA test boards are defective). It finds unknown problems; it does not yet replace a human for assembled boards.
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
 - The 1B model's choice among causes is not distinguishable from chance; its value is a grounded, readable summary. The 3B rule reader sends many clauses to the operator rather than guessing.
