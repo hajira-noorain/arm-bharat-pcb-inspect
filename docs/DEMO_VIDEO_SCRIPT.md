@@ -1,6 +1,6 @@
 # Demo video script (target about 3 minutes 15 seconds)
 
-One story: **every inspection system claims a high accuracy; ours measures the smallest defect it can find on your camera, says what it cannot see, and refuses rules it cannot keep.** The eye-chart analogy carries it. Every PS5 requirement still appears on screen.
+One story: **every inspection system claims a high accuracy; ours measures the smallest defect it can find on your camera and on your board, says what it cannot see, and refuses rules it cannot keep.** The eye-chart analogy carries it. Every PS5 requirement still appears on screen.
 
 **Rule:** what is on screen always matches what is being said at that moment. If a line talks about the stack light, the stack light is on screen.
 
@@ -31,21 +31,24 @@ One story: **every inspection system claims a high accuracy; ours measures the s
 | 0:40 | Screen: Eye test tab, sheets being captured one by one, hit/miss marks appearing on the coupons | "The station photographs each sheet and inspects every pattern, exactly as it inspects a board." |
 | 0:50 | Screen: the statement panel, e.g. "Opens: certified from [x] mm. Mouse bites: not certified below [y] mm" | "Then it states, for each defect type, the smallest size it finds 90 percent of the time with 95 percent confidence, the standard used in aerospace testing. And it says plainly what it cannot certify." |
 
-## 1:05 to 1:40: Live inspection of a real board
+## 1:05 to 1:45: A real board, taught and inspected live
+
+Everything in this segment is the station as built: the Teach a board screen (Setup), then Inspect. Rehearse it on the Pi before filming; if a step does not behave as written, film what it does and change the line.
 
 | Time | Shot | Narration |
 |---|---|---|
-| 1:05 | A real bare board with a knife-cut trace and the scale marker under the camera. Foot presses the pedal. | "Now a real board with a cut trace." |
-| 1:10 | Screen: red FAIL band, the defect marked; picture-in-picture of the stack light turning red with a beep | "It fails in [verdict time] seconds. Red light, defect marked." |
-| 1:17 | Screen: defect list zoomed: type, size in mm, Class 1/2/3 chips | "It compares the board with a known-good image of the same design, measures the cut in millimetres, and grades it against IPC class limits." |
-| 1:27 | Screen: the "What to do" panel filling in; footer "Written by llama3_2_1b_spinquant on this device"; a knowledge-base ID highlighted | "Llama 3.2, running on the Arm CPU through ExecuTorch, reads the findings, never the pixels, and picks the likely cause and next step from our defect knowledge base. If it states anything not in the findings, its answer is rejected." |
+| 1:05 | Screen: Setup, Teach a board. A real bare board against the corner stops with the scale marker; "Capture a good board" pressed three times, the board lifted and put down between presses | "Now a real board the station has never seen. I show it the good board three times." |
+| 1:13 | Screen: "Finish teaching", progress bar, then the result with the stated limits ("Finds opens from ... mm") and the line "Measured on test defects drawn onto your own board, not on real defects" | "It draws test defects of known size onto those pictures, sets its own pass and fail thresholds, and tells me what size of defect it can find on this board. That took [teach seconds] seconds on the Pi." |
+| 1:22 | The same good board under the camera; foot pedal; green PASS band and green light | "The good board passes." |
+| 1:27 | Hands: a knife cut across one trace. Board back under the camera; pedal. Red FAIL band, the cut boxed; picture-in-picture of the red light | "I cut one trace. It fails in [verdict time] seconds: an open circuit, at the cut." |
+| 1:35 | Screen: defect list zoomed: "Open circuit", size in mm, Class 1/2/3 chips; then the "What to do" panel with a knowledge-base ID and the footer naming the Llama model | "It measures the cut in millimetres against the reference picture and grades it. Llama 3.2, on the Arm CPU through ExecuTorch, reads the findings, never the pixels, and writes the summary; every cause and action shown is knowledge-base text, and an answer that states anything else is rejected." |
 
 ## 1:40 to 2:00: It says when it is unsure
 
 | Time | Shot | Narration |
 |---|---|---|
 | 1:40 | Screen: an amber CHECK band on a borderline board, with Pass/Fail buttons | "When the evidence is borderline, the board goes to a person: amber light." |
-| 1:47 | Screen: switch the allowed miss rate from 5% to 1%; cut to the gate table in RESULTS.md with the measured value highlighted | "The operator chooses how many defects may slip through, and the station guarantees it. On boards it had never seen, it missed [value] of defects at a 5 percent setting." |
+| 1:47 | Screen: switch the allowed miss rate from 5% to 1%; cut to the gate table in RESULTS.md with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.0 percent." |
 
 ## 2:00 to 2:30: It refuses rules it cannot keep
 
@@ -61,11 +64,11 @@ One story: **every inspection system claims a high accuracy; ours measures the s
 |---|---|---|
 | 2:30 | RESULTS table: detector on ExecuTorch vs Arm's optimised runtime, Llama tokens/s and memory, 30-minute soak with temperature | "Everything here was measured on the Pi itself: [detector ms] per tile on Arm's optimised runtime, Llama at [decode tokens per second], and [peak temperature] after 30 minutes with no throttling." |
 
-## 2:50 to 3:05: It learns on the floor
+## 2:50 to 3:05: Honest about what is not proven
 
 | Time | Shot | Narration |
 |---|---|---|
-| 2:50 | Screen: "Teach a board" tab; eight good boards captured; "Learned … in N seconds" | "A new design is taught from a few good boards, in seconds. Operator corrections are learned too, and switched on only if they hide no real defects." |
+| 2:50 | README table "What is and is not validated", the right-hand column highlighted | "What we have not proven: the limit for etched copper rather than drawn defects, solder-masked boards under shop lighting, and solder joints on assembled boards. The report lists every one." |
 
 ## 3:05 to 3:15: Close
 
