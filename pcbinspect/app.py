@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import json
 import logging
 import queue
 import threading
@@ -15,10 +16,9 @@ from collections import OrderedDict
 from pathlib import Path
 
 import cv2
-import numpy as np
 import yaml
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import BaseModel
 
 from . import ask as ask_mod
@@ -173,7 +173,7 @@ class Station:
             insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden)
         insp.latency_ms = {"capture": round(cap_ms, 2), **insp.latency_ms}
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
-                                (__import__("json").dumps(insp.latency_ms), iid))
+                                (json.dumps(insp.latency_ms), iid))
         self.cache[iid] = (insp, analysis, bgr)
         while len(self.cache) > 30:
             self.cache.popitem(last=False)
@@ -193,7 +193,6 @@ class Station:
         r = self.store.inspection(iid)
         if r is None:
             raise HTTPException(404)
-        import json
         for d in r["defects"]:
             d["ipc"] = json.loads(d["ipc_json"] or "{}")
             d["name"] = self.kb.display_name(d["cls"])
@@ -249,7 +248,6 @@ class Station:
 
     def undo(self, event_id: int) -> dict:
         ev = self.store.undo_feedback(event_id)
-        import json
         payload = json.loads(ev["payload_json"] or "{}")
         insp_row = self.store.inspection(ev["inspection_id"]) if ev["inspection_id"] else None
         design = insp_row["design"] if insp_row else None
@@ -422,6 +420,38 @@ def create_app(cfg: dict) -> FastAPI:
     def enrol_design(req: EnrolReq):
         with st.lock:
             return st.enrol(req.name, req.kind, req.images)
+
+    learn_status: dict[str, dict] = {}
+
+    @app.post("/api/learn/{design}")
+    def learn(design: str):
+        if design not in st.designs:
+            raise HTTPException(404)
+        if learn_status.get(design, {}).get("running"):
+            return learn_status[design]
+        from .promote import try_promote
+        learn_status[design] = {"running": True, "started": time.time()}
+
+        def job():
+            try:
+                with st.lock:      # no inspections while the model is being swapped
+                    rep = try_promote(st.inspector, design, st.buffer(design), st.root, st.store)
+                learn_status[design] = {"running": False, **rep}
+            except Exception as exc:
+                log.exception("learning update failed")
+                learn_status[design] = {"running": False, "promoted": False, "reason": repr(exc)}
+        threading.Thread(target=job, daemon=True).start()
+        return learn_status[design]
+
+    @app.get("/api/learn/{design}")
+    def learn_state(design: str):
+        n_pos, n_neg = st.buffer(design).counts()
+        versions = [dict(v) for v in st.store.model_versions(f"rescore_head:{design}")]
+        for v in versions:
+            v["metrics"] = json.loads(v.pop("metrics_json") or "{}")
+        return {"status": learn_status.get(design), "confirmed": n_pos, "false_alarms": n_neg,
+                "active_version": getattr(st.inspector.heads.get(design), "version", None),
+                "versions": versions[-10:][::-1]}
 
     @app.get("/api/spc/{design}")
     def spc(design: str):

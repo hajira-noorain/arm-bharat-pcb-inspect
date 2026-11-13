@@ -62,6 +62,19 @@ def main():
     if (m / "vision" / "pcb_y26n.pt").exists():
         copy(m / "vision" / "pcb_y26n.pt", out / "models" / "vision" / "pcb_y26n.pt")
 
+    # calibration boards (cal split, never trained on): lets the station re-calibrate the conformal
+    # gate itself after a learning update
+    cal = json.loads((work / "data" / "bare_yolo" / "boards_cal.json").read_text())
+    for design in ("deeppcb", "hripcb", "mendeley"):
+        cdir = out / "models" / "calib" / design
+        cdir.mkdir(parents=True, exist_ok=True)
+        items = []
+        for i, b in enumerate(x for x in cal if x["source"] == design):
+            name = f"{i:04d}.jpg"
+            shutil.copy2(b["path"], cdir / name)
+            items.append({"file": name, "good": b["good"]})
+        (cdir / "manifest.json").write_text(json.dumps(items))
+
     # demo boards: held-out TEST images only, a mix of defective and good
     rng = random.Random(0)
     demo = out / "demo" / "boards"

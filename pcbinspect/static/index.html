@@ -213,6 +213,14 @@ td.v-REVIEW { color: #9A6A00; font-weight: 700; }
       </form>
       <p id="teach-out" class="answer"></p>
     </div>
+    <div class="panel" style="max-width:640px;margin-top:20px">
+      <h2>Learn from your corrections</h2>
+      <p class="sub">Every time you confirm a defect or mark a false alarm, the station keeps an example. Updating the model uses them, but the new version is only switched on if it hides no real defects and does better than before.</p>
+      <p id="learn-counts" class="answer"></p>
+      <button class="btn solid" id="learn-btn">Update the model</button>
+      <p id="learn-out" class="meta"></p>
+      <table><thead><tr><th>When</th><th>Version</th><th>Result</th></tr></thead><tbody id="learn-hist"></tbody></table>
+    </div>
   </section>
 
   <section id="tab-log" hidden>
@@ -245,6 +253,7 @@ document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click
   document.querySelectorAll("main > section").forEach((s) => s.hidden = s.id !== `tab-${b.dataset.tab}`);
   if (b.dataset.tab === "trends") loadTrends();
   if (b.dataset.tab === "log") loadLog();
+  if (b.dataset.tab === "teach") loadLearn();
 }));
 
 // ---------------- state ----------------
@@ -439,6 +448,22 @@ $("#teach-form").addEventListener("submit", async (e) => {
     await loadState(); $("#design").value = r.design;
   } catch (err) { $("#teach-out").textContent = `Could not learn the design: ${err.message}`; }
   finally { b.disabled = false; }
+});
+
+// ---------------- learning ----------------
+async function loadLearn() {
+  const d = $("#design").value;
+  const s = await api(`/api/learn/${encodeURIComponent(d)}`);
+  $("#learn-counts").textContent = `${d}: ${s.confirmed} confirmed defects and ${s.false_alarms} false alarms collected. Active version: ${s.active_version ?? "detector only"}.`;
+  $("#learn-hist").innerHTML = s.versions.map((v) => `<tr><td>${new Date(v.ts * 1000).toLocaleString()}</td><td>${esc(v.version)}</td><td>${v.active ? "switched on" : esc(v.note || "kept previous version")}${v.metrics?.cross_validation?.ok ? `: ${Math.round(v.metrics.cross_validation.false_alarms_removed * 100)}% of false alarms removed, ${Math.round(v.metrics.cross_validation.recall_on_confirmed * 100)}% of real defects kept` : ""}</td></tr>`).join("");
+  const st = s.status;
+  $("#learn-btn").disabled = !!st?.running;
+  $("#learn-out").textContent = st?.running ? "Updating the model and re-checking the miss-rate calibration" : st ? (st.promoted ? `Version ${st.version} switched on in ${st.seconds} s.` : `Kept the previous version: ${st.reason}.`) : "";
+  if (st?.running) setTimeout(loadLearn, 2000);
+}
+$("#learn-btn").addEventListener("click", async () => {
+  try { await api(`/api/learn/${encodeURIComponent($("#design").value)}`, { method: "POST" }); loadLearn(); }
+  catch (err) { $("#learn-out").textContent = `Could not start the update: ${err.message}`; }
 });
 
 // ---------------- log ----------------
