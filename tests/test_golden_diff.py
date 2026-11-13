@@ -137,3 +137,15 @@ def test_alignment_recovers_a_board_put_down_off_position_and_turned():
     assert cc > 0.95
     inner = (slice(200, 700), slice(300, 900))
     assert np.abs(out[inner].astype(int) - t[inner].astype(int)).mean() < 6
+
+
+def test_detections_without_a_copper_change_can_be_trusted_less():
+    from types import SimpleNamespace
+
+    from pcbinspect.fusion import fuse
+    dets = [{"bbox": (10, 10, 30, 30), "conf": 0.8, "cls": "spur"}, {"bbox": (200, 200, 220, 220), "conf": 0.8, "cls": "open"}]
+    diff = [SimpleNamespace(bbox=(205, 205, 215, 215), score=0.6, cls="open", size_px=5.0)]
+    same = {tuple(f["bbox"])[0]: f["conf"] for f in fuse(dets, diff, unsupported_scale=1.0)}
+    less = {tuple(f["bbox"])[0]: f["conf"] for f in fuse(dets, diff, unsupported_scale=0.5)}
+    assert same == {10: 0.8, 200: 0.8}
+    assert less[10] == 0.4 and less[200] == 0.8        # only the detection the golden board does not support

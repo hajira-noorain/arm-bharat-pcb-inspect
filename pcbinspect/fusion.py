@@ -9,6 +9,8 @@ unavailable or refused, the station is exactly the detector-only station.
 """
 from __future__ import annotations
 
+import os
+
 
 def _iou(a, b) -> float:
     ix = max(0, min(a[2], b[2]) - max(a[0], b[0]))
@@ -28,7 +30,13 @@ def _overlap(a, b) -> bool:
     return _iou(a, b) >= 0.1 or _inside(ca, b) or _inside(cb, a)
 
 
-def fuse(dets: list[dict], diffs) -> list[dict]:
+# When the golden comparison ran and found NO copper change under a detection, the detection is less
+# credible: its confidence is multiplied by this (1.0 = unchanged). The gate is calibrated with the same
+# value, so the miss-rate target still holds; what changes is how many false calls sit above the threshold.
+UNSUPPORTED_SCALE = float(os.environ.get("PCB_UNSUPPORTED_SCALE", "1.0"))
+
+
+def fuse(dets: list[dict], diffs, unsupported_scale: float | None = None) -> list[dict]:
     """dets: [{bbox, conf, cls}]; diffs: golden_diff.DiffCandidate list. Returns fused candidates
     [{bbox, conf, cls, source, det_conf, diff_score, topo_cls, diff_size_px}]."""
     out = [{**d, "bbox": tuple(d["bbox"]), "source": "detector", "det_conf": d["conf"], "diff_score": None,
@@ -47,4 +55,9 @@ def fuse(dets: list[dict], diffs) -> list[dict]:
         else:
             out.append({"bbox": tuple(c.bbox), "conf": c.score, "cls": c.cls, "source": "golden",
                         "det_conf": None, "diff_score": c.score, "topo_cls": c.cls, "diff_size_px": c.size_px})
+    k = UNSUPPORTED_SCALE if unsupported_scale is None else unsupported_scale
+    if k != 1.0:
+        for o in out:
+            if o["source"] == "detector":
+                o["conf"] = o["conf"] * k
     return out
