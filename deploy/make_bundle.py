@@ -97,10 +97,12 @@ def main():
             if golden is None and design == "hripcb":
                 board = Path(b["path"]).stem.split("_")[0]
                 golden = next(iter((work / "data" / "HRIPCB" / "PCB_USED").glob(f"{board}.*")), None)
-            if golden and not b["good"]:
+            if golden is None and b["good"] and design == "deeppcb":
+                golden = b["path"]  # a DeepPCB good board IS its template: the golden is the same pattern
+            if golden:
                 shutil.copy2(golden, demo / f"{design}_{i:03d}.golden.jpg")
             manifest.append({"file": dst.name, "design": design, "good": b["good"], "boxes": b["boxes"],
-                             "golden": bool(golden and not b["good"])})
+                             "golden": bool(golden)})
     visa = work / "data" / "VisA"
     if visa.exists():
         with open(visa / "split_csv" / "1cls.csv", newline="") as f:
@@ -114,6 +116,24 @@ def main():
                 shutil.copy2(visa / r["image"], dst)
                 manifest.append({"file": dst.name, "design": f"visa_{obj}", "good": r["label"] == "normal"})
     (out / "demo" / "manifest.json").write_text(json.dumps(manifest, indent=1))
+
+    # detection-limit eye test: the printable card + manifest, and SIMULATED photos of the printed card
+    # for replay/demo mode (inkjet dot gain + camera model of training/eyetest_sim.py; not real photos)
+    card = work / "eyetest"
+    if (card / "manifest.json").exists():
+        copy(card / "manifest.json", out / "assets" / "eyetest" / "manifest.json")
+        copy(card / "eyetest_card.pdf", out / "assets" / "eyetest" / "eyetest_card.pdf")
+        import cv2
+        import numpy as np
+        import sys
+        sys.path.insert(0, str(REPO))
+        from training.eyetest_sim import inkjet, photograph
+        r = np.random.default_rng(1)
+        ed = out / "demo" / "eyetest"
+        ed.mkdir(parents=True, exist_ok=True)
+        for sp in sorted(card.glob("sheet_*.png")):
+            photo = photograph(inkjet(cv2.imread(str(sp), cv2.IMREAD_GRAYSCALE), 40, r), 30, r)
+            cv2.imwrite(str(ed / f"simulated_{sp.stem}.jpg"), photo, [cv2.IMWRITE_JPEG_QUALITY, 92])
     (out / "results").mkdir(exist_ok=True)
     for p in (work / "results").glob("*.json"):
         if not p.name.startswith(("bare_dets_", "emb_")):

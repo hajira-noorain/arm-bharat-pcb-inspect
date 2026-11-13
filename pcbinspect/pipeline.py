@@ -19,10 +19,13 @@ from .anomaly import AnomalyModel, FeatureFn
 from .calib import detect_scale, read_board_id
 from .detect_bare import BareDetector
 from .gate import ConformalGate, GateThresholds
+from .fusion import fuse
 from .golden import GoldenMeasurer
+from .golden_diff import diff_candidates
 from .learning import RescoreHead, crop_embedding, rescore
 from .record import ANOMALY_CLASS, Defect, Inspection, zone_of
 from .severity import DesignRules, SeverityEngine
+from .spec import Rule, apply_rules, render
 
 MIN_SHOW_CONF = 0.25      # display floor used only when the gate has no calibration yet
 RESCORE_TOP_K = 20        # rescore at most this many detections per board (Pi time budget)
@@ -41,7 +44,8 @@ class Design:
     alpha: float = 0.05
     beta: float = 0.01
     description: str = ""
-    golden: str | None = None              # known-good image of this design (for mm measurement)
+    golden: str | None = None              # known-good image of this design (mm measurement + difference channel)
+    gate_golden: str | None = None         # gate calibrated on detector+golden-difference evidence
 
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
@@ -53,7 +57,7 @@ class Design:
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
                    d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0), rules,
                    d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
-                   d.get("golden"))
+                   d.get("golden"), d.get("gate_golden"))
 
 
 @dataclass
@@ -65,6 +69,9 @@ class Candidate:
     raw_conf: float
     embedding: np.ndarray | None = None
     region_idx: int | None = None    # anomaly region index (for feedback)
+    diff_score: float | None = None  # golden-difference evidence for this area, if any
+    topo_cls: str | None = None      # what the golden comparison says it is (netlist / shape)
+    diff_size_px: float | None = None  # characteristic size of the golden difference (px)
 
 
 @dataclass
@@ -76,6 +83,8 @@ class Analysis:
     board_id: str | None
     anomaly: object | None           # AnomalyResult
     latency_ms: dict[str, float] = field(default_factory=dict)
+    golden_used: bool = False        # the golden-difference channel contributed (selects the gate)
+    golden_note: str = ""
 
 
 def _overlaps(a, b) -> bool:
@@ -95,6 +104,8 @@ class Inspector:
         self.severity = severity or SeverityEngine()
         self.anomaly: dict[str, AnomalyModel] = {}
         self.gates: dict[str, ConformalGate] = {}
+        self.gates_golden: dict[str, ConformalGate] = {}
+        self.customer_rules: dict[str, list[tuple[int, Rule]]] = {}   # confirmed by the operator
         self.heads: dict[str, RescoreHead] = {}
         self._auto_id = itertools.count(1)
         for name, d in designs.items():
@@ -107,12 +118,15 @@ class Inspector:
             self.anomaly[name] = AnomalyModel.load(self.root / d.anomaly_dir, self.feature_fn)
         if d.gate_file and (self.root / d.gate_file).exists():
             self.gates[name] = ConformalGate.load(self.root / d.gate_file)
+        if d.gate_golden and (self.root / d.gate_golden).exists():
+            self.gates_golden[name] = ConformalGate.load(self.root / d.gate_golden)
         head_p = self.root / "models" / "heads" / f"{name}.json"
         if head_p.exists():
             self.heads[name] = RescoreHead.load(head_p)
 
-    def thresholds(self, design: str, alpha: float | None = None) -> GateThresholds | None:
-        g = self.gates.get(design)
+    def thresholds(self, design: str, alpha: float | None = None, golden: bool = False) -> GateThresholds | None:
+        """Thresholds of the gate calibrated on the SAME evidence the board was judged with."""
+        g = self.gates_golden.get(design) if golden else self.gates.get(design)
         if g is None:
             return None
         d = self.designs[design]
@@ -120,7 +134,7 @@ class Inspector:
 
     # ------------------------------------------------------------ scoring
     def analyse(self, bgr: np.ndarray, design: str, head: RescoreHead | None | str = "active",
-                read_id: bool = True) -> Analysis:
+                read_id: bool = True, golden: np.ndarray | None = None) -> Analysis:
         d = self.designs[design]
         lat: dict[str, float] = {}
         t = time.perf_counter()
@@ -166,8 +180,31 @@ class Inspector:
                 c.conf = rescore(c.cls, c.raw_conf, h.p_real(c.embedding))
             lat["rescore"] = (time.perf_counter() - t) * 1e3
 
+        golden_used, golden_note = False, ""
+        if golden is not None and d.use_detector and design in self.gates_golden:
+            t = time.perf_counter()
+            diffs, info = diff_candidates(bgr, golden)
+            lat["golden_diff"] = (time.perf_counter() - t) * 1e3
+            if info["ok"]:
+                golden_used = True
+                fz = fuse([{"bbox": c.bbox, "conf": c.conf, "cls": c.cls, "_c": c} for c in cands
+                           if c.source == "detector"], diffs)
+                for f in fz:
+                    if "_c" in f:  # an existing detection, possibly strengthened by the difference
+                        c = f["_c"]
+                        c.conf, c.diff_score, c.topo_cls = f["conf"], f["diff_score"], f["topo_cls"]
+                        c.diff_size_px = f["diff_size_px"]
+                    else:
+                        cands.append(Candidate(f["cls"], "golden", f["bbox"], f["conf"], f["conf"],
+                                               diff_score=f["diff_score"], topo_cls=f["topo_cls"],
+                                               diff_size_px=f["diff_size_px"]))
+            else:
+                golden_note = info.get("reason", "golden comparison refused")
+        elif golden is not None and design not in self.gates_golden:
+            golden_note = "golden comparison not calibrated for this design"
+
         score = max((c.conf for c in cands), default=0.0)
-        return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat)
+        return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat, golden_used, golden_note)
 
     # ------------------------------------------------------------ full inspection
     def golden_for(self, design: str) -> np.ndarray | None:
@@ -178,45 +215,56 @@ class Inspector:
 
     def inspect(self, bgr: np.ndarray, design: str, board_id: str | None = None,
                 alpha: float | None = None, log: bool = True,
-                golden: np.ndarray | None = None) -> tuple[Inspection, Analysis, int | None]:
+                golden: np.ndarray | None = None, force_review: str | None = None,
+                capture_info: dict | None = None) -> tuple[Inspection, Analysis, int | None]:
+        """force_review: a reason why this capture cannot be trusted (blur, glare, a lighting shift
+        outside the calibrated envelope). A board that would PASS goes to a person instead: the
+        miss-rate guarantee only holds for captures like the calibration ones."""
         t_all = time.perf_counter()
         d = self.designs[design]
-        a = self.analyse(bgr, design)
-        th = self.thresholds(design, alpha)
+        golden = golden if golden is not None else self.golden_for(design)
+        a = self.analyse(bgr, design, golden=golden)
+        th = self.thresholds(design, alpha, golden=a.golden_used)
         if th is not None:
             verdict = th.verdict(a.board_score)
             show_thr = th.lam if np.isfinite(th.lam) else MIN_SHOW_CONF
         else:  # uncalibrated design: never auto-pass anything with evidence
             verdict = "REVIEW" if a.board_score >= MIN_SHOW_CONF else "PASS"
             show_thr = MIN_SHOW_CONF
+        if force_review and verdict == "PASS":
+            verdict = "REVIEW"
         shown = [] if verdict == "PASS" else [
             c for c in a.candidates if c.conf >= show_thr and c.source != "anomaly-image"]
 
         t = time.perf_counter()
         h, w = bgr.shape[:2]
-        golden = golden if golden is not None else self.golden_for(design)
         gm = None
-        if golden is not None and a.mm_per_px and any(c.source == "detector" for c in shown):
+        if golden is not None and a.mm_per_px and any(c.source in ("detector", "golden") for c in shown):
             gm = GoldenMeasurer(bgr, golden, a.mm_per_px, d.rules.min_spacing_mm)
             a.latency_ms["golden_align"] = (time.perf_counter() - t) * 1e3
-        defects = []
+        defects, features = [], []
         for i, c in enumerate(sorted(shown, key=lambda c: -c.conf)):
             x1, y1, x2, y2 = c.bbox
             mmpp = a.mm_per_px
             defect = Defect(
-                id=f"D{i + 1}", cls=c.cls, source="detector" if c.source == "detector" else "anomaly",
+                id=f"D{i + 1}", cls=c.cls, source=c.source if c.source in ("detector", "golden") else "anomaly",
                 bbox=c.bbox, confidence=round(c.conf, 4),
                 size_mm=None if mmpp is None else round(max(x2 - x1, y2 - y1) * mmpp, 3),
                 width_mm=None if mmpp is None else round(min(x2 - x1, y2 - y1) * mmpp, 3),
                 area_mm2=None if mmpp is None else round((x2 - x1) * (y2 - y1) * mmpp * mmpp, 3),
                 location=zone_of(c.bbox, w, h))
-            meas = gm.measure(c.cls, c.bbox) if gm is not None and c.source == "detector" else None
+            meas = gm.measure(c.cls, c.bbox) if gm is not None and c.source in ("detector", "golden") else None
             self.severity.grade(defect, d.rules, measurement=meas)
-            if gm is not None and meas is None and gm.last_reason and c.source == "detector":
+            size = (c.diff_size_px * mmpp if c.diff_size_px and mmpp else defect.size_mm)
+            features.append({"cls": c.cls, "size_mm": size,
+                             "width_loss_pct": meas.pct if meas is not None and meas.kind == "width" else None,
+                             "spacing_loss_pct": meas.pct if meas is not None and meas.kind == "spacing" else None})
+            if gm is not None and meas is None and gm.last_reason and c.source in ("detector", "golden"):
                 defect.severity_reason += f"; no mm measurement: {gm.last_reason}"
             if not d.rules.rules_from_design and meas is not None:
                 defect.severity_reason += "; design rules are generic defaults, set them from the Gerber"
             defects.append(defect)
+        self._apply_customer_rules(design, defects, features)
         a.latency_ms["severity"] = (time.perf_counter() - t) * 1e3
 
         bid = board_id or a.board_id or f"{design}-{int(time.time())}-{next(self._auto_id)}"
@@ -227,6 +275,12 @@ class Inspector:
             latency_ms={}, model_versions=self.model_versions(design),
             disposition=SeverityEngine.board_disposition(defects) if verdict != "PASS" else "ACCEPT",
             customer_class=d.rules.customer_class)
+        if force_review:
+            insp.model_versions["capture_check"] = force_review
+        if capture_info:
+            insp.model_versions["capture"] = json.dumps(capture_info, default=str)[:500]
+        insp.model_versions["evidence"] = "detector+golden" if a.golden_used else (
+            "detector" + (f" ({a.golden_note})" if a.golden_note else ""))
         a.latency_ms["total_to_verdict"] = (time.perf_counter() - t_all) * 1e3
 
         iid = None
@@ -242,6 +296,25 @@ class Inspector:
         if self.light is not None:
             self.light.show(verdict)
         return insp, a, iid
+
+    CUSTOMER_DISPOSITION = {"reject": "SCRAP", "rework": "REWORK", "review": "REVIEW", "accept": "ACCEPT"}
+
+    def _apply_customer_rules(self, design: str, defects, features) -> None:
+        """Operator-confirmed customer rules decide the disposition of the defect types they cover; the
+        IPC-style defaults decide the rest. A rule that needs a measurement the station could not make
+        cannot clear a defect (it fires)."""
+        rules = self.customer_rules.get(design) or []
+        if not rules or not defects:
+            return
+        acts, _ = apply_rules([r for _, r in rules], features)
+        for defect, f, act in zip(defects, features, acts):
+            if act is None:
+                continue
+            defect.disposition = self.CUSTOMER_DISPOSITION[act]
+            for rid, r in rules:
+                if apply_rules([r], [f])[0][0] == act:
+                    defect.severity_reason += f"; customer rule #{rid}: {render(r)}"
+                    break
 
     def model_versions(self, design: str) -> dict[str, str]:
         v = {}
@@ -270,6 +343,6 @@ def save_design(config_dir: Path, d: Design) -> None:
            "rules": ({"min_trace_width_mm": d.rules.min_trace_width_mm,
                       "min_spacing_mm": d.rules.min_spacing_mm} if d.rules.rules_from_design else None),
            "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
-           "golden": d.golden}
+           "golden": d.golden, "gate_golden": d.gate_golden}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     json  # noqa: B018 (keep import for callers that serialise designs)

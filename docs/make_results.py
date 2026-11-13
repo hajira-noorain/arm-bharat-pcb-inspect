@@ -30,9 +30,10 @@ def table(header, rows):
     return "\n".join(out)
 
 
-def bare_section(r: Path) -> list[str]:
+def bare_section(r: Path, tag_pref=("executorch", "final", "ultralytics", "ep70")) -> list[str]:
     out = []
-    for tag in ("executorch", "ultralytics"):
+    tags = [t for t in tag_pref if (r / f"bare_eval_{t}.json").exists()]
+    for tag in tags:
         ev = load(r / f"bare_eval_{tag}.json")
         if not ev:
             continue
@@ -54,11 +55,17 @@ def bare_section(r: Path) -> list[str]:
         for design, by_a in ev.get("gate", {}).items():
             for a, g in by_a.items():
                 lo, hi = g["miss_rate_ci95"]
+                dlo, dhi = g.get("defect_recall_ci95", (None, None))
                 rows.append([design, f"{100 * g['alpha']:.0f}%", g["n_defective"], g["n_good"],
+                             f"{pct(1 - g['defect_recall'])} ({pct(1 - dhi)} to {pct(1 - dlo)})" if dlo is not None else "n/a",
                              f"{pct(g['miss_rate'])} ({pct(lo)} to {pct(hi)})",
+                             num(g.get("false_alarms_per_board"), 2),
                              pct(g["false_reject_rate"]), pct(g["review_rate"])])
+        out.append("The gate is calibrated PER DEFECT (one random defect per calibration board); a defect is "
+                   "shown when its evidence reaches the threshold. Miss rates are measured on test boards.\n")
         out.append(table(["Design", "Allowed miss rate", "Defective", "Good",
-                          "Measured miss rate (95% CI)", "Good boards failed", "Sent to a person"], rows))
+                          "Defects not shown (95% CI)", "Defective boards passed (95% CI)", "False calls per board",
+                          "Good boards failed", "Sent to a person"], rows))
         break
     return out
 
@@ -184,6 +191,90 @@ def device_section(dev: Path | None) -> list[str]:
     return out
 
 
+def golden_section(r: Path) -> list[str]:
+    files = sorted(r.glob("golden_eval_*.json"))
+    if not files:
+        return []
+    ev = load(files[-1])
+    rows = []
+    names = {"detector": "Detector only", "golden_diff": "Golden-board difference only",
+             "fused": "Detector + golden difference (fused)"}
+    for ch, by_a in ev["channels"].items():
+        g = by_a["alpha_0.05"]
+        lo, hi = g["defect_miss_ci95"]
+        rows.append([names.get(ch, ch), f"{pct(g['defect_miss'])} ({pct(lo)} to {pct(hi)})",
+                     num(g["false_calls_per_board"], 2), pct(g["typed_correct_share_of_found"])])
+    return [f"### Golden-board comparison ({ev['design']}, test boards, golden re-captured with a random warp)\n",
+            "Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated on the calibration "
+            "boards.\n",
+            table(["Evidence", "Defects not shown (95% CI)", "False calls per board", "Named correctly"], rows)]
+
+
+def eyetest_section(r: Path) -> list[str]:
+    out = []
+    pod = load(r / "pod_insilico.json")
+    if pod:
+        out.append("### Detection-limit eye test, in silico (defects drawn on held-out DeepPCB patterns)\n")
+        out.append(f"{pod['n_drawn']} drawn defects on held-out clean patterns at {pod['px_per_mm']:.0f} px/mm; "
+                   "each condition re-judges the same drawn boards. Shorts are sized by the gap they bridge.\n")
+        rows = []
+        for cond, o in pod["conditions"].items():
+            for t, v in o["types"].items():
+                g = o.get("golden", {}).get("types", {}).get(t)
+                rows.append([cond, t.replace("_", " "), v.get("sentence", ""), g.get("sentence", "") if g else "n/a"])
+        out.append(table(["Camera condition", "Defect", "Detector only", "Detector + golden board"], rows))
+        fc = [[c, num(o["false_calls_per_board"]["gate_lambda"], 2),
+               num(o.get("golden", {}).get("false_calls_per_board"), 2)] for c, o in pod["conditions"].items()]
+        out.append("\nFalse calls per clean board at the operating threshold:\n")
+        out.append(table(["Camera condition", "Detector only", "Detector + golden board"], fc))
+    sim = load(r / "eyetest_sim.json")
+    if sim:
+        out.append("\n### Eye-test card read from SIMULATED photos (print + camera model, not real photos)\n")
+        out.append(f"Inkjet dot gain {sim['ink_um']:.0f} um, camera {sim['px_per_mm']:.0f} px/mm on paper, "
+                   "perspective, blur, noise and JPEG (`training/eyetest_sim.py`). Validates the reader end to end, "
+                   "not the physical print or camera.\n")
+        rows = []
+        for ch, sres in sim["channels"].items():
+            for t, v in sres["types"].items():
+                rows.append([ch, t.replace("_", " "), v["sentence"],
+                             " ".join(f"{x['size_mm']}:{x['hits']}/{x['n']}" for x in v["table"])])
+        out.append(table(["Evidence", "Defect", "Statement", "Found / planted per size (mm)"], rows))
+    return out
+
+
+def spec_section(r: Path) -> list[str]:
+    files = {p.stem.replace("spec_eval_", ""): load(p) for p in sorted(r.glob("spec_eval_*.json"))}
+    files = {k: v for k, v in files.items() if v}
+    if not files:
+        return []
+    out = ["### Customer requirements to rules (Llama on ExecuTorch vs keyword reader)\n",
+           "Tuning = 80 clauses used while writing the checks; held-out = 40 clauses written independently and "
+           "never used for tuning. Silently wrong = the checks passed but the rule is wrong.\n"]
+    rows = []
+    seen_kw = False
+    for tag, ev in files.items():
+        for name, by_set in ev["compilers"].items():
+            if name == "keyword":
+                if seen_kw:
+                    continue
+                seen_kw = True
+            for sname, sc in by_set.items():
+                rows.append([name, sname, sc["n"], pct(sc["exact"]), pct(sc["auto_correct"]), pct(sc["silent_wrong"]),
+                             pct(sc["to_operator"]), pct(sc["failed"]),
+                             "0" if name == "keyword" else f"{sc['latency_ms_median'] / 1000:.1f} s"])
+    out.append(table(["Reader", "Set", "Clauses", "Exactly right", "Auto-accepted and right", "Silently wrong",
+                      "Sent to operator", "No rule", "Median time (x86 host)"], rows))
+    ev = next(iter(files.values()))
+    cc = ev.get("verifier_corruption_catch", {})
+    if cc:
+        out.append("\nChecks on deliberately corrupted correct rules (share caught):\n")
+        out.append(table(["Corruption", "Caught"], [[k.replace("_", " "), pct(v)] for k, v in cc.items()]))
+        fl = ev.get("verifier_flags_on_gold", {})
+        out.append(f"\nCorrect rules flagged for the operator anyway: tuning {pct(fl.get('tuning'))}, "
+                   f"held-out {pct(fl.get('heldout'))}.")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default=r"C:\Users\sulai\pcb_work\results")
@@ -194,7 +285,8 @@ def main():
     parts = ["# Measured results\n",
              "Generated by `docs/make_results.py` from the JSON files the experiments write. "
              "Nothing in this file is typed by hand.\n"]
-    for sec in (bare_section(r), anomaly_compare_section(r), anomaly_section(r), advice_section(r),
+    for sec in (bare_section(r), golden_section(r), eyetest_section(r), spec_section(r),
+                anomaly_compare_section(r), anomaly_section(r), advice_section(r),
                 learning_section(r),
                 device_section(Path(a.device) if a.device else None)):
         if sec:

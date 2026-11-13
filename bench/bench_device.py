@@ -110,6 +110,54 @@ def bench_vision(root: Path, threads: list[int], quick: bool) -> dict:
     return out
 
 
+def bench_detector_runtimes(root: Path, cfg: dict, quick: bool) -> dict:
+    """The SAME fine-tuned detector on the same real 640 px tiles: ExecuTorch (XNNPACK) vs Arm Runtime for
+    YOLO26 (Arm Optimized-Runtimes). Reports per-tile latency and whether both give the same detections."""
+    import glob
+    import cv2
+    from pcbinspect.detect_bare import ArmRuntimeTiles, ExecuTorchTiles
+    tiles = []
+    for p in sorted(glob.glob(str(root / "demo" / "boards" / "deeppcb_*.jpg")))[:8]:
+        im = cv2.imread(p)
+        if im is not None and "golden" not in p:
+            tiles.append(im[:640, :640])
+    out = {}
+    backends = {}
+    if (root / cfg.get("detector_pte", "")).is_file():
+        backends["executorch"] = lambda: ExecuTorchTiles(root / cfg["detector_pte"])
+    lib, mdl = root / cfg.get("arm_runtime_lib", "missing"), root / cfg.get("arm_runtime_model", "missing")
+    if lib.is_file() and mdl.is_dir():
+        backends["arm_runtime"] = lambda: ArmRuntimeTiles(lib, mdl)
+    dets = {}
+    for name, make in backends.items():
+        try:
+            m = make()
+        except Exception as exc:   # noqa: BLE001
+            out[name] = {"error": str(exc)}
+            continue
+        for t in tiles[:2]:
+            m.infer(t)                       # warm-up
+        reps = 3 if quick else 10
+        ts = []
+        for _ in range(reps):
+            for t in tiles:
+                t0 = time.perf_counter()
+                m.infer(t)
+                ts.append((time.perf_counter() - t0) * 1e3)
+        dets[name] = [m.infer(t) for t in tiles]
+        out[name] = {"tile_ms_median": float(np.median(ts)), "tile_ms_p90": float(np.percentile(ts, 90)),
+                     "n": len(ts), "temp_c": temp_c()}
+        print("detector runtime", name, out[name], flush=True)
+    if len(dets) == 2:   # agreement: same boxes above 0.25 confidence
+        a, b = dets["executorch"], dets["arm_runtime"]
+        agree = []
+        for x, y in zip(a, b):
+            x, y = x[x[:, 4] >= 0.25], y[y[:, 4] >= 0.25]
+            agree.append(abs(len(x) - len(y)))
+        out["count_difference_per_tile"] = float(np.mean(agree))
+    return out
+
+
 def bench_llm(root: Path, cfg: dict, quick: bool) -> dict:
     from pcbinspect.advisor import build_prompt
     from pcbinspect.kb import default_kb
@@ -185,6 +233,9 @@ def main():
     skip = set(args.skip.split(","))
     if "vision" not in skip:
         res["vision"] = bench_vision(root, [1, 2, 4], args.quick)
+    if "runtimes" not in skip:
+        set_threads(4)
+        res["detector_runtimes"] = bench_detector_runtimes(root, cfg, args.quick)
     if "e2e" not in skip:
         set_threads(4)
         res["end_to_end"] = bench_e2e(root, cfg, 5 if args.quick else 20)

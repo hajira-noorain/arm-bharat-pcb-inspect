@@ -100,6 +100,26 @@ CREATE TABLE IF NOT EXISTS alerts (
     data_json TEXT,
     acknowledged INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS eyetests (
+    id INTEGER PRIMARY KEY,
+    ts REAL NOT NULL,
+    design TEXT NOT NULL,
+    rig TEXT,
+    n_trials INTEGER,
+    result_json TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS customer_rules (
+    id INTEGER PRIMARY KEY,
+    ts REAL NOT NULL,
+    design TEXT NOT NULL,
+    clause TEXT NOT NULL,
+    rule_json TEXT NOT NULL,
+    compiler TEXT,
+    verify_json TEXT,
+    capability_json TEXT,
+    confirmed_by_operator INTEGER NOT NULL DEFAULT 1,
+    active INTEGER NOT NULL DEFAULT 1
+);
 """
 
 
@@ -277,6 +297,49 @@ class Store:
             "SELECT * FROM alerts WHERE acknowledged=0 ORDER BY id DESC")]
 
     # ---------- export ----------
+    # ---------- detection-limit eye test ----------
+    def log_eyetest(self, design: str, result: dict, rig: str = "") -> int:
+        n = sum(t.get("n", 0) for t in result.get("types", {}).values())
+        cur = self.conn.execute("INSERT INTO eyetests (ts, design, rig, n_trials, result_json) VALUES (?,?,?,?,?)",
+                                (time.time(), design, rig, n, json.dumps(result)))
+        return int(cur.lastrowid)
+
+    def latest_eyetest(self, design: str) -> dict | None:
+        r = self.conn.execute("SELECT * FROM eyetests WHERE design=? ORDER BY ts DESC, id DESC LIMIT 1",
+                              (design,)).fetchone()
+        if r is None:
+            return None
+        return {"id": r["id"], "ts": r["ts"], "rig": r["rig"], "n_trials": r["n_trials"],
+                **json.loads(r["result_json"])}
+
+    def detection_limits(self, design: str) -> dict:
+        """Per defect type: the stated lower limit (mm) of the latest eye test; None = not reached."""
+        e = self.latest_eyetest(design)
+        if e is None:
+            return {}
+        return {t: v.get("limit_mm") for t, v in e.get("types", {}).items()}
+
+    # ---------- customer acceptance rules ----------
+    def add_rule(self, design: str, clause: str, rule: dict, compiler: str, verify: dict, capability: dict) -> int:
+        cur = self.conn.execute(
+            "INSERT INTO customer_rules (ts, design, clause, rule_json, compiler, verify_json, capability_json) "
+            "VALUES (?,?,?,?,?,?,?)", (time.time(), design, clause, json.dumps(rule), compiler,
+                                       json.dumps(verify), json.dumps(capability)))
+        return int(cur.lastrowid)
+
+    def rules(self, design: str, active_only: bool = True) -> list[dict]:
+        q = "SELECT * FROM customer_rules WHERE design=?" + (" AND active=1" if active_only else "") + " ORDER BY id"
+        out = []
+        for r in self.conn.execute(q, (design,)):
+            d = dict(r)
+            for k in ("rule_json", "verify_json", "capability_json"):
+                d[k[:-5]] = json.loads(d.pop(k) or "null")
+            out.append(d)
+        return out
+
+    def deactivate_rule(self, rule_id: int) -> None:
+        self.conn.execute("UPDATE customer_rules SET active=0 WHERE id=?", (rule_id,))
+
     def export_csv(self, path: Path, since_ts: float = 0.0) -> int:
         rows = self.conn.execute(
             "SELECT i.id, datetime(i.ts,'unixepoch','localtime') AS time, i.board_id, i.design, "

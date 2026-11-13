@@ -1,0 +1,39 @@
+# Notices and third-party terms
+
+**Built with Llama.** This project uses Meta Llama 3.2 (1B and 3B Instruct, SpinQuant INT4 checkpoints),
+licensed under the [Llama 3.2 Community License](https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE)
+and subject to the [Acceptable Use Policy](https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/USE_POLICY.md).
+Llama model weights and the exported `.pte` files are **not** included in this repository. Obtain the checkpoints
+from Meta (Hugging Face, after accepting the licence) and export them with `llm/` as described in the README.
+
+The licence for this repository's own code is being finalised (see the note on Ultralytics below).
+
+## Software
+
+| Component | Use | Licence |
+|---|---|---|
+| [ExecuTorch](https://github.com/pytorch/executorch) | Runs Llama and the vision models on the Arm CPU (XNNPACK / KleidiAI) | BSD-3-Clause |
+| [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) (YOLO26n) | Detector architecture, pretrained weights and training (laptop / Colab only; not installed on the Pi) | **AGPL-3.0**. Weights we train start from Ultralytics' pretrained YOLO26n. |
+| [Arm Optimized-Runtimes](https://github.com/arm/Optimized-Runtimes), YOLO26 for Raspberry Pi 5 | Optional detector runtime, downloaded by `deploy/pi_setup.sh` | Apache-2.0 |
+| PyTorch / torchvision (ResNet-18, Wide-ResNet-50 ImageNet weights) | Anomaly feature backbone | BSD-3-Clause |
+| FAISS, OpenCV, NumPy, SciPy, scikit-learn, FastAPI, uvicorn, PyYAML, reportlab | Runtime and tooling | MIT / BSD / Apache-2.0 (per package) |
+| Atkinson Hyperlegible, Barlow Condensed (fonts, bundled in `pcbinspect/static/fonts`) | Dashboard | SIL Open Font License 1.1 |
+
+## Datasets
+
+None of the datasets are redistributed in this repository; scripts download them from their original hosts.
+
+| Dataset | Use | Licence / terms |
+|---|---|---|
+| [DeepPCB](https://github.com/tangsanli5201/DeepPCB) | Detector training and test; eye-test card board patterns (held-out templates) | MIT |
+| [PKU-Market-PCB / HRIPCB](https://github.com/Ironbrotherstyle/PCB-DATASET) | Detector training and test | Released for research use by the authors (no formal licence stated) |
+| [Mendeley PCB-Defect](https://data.mendeley.com/datasets/vdj74sngvn) | Detector training and test | As stated on the dataset page |
+| [DsPCBSD+](https://doi.org/10.6084/m9.figshare.24970329) (Lv et al., *Scientific Data* 2024) | Detector training and test | CC BY 4.0 |
+| [DefectDet](https://data.mendeley.com/datasets/t9d9zs3bmb) (Azam et al., 2026) | Half of the physical boards for training, the other half held out as a cross-lab test | CC BY 4.0 |
+| [VisA](https://github.com/amazon-science/spot-diff) (pcb1–pcb4) | Assembled-board anomaly model and test | CC BY 4.0 |
+| [EPID](https://zenodo.org/records/16811808) | Assembled-board test | CC BY 4.0 |
+| [Real-IAD](https://huggingface.co/datasets/Real-IAD/Real-IAD) (`pcb` object) | **Evaluation only.** Never copied into this repository, never used to train any weights or memory bank that we publish | CC BY-NC-SA 4.0, research purposes |
+| Open-hardware KiCad board designs (list with per-board licence and commit in `training/kicad/sources.py`) | Design-level synthetic defect rendering | Permissive only (CERN-OHL-P, MIT, Apache-2.0, BSD, CC0, CC BY, ISC, Unlicense); ShareAlike designs excluded. CC BY designs require attribution: see the `manifest.json` written with every render. |
+
+Defect "IPC-style" limits in `config/severity.yaml` come from a secondary source and are not the licensed IPC-A-600
+text; they are editable per customer.

@@ -87,6 +87,29 @@ class ExecuTorchTiles:
         return decode(out.numpy(), self.conf_thr)
 
 
+class ArmRuntimeTiles:
+    """Arm Runtime for YOLO26 on Raspberry Pi 5 (github.com/arm/Optimized-Runtimes, Apache-2.0): a
+    fixed-graph YOLO26n implementation with model-specific memory planning, custom operators and fused,
+    patched XNNPACK kernels. Arm's published Pi 5 figure for YOLO26n at 640 px: 36.6 ms vs 136.9 ms for
+    stock ExecuTorch (benchmarks/reporting/baseline.md in that repo). It accepts any YOLO26n class count,
+    so our fine-tuned 11-class detector converts with `make model CHECKPOINT=best.pt`.
+    Raw output is [1, 4 + classes, positions] (cx, cy, w, h + per-class scores): the classic layout that
+    decode() already handles with NMS. Input is the same letterboxed FP32 NCHW tile as ExecuTorchTiles."""
+    name = "arm-runtime"
+
+    def __init__(self, runtime_lib: str | Path, model_dir: str | Path, conf_thr: float = 0.05):
+        from arm_yolo26n import Yolo26nTensorSession
+        self.session = Yolo26nTensorSession(runtime=str(runtime_lib), model=str(model_dir))
+        self.session.__enter__()
+        self.conf_thr = conf_thr
+
+    def infer(self, tile_bgr: np.ndarray) -> np.ndarray:
+        return decode(np.asarray(self.session.execute(_to_input(tile_bgr))), self.conf_thr)
+
+    def close(self):
+        self.session.__exit__(None, None, None)
+
+
 class UltralyticsTiles:
     name = "ultralytics"
 

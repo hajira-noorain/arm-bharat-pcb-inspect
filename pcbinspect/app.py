@@ -31,6 +31,7 @@ from .learning import FeedbackBuffer, crop_embedding
 from .overlay import render
 from .pipeline import Design, Inspector, load_designs, save_design
 from .spc import drift_alerts, p_chart, pareto
+from .spec import Rule, capability, keyword_compile, render as render_rule, same_rule, verify
 from .store import Store
 
 log = logging.getLogger("pcbinspect")
@@ -61,7 +62,14 @@ class Station:
         self.jobs: queue.Queue = queue.Queue()
         self.lock = threading.Lock()                           # one inspection at a time
         self.llm_lock = threading.Lock()                       # one Llama generation at a time
+        self.spec_compiler = None                              # loaded on first use (setup-time task)
+        self._load_customer_rules()
         threading.Thread(target=self._advice_worker, daemon=True).start()
+
+    def _load_customer_rules(self):
+        for name in self.designs:
+            self.inspector.customer_rules[name] = [(r["id"], Rule.from_dict(r["rule"]))
+                                                   for r in self.store.rules(name)]
 
     # ---------------- loading ----------------
     def _load_vision(self):
@@ -81,6 +89,15 @@ class Station:
                 feature_fn = executorch_feature_fn(root / cfg["backbone_pte"])
             if (root / cfg["detector_pte"]).exists():
                 det = BareDetector(ExecuTorchTiles(root / cfg["detector_pte"]))
+            if cfg.get("vision_backend") == "arm-runtime":
+                # Arm's optimised YOLO26n runtime for the Pi 5 (falls back to ExecuTorch if absent)
+                from .detect_bare import ArmRuntimeTiles
+                lib, mdl = root / cfg.get("arm_runtime_lib", ""), root / cfg.get("arm_runtime_model", "")
+                if lib.is_file() and mdl.is_dir():
+                    try:
+                        det = BareDetector(ArmRuntimeTiles(lib, mdl))
+                    except Exception as exc:
+                        log.warning("Arm runtime unavailable (%s); using ExecuTorch for vision", exc)
         log.info("vision: detector=%s backbone=%s", det is not None, feature_fn is not None)
         return feature_fn, det
 
@@ -164,13 +181,18 @@ class Station:
             raise HTTPException(404, f"unknown design {design}")
         with self.lock:
             t0 = time.perf_counter()
-            bgr = self.camera.capture()
+            live = not isinstance(self.camera, ReplayCamera)
+            bgr = self.camera.capture(n_average=self.cfg.get("average_frames", 1)) if live else self.camera.capture()
             cap_ms = (time.perf_counter() - t0) * 1e3
-            golden = self.camera.golden() if isinstance(self.camera, ReplayCamera) else None
+            golden = self.camera.golden() if not live else None
+            force_review, capture_info = None, None
+            if live:
+                bgr, force_review, capture_info = self._check_capture(bgr, design)
             if board_id is None:
                 n = self.store.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM inspections").fetchone()[0]
                 board_id = f"B{n:05d}"
-            insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden)
+            insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden,
+                                                         force_review=force_review, capture_info=capture_info)
         insp.latency_ms = {"capture": round(cap_ms, 2), **insp.latency_ms}
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
                                 (json.dumps(insp.latency_ms), iid))
@@ -183,6 +205,184 @@ class Station:
         if isinstance(self.camera, ReplayCamera):
             self.camera.next()
         return self.inspection_json(iid)
+
+    # ---------------- detection-limit eye test ----------------
+    def _eyetest_dir(self, design: str) -> Path:
+        p = self.data / "eyetest" / design
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    def _eyetest_manifest(self) -> dict:
+        from .eyetest import load_manifest
+        mp = self.root / self.cfg.get("eyetest_dir", "assets/eyetest") / "manifest.json"
+        if not mp.exists():
+            raise HTTPException(404, f"eye test card manifest not found at {mp}")
+        return load_manifest(mp)
+
+    def eyetest_capture(self, design: str, path: str | None = None) -> dict:
+        """Photograph one card sheet (or read a file in replay/demo mode), rectify it, identify it."""
+        from .eyetest import rectify
+        if design not in self.designs:
+            raise HTTPException(404, f"unknown design {design}")
+        if path:
+            bgr = cv2.imread(str(self.root / path))
+            if bgr is None:
+                raise HTTPException(404, f"cannot read {path}")
+        else:
+            if self.camera is None:
+                raise HTTPException(503, "no camera")
+            with self.lock:
+                bgr = self.camera.capture()
+        r = rectify(bgr)
+        d = self._eyetest_dir(design)
+        if not r.ok or r.sheet is None:
+            return {"ok": False, "reason": r.reason or "sheet number marker not visible",
+                    "captured": sorted(int(x.stem.split("_")[1]) for x in d.glob("sheet_*.png"))}
+        cv2.imwrite(str(d / f"sheet_{r.sheet:02d}.png"), r.img)
+        man = self._eyetest_manifest()
+        have = sorted(int(x.stem.split("_")[1]) for x in d.glob("sheet_*.png"))
+        need = [s["sheet"] for s in man["sheets"]]
+        return {"ok": True, "sheet": r.sheet, "golden": r.sheet == 0, "captured": have,
+                "missing": [k for k in need if k not in have]}
+
+    def eyetest_finish(self, design: str, alpha: float | None = None) -> dict:
+        from .eyetest import read_sheet, summarise
+        if self.detector is None:
+            raise HTTPException(503, "no detector loaded")
+        man = self._eyetest_manifest()
+        d = self._eyetest_dir(design)
+        imgs = {int(x.stem.split("_")[1]): cv2.imread(str(x)) for x in d.glob("sheet_*.png")}
+        if 0 not in imgs:
+            raise HTTPException(409, "capture the GOLDEN sheet (sheet 0) first")
+        tests = [s for s in man["sheets"] if not s["golden"] and s["sheet"] in imgs]
+        if not tests:
+            raise HTTPException(409, "capture at least one test sheet")
+        use_golden = design in self.inspector.gates_golden
+        th = self.inspector.thresholds(design, alpha, golden=use_golden)
+        if th is None:
+            raise HTTPException(409, "design has no calibrated gate")
+        t0 = time.perf_counter()
+        trials = []
+        with self.lock:
+            for s in tests:
+                trials += read_sheet(imgs[s["sheet"]], imgs[0], s, self.detector, use_golden=use_golden)
+        res = summarise(trials, float(th.lam))
+        res.update({"design": design, "alpha": th.alpha, "evidence": "detector+golden" if use_golden else "detector",
+                    "sheets_read": [s["sheet"] for s in tests], "sheets_total": len(man["sheets"]) - 1,
+                    "seconds": round(time.perf_counter() - t0, 1)})
+        res["id"] = self.store.log_eyetest(design, res, rig=str(self.camera.name if self.camera else ""))
+        return res
+
+    # ---------------- customer acceptance rules ----------------
+    def _spec_backend(self):
+        """The Llama used to read acceptance clauses: a dedicated (larger) .pte if configured, else the
+        advice model. Loaded once, on first use: compiling rules is a setup-time task."""
+        if self.spec_compiler is not None:
+            return self.spec_compiler
+        from .spec_llm import LlamaSpecCompiler
+        be = None
+        p = self.root / self.cfg.get("spec_llm_pte", "")
+        if self.cfg.get("spec_llm_pte") and p.is_file():
+            from .llm import ExecuTorchLlama
+            try:
+                be = ExecuTorchLlama(p, self.root / self.cfg["llm_tokenizer"], threads=self.cfg.get("llm_threads", 4))
+            except Exception as exc:
+                log.exception("spec Llama failed to load (%s)", exc)
+        be = be or self.llm
+        self.spec_compiler = LlamaSpecCompiler(be) if be is not None else False
+        return self.spec_compiler
+
+    def compile_rule(self, design: str, clause: str) -> dict:
+        if design not in self.designs:
+            raise HTTPException(404, f"unknown design {design}")
+        d = self.designs[design]
+        limits = self.store.detection_limits(design)
+        out = {"clause": clause, "readers": []}
+        rules = {}
+        comp = self._spec_backend()
+        if comp:
+            with self.llm_lock:
+                r = comp.compile(clause)
+            rules["llama"] = r.rule
+            out["llama_ms"] = round(r.latency_ms)
+            out["llama_error"] = r.error
+        rules["keyword"] = keyword_compile(clause)
+        for name, rule in rules.items():
+            if rule is None:
+                out["readers"].append({"reader": name, "rule": None})
+                continue
+            out["readers"].append({
+                "reader": name, "rule": rule.to_dict(), "sentence": render_rule(rule), "verify": verify(rule, clause),
+                "capability": capability(rule, limits, d.rules.min_trace_width_mm, d.rules.min_spacing_mm)})
+        lr, kr = rules.get("llama"), rules.get("keyword")
+        out["readers_agree"] = bool(lr is not None and same_rule(lr, kr))
+        first = out["readers"][0]
+        out["status"] = ("verified" if out["readers_agree"] and first.get("verify", {}).get("status") == "verified"
+                         else "operator_must_choose")
+        out["detection_limits_from"] = "latest eye test" if limits else "no eye test yet"
+        return out
+
+    def save_rule(self, design: str, clause: str, rule: dict, reader: str) -> dict:
+        r = Rule.from_dict(rule)
+        from .spec import schema_errors
+        errs = schema_errors(r)
+        if errs:
+            raise HTTPException(422, "; ".join(errs))
+        d = self.designs[design]
+        cap = capability(r, self.store.detection_limits(design), d.rules.min_trace_width_mm, d.rules.min_spacing_mm)
+        rid = self.store.add_rule(design, clause, r.to_dict(), reader, verify(r, clause), cap)
+        self._load_customer_rules()
+        return {"id": rid, "sentence": render_rule(r), "capability": cap}
+
+    # ---------------- capture envelope (live cameras only) ----------------
+    def _flatfield_path(self) -> Path:
+        return self.data / "flatfield.npz"
+
+    def _profile_path(self, design: str) -> Path:
+        return self.data / f"capture_profile_{design}.json"
+
+    def _check_capture(self, bgr, design: str):
+        """Flat-field correction (if recorded), then: is this capture inside the envelope the station was
+        calibrated for? Generic checks (blur, clipping, exposure) plus, when recorded, the design's reference
+        profile (sharpness, brightness, colour balance). Returns (image, reason or None, info)."""
+        from .imaging import CaptureProfile, FlatField, capture_quality
+        if self._flatfield_path().exists():
+            bgr = FlatField.load(self._flatfield_path()).apply(bgr)
+        q = capture_quality(bgr)
+        reasons = list(q["reasons"])
+        if self._profile_path(design).exists():
+            reasons += CaptureProfile.load(self._profile_path(design)).check(bgr)["reasons"]
+        info = {"sharpness": round(q["sharpness"], 1), "mean": round(q["mean"], 1)}
+        try:
+            info["camera"] = self.camera.settings()
+        except Exception:   # noqa: BLE001
+            pass
+        reason = ("capture outside the calibrated envelope: " + "; ".join(dict.fromkeys(reasons))) if reasons else None
+        return bgr, reason, info
+
+    def record_flatfield(self, n: int = 8) -> dict:
+        """Blank matte grey/white card under the same light, filling the view."""
+        from .imaging import FlatField
+        if self.camera is None or isinstance(self.camera, ReplayCamera):
+            raise HTTPException(409, "needs a live camera")
+        with self.lock:
+            frames = [self.camera.capture() for _ in range(n)]
+        FlatField.from_frames(frames).save(self._flatfield_path())
+        return {"ok": True, "frames": n}
+
+    def record_profile(self, design: str, n: int = 8) -> dict:
+        """With the GOLDEN board in place: the reference look of a good capture for this design."""
+        from .imaging import CaptureProfile, FlatField
+        if self.camera is None or isinstance(self.camera, ReplayCamera):
+            raise HTTPException(409, "needs a live camera")
+        with self.lock:
+            frames = [self.camera.capture() for _ in range(n)]
+        if self._flatfield_path().exists():
+            ff = FlatField.load(self._flatfield_path())
+            frames = [ff.apply(f) for f in frames]
+        prof = CaptureProfile.from_images(frames)
+        prof.save(self._profile_path(design))
+        return {"ok": True, **prof.to_dict()}
 
     def _overlay_path(self, iid: int) -> Path:
         p = self.data / "overlays"
@@ -333,6 +533,28 @@ class EnrolReq(BaseModel):
     images: int = 8
 
 
+class EyeCaptureReq(BaseModel):
+    design: str
+    path: str | None = None      # replay/demo: a photo file instead of the camera
+
+
+class EyeFinishReq(BaseModel):
+    design: str
+    alpha: float | None = None
+
+
+class RuleCompileReq(BaseModel):
+    design: str
+    clause: str
+
+
+class RuleSaveReq(BaseModel):
+    design: str
+    clause: str
+    rule: dict
+    reader: str
+
+
 class AskReq(BaseModel):
     question: str
 
@@ -364,6 +586,8 @@ def create_app(cfg: dict) -> FastAPI:
                 "vision": {"detector": None if st.detector is None else st.detector.tiles.name,
                            "backbone": st.feature_fn is not None},
                 "light": st.light.state,
+                "eyetest_demo": sorted(str(x.relative_to(st.root)).replace("\\", "/")
+                                       for x in (st.root / "demo" / "eyetest").glob("*.jpg")),
                 "recent": st.store.recent(12),
                 "alerts": st.store.open_alerts()}
 
@@ -471,6 +695,59 @@ def create_app(cfg: dict) -> FastAPI:
     @app.post("/api/alerts/{aid}/ack")
     def ack(aid: int):
         st.store.conn.execute("UPDATE alerts SET acknowledged=1 WHERE id=?", (aid,))
+        return {"ok": True}
+
+    @app.post("/api/capture/flatfield")
+    def capture_flatfield():
+        return st.record_flatfield()
+
+    @app.post("/api/capture/profile/{design}")
+    def capture_profile(design: str):
+        return st.record_profile(design)
+
+    @app.get("/api/eyetest/card.pdf")
+    def eyetest_card():
+        f = st.root / cfg.get("eyetest_dir", "assets/eyetest") / "eyetest_card.pdf"
+        if not f.exists():
+            raise HTTPException(404, "card PDF not in this bundle")
+        return FileResponse(f, media_type="application/pdf", filename="eyetest_card.pdf")
+
+    @app.post("/api/eyetest/capture")
+    def eyetest_capture(req: EyeCaptureReq):
+        return st.eyetest_capture(req.design, req.path)
+
+    @app.post("/api/eyetest/finish")
+    def eyetest_finish(req: EyeFinishReq):
+        return st.eyetest_finish(req.design, req.alpha)
+
+    @app.post("/api/eyetest/reset/{design}")
+    def eyetest_reset(design: str):
+        for x in st._eyetest_dir(design).glob("sheet_*.png"):
+            x.unlink()
+        return {"ok": True}
+
+    @app.get("/api/eyetest/{design}")
+    def eyetest_latest(design: str):
+        d = st._eyetest_dir(design)
+        return {"latest": st.store.latest_eyetest(design),
+                "captured": sorted(int(x.stem.split("_")[1]) for x in d.glob("sheet_*.png"))}
+
+    @app.post("/api/rules/compile")
+    def rules_compile(req: RuleCompileReq):
+        return st.compile_rule(req.design, req.clause)
+
+    @app.post("/api/rules")
+    def rules_save(req: RuleSaveReq):
+        return st.save_rule(req.design, req.clause, req.rule, req.reader)
+
+    @app.get("/api/rules/{design}")
+    def rules_list(design: str):
+        return [{**r, "sentence": render_rule(Rule.from_dict(r["rule"]))} for r in st.store.rules(design)]
+
+    @app.delete("/api/rules/{rule_id}")
+    def rules_delete(rule_id: int):
+        st.store.deactivate_rule(rule_id)
+        st._load_customer_rules()
         return {"ok": True}
 
     @app.post("/api/ask")

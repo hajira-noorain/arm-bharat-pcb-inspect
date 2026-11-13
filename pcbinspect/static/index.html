@@ -111,6 +111,7 @@ section[hidden] { display: none; }
 
 /* ---------- inspect button (also: space bar / USB foot pedal) ---------- */
 .inspect-dock { position: fixed; right: 20px; bottom: 20px; z-index: 5; display: flex; align-items: center; gap: 14px; }
+.inspect-dock[hidden] { display: none; }
 
 #inspect small { display: block; font: 400 13px/1.2 var(--body); letter-spacing: 0; color: #B7D2C7; margin-top: 6px; }
 #inspect { font: 700 30px/1 var(--display); letter-spacing: .03em; padding: 16px 40px 14px; border-radius: 12px; border: 0; background: var(--mask); color: var(--silk); cursor: pointer; box-shadow: 0 6px 18px rgba(15, 61, 46, .35); min-width: 220px; }
@@ -138,6 +139,33 @@ td.v-REVIEW { color: #9A6A00; font-weight: 700; }
 .answer { font-size: 20px; margin: 16px 0 8px; }
 .meta { color: var(--ink-3); font-size: 14px; }
 
+.llm-banner { background: var(--fail); color: #fff; padding: 10px 20px; font-weight: 700; }
+.llm-banner[hidden] { display: none; }
+.llm-banner code { background: rgba(255,255,255,.15); padding: 1px 5px; border-radius: 4px; }
+
+/* ---------- eye test + customer rules ---------- */
+.steps { margin: 0 0 14px; padding-left: 22px; }
+.steps li { margin-bottom: 6px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+.sheets span { font: 500 16px/1 var(--display); padding: 6px 9px; border-radius: 6px; border: 1px solid var(--rule); color: var(--ink-3); }
+.sheets span.got { background: var(--mask); color: var(--silk); border-color: var(--mask); }
+.limit { padding: 12px 0; border-top: 1px solid var(--rule); }
+.limit .what { font: 700 21px/1.15 var(--display); }
+.limit .say { margin: 2px 0 6px; }
+.limit .say.no { color: var(--fail); }
+.hits { display: grid; grid-template-columns: repeat(var(--n), minmax(44px, 1fr)); gap: 3px; max-width: 520px; }
+.hits div { font-size: 13px; text-align: center; padding: 4px 0; border-radius: 4px; background: #E7EFEB; color: var(--ink-2); }
+.hits div.ok { background: #CDEBD9; color: #11613A; }
+.hits div.low { background: #F7D6D3; color: #8E1F18; }
+.hits small { display: block; font-size: 11px; color: var(--ink-3); }
+textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding: 10px 12px; width: 100%; min-height: 70px; resize: vertical; }
+.reader { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+.reader .who { font: 500 16px/1 var(--display); color: var(--ink-3); letter-spacing: .02em; }
+.reader .rule { font-size: 19px; margin: 6px 0; }
+.chk { font-size: 15px; margin: 2px 0; }
+.chk.ok { color: #11613A; } .chk.warn { color: #8A6200; } .chk.bad { color: var(--fail); }
+.agree { font: 700 20px/1.2 var(--display); margin-top: 14px; }
+
 .toast { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 10px; display: none; gap: 14px; align-items: center; z-index: 20; max-width: 90vw; }
 .toast button { background: none; border: 1px solid #fff; color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
 
@@ -162,10 +190,13 @@ td.v-REVIEW { color: #9A6A00; font-weight: 700; }
     <span id="st-camera">Camera</span><span id="st-vision">Vision</span><span id="st-llm">Llama</span>
   </div>
 </header>
+<div id="llm-banner" class="llm-banner" hidden role="alert">Llama is not running on this station, so advice and customer rules fall back to fixed text. Check the model files and run <code>deploy/arm_check.py</code>.</div>
 <nav role="tablist">
   <button role="tab" aria-selected="true" data-tab="inspect">Inspect</button>
   <button role="tab" aria-selected="false" data-tab="trends">Trends</button>
   <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
+  <button role="tab" aria-selected="false" data-tab="eyetest">Eye test</button>
+  <button role="tab" aria-selected="false" data-tab="rules">Customer rules</button>
   <button role="tab" aria-selected="false" data-tab="teach">Teach a board</button>
   <button role="tab" aria-selected="false" data-tab="log">Log</button>
 </nav>
@@ -202,6 +233,49 @@ td.v-REVIEW { color: #9A6A00; font-weight: 700; }
       <p class="sub">For example: how many shorts in the last 3 hours, what was the yield this shift, history of board B-0042.</p>
       <form class="ask-row" id="ask-form"><input id="question" autocomplete="off" placeholder="Type a question"><button class="btn solid">Ask</button></form>
       <div id="ask-out"></div>
+    </div>
+  </section>
+
+  <section id="tab-eyetest" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h2>How small a defect can this station find?</h2>
+        <p class="sub">Like an eye chart: a printed card has defects that get smaller, each size repeated 30 times. The station counts how many it finds and states its own limit for this camera, lighting and software. Repeat it after changing any of them.</p>
+        <ol class="steps">
+          <li><a href="/api/eyetest/card.pdf">Print the card</a> at 100% (actual size) and check the 100 mm bar with a ruler.</li>
+          <li>Put sheet 0, the defect-free sheet, under the camera at the same height you inspect boards, and press Capture.</li>
+          <li>Capture each numbered sheet the same way, in any order.</li>
+          <li>Press Read the card.</li>
+        </ol>
+        <div class="sheets" id="et-sheets"></div>
+        <div class="actions">
+          <button class="btn solid" id="et-capture">Capture sheet</button>
+          <button class="btn" id="et-demo" hidden>Use simulated photos (demo)</button>
+          <button class="btn solid" id="et-finish">Read the card</button>
+          <button class="btn" id="et-reset">Start again</button>
+        </div>
+        <p id="et-msg" class="meta"></p>
+      </div>
+      <div class="panel" id="et-result"><h2>Measured limit</h2><p class="sub">No eye test has been run for this design yet.</p></div>
+    </div>
+  </section>
+
+  <section id="tab-rules" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Add a customer requirement</h2>
+        <p class="sub">Paste one acceptance requirement as the customer wrote it. Llama on this station and a keyword reader each turn it into a rule; you confirm before it is used. The station also says whether it can actually guarantee the rule, from its last eye test.</p>
+        <form id="rule-form">
+          <textarea id="clause" placeholder="for example: Nicks that reduce the conductor width by more than 20% are rejectable."></textarea>
+          <div class="actions" style="margin-top:10px"><button class="btn solid" id="rule-read">Read requirement</button></div>
+        </form>
+        <div id="rule-out"></div>
+      </div>
+      <div class="panel">
+        <h2>Rules in use</h2>
+        <p class="sub">They decide what happens to the defect types they mention. Everything else follows the standard IPC-style table.</p>
+        <div id="rule-list"></div>
+      </div>
     </div>
   </section>
 
@@ -255,9 +329,12 @@ let state = null, current = null, pollTimer = null;
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
   document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", x === b));
   document.querySelectorAll("main > section").forEach((s) => s.hidden = s.id !== `tab-${b.dataset.tab}`);
+  document.querySelector(".inspect-dock").hidden = b.dataset.tab !== "inspect";  // never cover other tabs
   if (b.dataset.tab === "trends") loadTrends();
   if (b.dataset.tab === "log") loadLog();
   if (b.dataset.tab === "teach") loadLearn();
+  if (b.dataset.tab === "eyetest") loadEyetest();
+  if (b.dataset.tab === "rules") loadRules();
 }));
 
 // ---------------- state ----------------
@@ -271,6 +348,7 @@ async function loadState() {
   on("#st-camera", !!state.camera, state.camera ? `Camera: ${state.camera}` : "No camera");
   on("#st-vision", !!state.vision.detector || state.vision.backbone, state.vision.detector ? `Vision: ${state.vision.detector}` : "Vision: anomaly only");
   on("#st-llm", !!state.llm, state.llm ? `Llama: ${state.llm}` : "Llama not loaded");
+  $("#llm-banner").hidden = !!state.llm;   // the mandatory Llama must never be missing silently
 }
 
 // Only offer miss rates the calibration set can support: alpha needs at least 1/alpha - 1
@@ -487,6 +565,99 @@ $("#learn-btn").addEventListener("click", async () => {
 });
 
 // ---------------- log ----------------
+// ---------------- eye test ----------------
+const TYPE_NAMES = { open: "Opens", short: "Shorts", pin_hole: "Pin holes", spurious_copper: "Spurious copper", mouse_bite: "Mouse bites (nicks)", spur: "Spurs" };
+function renderSheets(captured, total) {
+  const n = total ?? Math.max(10, ...captured);
+  $("#et-sheets").innerHTML = Array.from({ length: n + 1 }, (_, k) =>
+    `<span class="${captured.includes(k) ? "got" : ""}" title="${k === 0 ? "defect-free sheet" : "test sheet"}">${k === 0 ? "0 golden" : k}</span>`).join("");
+}
+function renderLimit(t, v) {
+  const n = v.table.length;
+  const cells = v.table.map((r) => `<div class="${r.lcb95 >= 0.9 ? "ok" : (r.significantly_low ? "low" : "")}">${r.hits}/${r.n}<small>${r.size_mm} mm</small></div>`).join("");
+  const no = !["ok", "below_range"].includes(v.status);
+  return `<div class="limit"><div class="what">${esc(TYPE_NAMES[t] || words(t))}</div>
+    <p class="say ${no ? "no" : ""}">${esc(v.sentence)}</p><div class="hits" style="--n:${n}">${cells}</div></div>`;
+}
+async function loadEyetest() {
+  const design = $("#design").value;
+  const r = await api(`/api/eyetest/${encodeURIComponent(design)}`);
+  renderSheets(r.captured, r.latest?.sheets_total);
+  $("#et-demo").hidden = !(state?.eyetest_demo?.length);
+  const L = r.latest;
+  if (!L) { $("#et-result").innerHTML = `<h2>Measured limit</h2><p class="sub">No eye test has been run for this design yet.</p>`; return; }
+  const when = new Date(L.ts * 1000).toLocaleString();
+  $("#et-result").innerHTML = `<h2>Measured limit</h2>
+    <p class="sub">${esc(when)}. ${L.n_trials} planted defects on ${L.sheets_read.length} sheets, judged as the station judges boards (${esc(L.evidence)}, ${Math.round(L.alpha * 100)}% miss setting). False calls: ${L.false_calls_per_coupon.toFixed(2)} per pattern. Each cell: found / planted at that size; green = shown to be at least 90% at 95% confidence.</p>
+    ${Object.entries(L.types).map(([t, v]) => renderLimit(t, v)).join("")}`;
+}
+async function etCapture(path) {
+  const r = await api("/api/eyetest/capture", { method: "POST", body: JSON.stringify({ design: $("#design").value, path }) });
+  renderSheets(r.captured);
+  $("#et-msg").textContent = r.ok ? `Captured sheet ${r.sheet}${r.golden ? " (defect-free)" : ""}. ${r.missing?.length ? `Still to capture: ${r.missing.join(", ")}.` : "All sheets captured."}`
+                                  : `Sheet not read: ${r.reason}. Make sure all four corner squares and the top centre square are in view.`;
+  return r;
+}
+$("#et-capture").addEventListener("click", () => etCapture(null).catch((e) => toast(e.message)));
+$("#et-demo").addEventListener("click", async () => {
+  for (const p of state.eyetest_demo) { try { await etCapture(p); } catch (e) { toast(e.message); return; } }
+});
+$("#et-reset").addEventListener("click", async () => { await api(`/api/eyetest/reset/${encodeURIComponent($("#design").value)}`, { method: "POST" }); $("#et-msg").textContent = ""; loadEyetest(); });
+$("#et-finish").addEventListener("click", async () => {
+  const b = $("#et-finish"); b.disabled = true; $("#et-msg").textContent = "Reading every sheet";
+  try { await api("/api/eyetest/finish", { method: "POST", body: JSON.stringify({ design: $("#design").value, alpha: parseFloat($("#alpha").value) }) }); $("#et-msg").textContent = "Done."; loadEyetest(); }
+  catch (e) { $("#et-msg").textContent = `Not read: ${e.message}`; }
+  finally { b.disabled = false; }
+});
+
+// ---------------- customer rules ----------------
+const CAP_TEXT = { guaranteed: ["ok", "The station can guarantee this"], limited: ["warn", "Partly guaranteed"],
+  not_guaranteed: ["bad", "NOT guaranteed by this station"], unmeasured: ["warn", "Not yet measured: run the eye test"] };
+let lastRead = null;
+function readerBlock(rd, i) {
+  if (!rd.rule) return `<div class="reader"><div class="who">${esc(rd.reader)}</div><p class="rule">Could not read this requirement.</p></div>`;
+  const v = rd.verify, c = rd.capability, ct = CAP_TEXT[c.status] || ["warn", c.status];
+  const checks = v.status === "verified" ? `<p class="chk ok">Checks passed: the number, defect, comparison and action match the text.</p>`
+    : `<p class="chk ${v.status === "check" ? "warn" : "bad"}">${esc(v.problems.join("; "))}</p>`;
+  return `<div class="reader"><div class="who">Read by ${rd.reader === "llama" ? "Llama on this station" : "the keyword reader"}</div>
+    <p class="rule">${esc(rd.sentence)}</p>${checks}<p class="chk ${ct[0]}">${esc(ct[1])}: ${esc(c.reason)}</p>
+    <button class="btn" data-use="${i}">Use this rule</button></div>`;
+}
+$("#rule-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const clause = $("#clause").value.trim(); if (!clause) return;
+  $("#rule-out").innerHTML = `<p class="pending">Reading</p>`;
+  try {
+    const r = await api("/api/rules/compile", { method: "POST", body: JSON.stringify({ design: $("#design").value, clause }) });
+    lastRead = r;
+    const single = r.readers.filter((x) => x.rule).length < 2 && !r.readers.some((x) => x.reader === "llama" && x.rule);
+    const head = single ? `<p class="agree">Llama is not available, so only the keyword reader read this. Check the rule before using it.</p>`
+      : r.readers_agree ? `<p class="agree">Both readers agree${r.status === "verified" ? " and the checks pass" : ", but check the warnings"}.</p>`
+      : `<p class="agree">The readers disagree. Choose the one that matches the requirement, or rephrase it.</p>`;
+    const show = r.readers_agree ? [r.readers[0]] : r.readers;
+    $("#rule-out").innerHTML = head + show.map((rd) => readerBlock(rd, r.readers.indexOf(rd))).join("");
+  } catch (e) { $("#rule-out").innerHTML = `<p class="chk bad">${esc(e.message)}</p>`; }
+});
+$("#rule-out").addEventListener("click", async (ev) => {
+  const i = ev.target.dataset.use; if (i === undefined || !lastRead) return;
+  const rd = lastRead.readers[+i];
+  await api("/api/rules", { method: "POST", body: JSON.stringify({ design: $("#design").value, clause: lastRead.clause, rule: rd.rule, reader: rd.reader }) });
+  $("#rule-out").innerHTML = `<p class="chk ok">Rule saved. It applies from the next inspection.</p>`; $("#clause").value = ""; loadRules();
+});
+async function loadRules() {
+  const rows = await api(`/api/rules/${encodeURIComponent($("#design").value)}`);
+  $("#rule-list").innerHTML = rows.length ? rows.map((r) => {
+    const ct = CAP_TEXT[r.capability?.status] || ["warn", ""];
+    return `<div class="reader"><p class="rule">#${r.id}: ${esc(r.sentence)}</p><p class="meta">From: "${esc(r.clause)}"</p>
+      <p class="chk ${ct[0]}">${esc(ct[1])}${r.capability?.reason ? `: ${esc(r.capability.reason)}` : ""}</p>
+      <button class="btn" data-del="${r.id}">Remove</button></div>`; }).join("")
+    : `<p class="sub">No customer rules yet: boards are judged with the IPC-style table for Class ${state?.designs.find((d) => d.name === $("#design").value)?.customer_class ?? 2}.</p>`;
+}
+$("#rule-list").addEventListener("click", async (ev) => {
+  const id = ev.target.dataset.del; if (!id) return;
+  await api(`/api/rules/${id}`, { method: "DELETE" }); loadRules();
+});
+
 async function loadLog() {
   await loadState();
   $("#log-body").innerHTML = state.recent.map((r) => `<tr><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? (r.final_verdict === "PASS" ? "passed" : "failed") : ""}</td></tr>`).join("");
