@@ -83,7 +83,7 @@ The verdict never waits for Llama. Advice is produced on a background thread and
 | DsPCBSD+ (Lv et al., 2024) | 10,259 crops of real production-line AOI defects | Its own validation split is our test set |
 | DefectDet (Azam et al., 2026) | 268 photos of real manufactured double-layer boards | **By physical board**: half the boards train, the other half are test only |
 
-The sources look very different: binarised, green solder mask, bare copper, production AOI crops, phone-style photos. That variety is deliberate. Training also recolours the solder mask (green, blue, red, black, white finishes) and simulates camera effects, so the model does not learn one look.
+The sources look very different: binarised, green solder mask, bare copper, production AOI crops, phone-style photos. That variety is deliberate. Training also recolours the binarised scans as real finishes (green, blue, red, black, white, yellow and purple solder mask, bare copper, tinned copper) and simulates camera effects, so the model does not learn one look.
 
 **Tiling.** Large frames are cut into 640-pixel tiles with 128 pixels of overlap, with the same code in training and inference. Detections are merged with NMS.
 
@@ -113,7 +113,7 @@ The PS lists anomalies alongside named defects. On assembled boards the variety 
 4. **Calibration.** Leave-one-out, or a held-out share of good boards, sets the per-design normalisation. These numbers are honest even when a design is taught from five boards.
 5. **Export.** The backbone is the only neural network on this path. Its ExecuTorch FP32 export matches PyTorch to about 1e-6 relative error, so a memory built in the cloud is valid on the Pi (measured at 320 px: 1.2e-6).
 
-**How the setting was chosen.** Nine settings were compared on VisA pcb1-4: two backbones, three input sizes, and three scoring refinements. The deployed setting (ResNet-18, 320 px, top-1% score) had a mean image AUROC of 95.6%, versus 90.5% for the first version (256 px, worst patch). It also had the best heatmap (pixel AUROC 97.9%) and the best result when teaching a design from 10 good boards (90.8%, versus 84.5%). A Wide-ResNet-50 was no better and costs several times the compute on the Pi. Per-position normalisation and a board mask raised the full-memory score but hurt the 10-board result and the heatmap, so they are off.
+**How the setting was chosen.** Nine settings were compared on VisA pcb1-4: two backbones, three input sizes, and three scoring refinements. The deployed setting (ResNet-18, 320 px, top-1% score) had a mean image AUROC of 95.6%, versus 90.5% for the first version (256 px, worst patch). It also had the best heatmap (pixel AUROC 97.9%) and tied for the best result when teaching a design from 10 good boards (90.8%, versus 84.5%). A Wide-ResNet-50 was no better and costs several times the compute on the Pi. Per-position normalisation and a board mask raised the full-memory score but hurt the 10-board result and the heatmap, so they are off.
 
 **Second dataset.** On Real-IAD's `pcb` object (five camera views per board, evaluation only, never trained on), the same method (ResNet-18, 320 px) reached a mean image AUROC of 90.6% across the five views (89.2% to 93.0%), with one memory per view built from that view's good images.
 
