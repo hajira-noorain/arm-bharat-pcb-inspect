@@ -82,3 +82,27 @@ def test_the_checker_still_rejects_what_decoding_cannot_prevent():
     assert a.backend == "template" and a.rejected_reasons and len(a.choices) == 2
     be2 = Scripted(prefer=("under-etching",), summary_pieces=[])
     assert Advisor(be2, kb, option_order="kb").advise(RECORD, None).rejected_reasons == ["empty summary"]
+
+
+def test_pointwise_mode_judges_each_cause_alone_and_keeps_the_list_out_of_the_prompt():
+    kb = default_kb()
+
+    class YesNo(Scripted):
+        def __init__(self, *a):
+            super().__init__(*a)
+            self.questions = []
+
+        def yes_no(self, text):
+            self.questions.append(text)
+            repeating = "is REPEATING" in text
+            handling = "handling cause" in text
+            return 3.0 if (repeating != handling) else -3.0      # the rule: repeating -> process, one-off -> handling
+
+    be = YesNo(("continuity",), [["A short and an open were found."]])
+    a = Advisor(be, kb, option_order="kb", cause_mode="pointwise").advise(RECORD, {"short": 5})
+    by = {s["defect"]: s for s in a.steps}
+    assert kb.by_id[by["D1"]["cause_id"]]["step"] != "handling"          # the repeating short: a process cause
+    assert kb.by_id[by["D2"]["cause_id"]]["step"] == "handling"          # the one-off open: the handling cause
+    assert len(be.questions) == 3 + 4 and all("Candidate cause:" in q for q in be.questions)
+    assert "causes:" not in be.fed[0] and "actions:" in be.fed[0]        # no cause list to copy from
+    assert a.backend == LLAMA_BACKEND

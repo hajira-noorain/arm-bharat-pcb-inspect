@@ -136,6 +136,8 @@ class LogitLlama:
         self.load_ms = (time.perf_counter() - t0) * 1e3
         self.tok = load_tokenizer(tokenizer_path)
         self.max_ctx = 2048
+        self._yes = [self.tok.encode(w)[0] for w in (" yes", " Yes", "yes", "Yes")]
+        self._no = [self.tok.encode(w)[0] for w in (" no", " No", "no", "No")]
         self.pos = 0
         self._last: np.ndarray | None = None
         self.n_forward = 0
@@ -179,6 +181,22 @@ class LogitLlama:
             return self._forward([tok]).copy()
         try:
             return score_sequences(step, [self.encode(o) for o in options], self.encode(end) if end else None)
+        finally:
+            self.pos, self._last = base_pos, base
+
+    def yes_no(self, text: str) -> float:
+        """Append `text` (a yes/no question ending just before the answer), read how much more likely
+        "yes" is than "no" as the next word (log-odds), and take the text back out of the context.
+        One forward pass per question: this is how candidates are judged one at a time, with no list."""
+        if self._last is None:
+            raise RuntimeError("feed() a prompt first")
+        base_pos, base = self.pos, self._last
+        try:
+            self.feed(text)
+            lg = self._last
+            yes = max(float(lg[t]) for t in self._yes)
+            no = max(float(lg[t]) for t in self._no)
+            return yes - no
         finally:
             self.pos, self._last = base_pos, base
 

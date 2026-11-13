@@ -71,6 +71,7 @@ def main():
     ap.add_argument("--backend", default="runner", choices=["runner", "logits"],
                     help="runner = text runner, numbered options; logits = scored option text + number-safe summary")
     ap.add_argument("--score-norm", default="sum", choices=["sum", "mean"])
+    ap.add_argument("--cause-mode", default="list", choices=["list", "pointwise"])
     ap.add_argument("--seed", type=int, default=0, help="record set: 0 = the original set (used while "
                     "developing prompts), 1 = development set for the logits path, 2 = held-out, run once")
     args = ap.parse_args()
@@ -82,7 +83,8 @@ def main():
         from pcbinspect.llm import ExecuTorchLlama
         llm = ExecuTorchLlama(args.pte, args.tok)
     # options shuffled per board: measure the model itself, not the order they are listed in
-    adv = Advisor(llm, kb, fewshot=args.fewshot, option_order="shuffle", score_norm=args.score_norm)
+    adv = Advisor(llm, kb, fewshot=args.fewshot, option_order="shuffle", score_norm=args.score_norm,
+                  cause_mode=args.cause_mode)
     rows = []
     t0 = time.time()
     for i, (rec, hist) in enumerate(make_records(args.n, args.seed)):
@@ -127,7 +129,7 @@ def main():
 
     summary = {
         "model": Path(args.pte).name, "fewshot": args.fewshot, "n": len(rows), "load_ms": llm.load_ms,
-        "backend": args.backend, "score_norm": args.score_norm, "seed": args.seed,
+        "backend": args.backend, "score_norm": args.score_norm, "cause_mode": args.cause_mode, "seed": args.seed,
         "accepted_rate": len(acc) / len(rows),
         "rejection_reasons": dict(reasons),
         "choices_parsed": len(choices),

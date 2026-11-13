@@ -200,7 +200,7 @@ SCORED_SYSTEM = ("You are the quality assistant on a PCB inspection station. For
 
 
 def build_scored_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase,
-                        orders: dict[str, tuple[list, list]], window: int = 20) -> str:
+                        orders: dict[str, tuple[list, list]], window: int = 20, list_causes: bool = True) -> str:
     """Prompt for the scored path. Each cause carries its process step in brackets, and each defect line
     says whether that defect has been repeating, so the rule in the last paragraph can be applied."""
     lines = []
@@ -212,13 +212,15 @@ def build_scored_prompt(record: dict, history: dict[str, int] | None, kb: Knowle
         cids, aids = orders[d["id"]]
         lines.append(f"{d['id']}: {d['type'].replace('_', ' ')}, {d.get('severity')}{size}, {d.get('location')}, "
                      f"confidence {d.get('confidence')}. {rep_txt}.")
-        lines.append("  causes: " + "; ".join(
-            f"{kb.by_id[x]['short']} ({kb.by_id[x].get('step', 'process')})" for x in cids))
+        if list_causes:
+            lines.append("  causes: " + "; ".join(
+                f"{kb.by_id[x]['short']} ({kb.by_id[x].get('step', 'process')})" for x in cids))
         lines.append("  actions: " + "; ".join(kb.by_id[x]["short"] for x in aids))
     user = (f"Board {record['board_id']} verdict {record['verdict']}. Defects:\n" + "\n".join(lines) +
             "\nRule: a REPEATING defect comes from the process (imaging, etching, drilling, plating, assembly), "
-            "so choose a cause from one of those steps. A ONE-OFF defect comes from handling or a local "
-            "accident, so choose a handling cause if one is listed.\n"
+            "so the rule points to an imaging, etching, drilling, plating or assembly cause and NOT to a handling "
+            "cause. A ONE-OFF defect comes from handling or a local accident, so the rule points to a handling "
+            "cause and NOT to a process cause.\n"
             "Answer one line per item, copying the option text, then one line 'Summary:' with one or two "
             "sentences for the operator that use only the facts above.")
     return (HDR + SCORED_SYSTEM + "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n" + user +
@@ -286,7 +288,9 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
 class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
-                 option_order: str | None = None, score_norm: str = "sum"):
+                 option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list"):
+        self.cause_mode = cause_mode      # scored path: 'list' (score the listed options) or 'pointwise'
+        #                                   (one yes/no question per candidate cause, no list in the prompt)
         self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
         self.last_forwards = 0
         self.fewshot = fewshot
@@ -330,17 +334,27 @@ class Advisor:
         t0 = time.perf_counter()
         be.reset()
         n0 = be.n_forward
-        be.feed(build_scored_prompt(record, history, kb, orders, window))
+        pointwise = self.cause_mode == "pointwise" and hasattr(be, "yes_no")
+        be.feed(build_scored_prompt(record, history, kb, orders, window, list_causes=not pointwise))
         n_prompt, t1 = be.pos, time.perf_counter()
         steps, choices, lines = [], [], []
         for i, d in enumerate(defects):
             cids, aids = orders[d["id"]]
             picked = {}
             for what, ids in (("cause", cids), ("action", aids)):
-                be.feed(("" if not lines else "\n") + f"{d['id']} {what}:")
                 opts = [" " + kb.by_id[x]["short"] for x in ids]
-                sc = be.score(opts, end="\n")
-                val = [lp / n if self.score_norm == "mean" else lp for lp, n in sc]
+                if what == "cause" and pointwise:
+                    # each candidate is judged alone: there is no list to copy the first entry from
+                    seen = (history or {}).get(d["type"], 0)
+                    kind = "REPEATING" if seen >= 3 else "ONE-OFF"
+                    val = [be.yes_no(f"\nQuestion: {d['id']} is a {kind} defect. Candidate cause: "
+                                     f"\"{kb.by_id[x]['short']}\" ({kb.by_id[x].get('step', 'process')}). Is this the "
+                                     f"kind of cause the rule points to for a {kind} defect? Answer:") for x in ids]
+                    be.feed(("" if not lines else "\n") + f"{d['id']} {what}:")
+                else:
+                    be.feed(("" if not lines else "\n") + f"{d['id']} {what}:")
+                    sc = be.score(opts, end="\n")
+                    val = [lp / n if self.score_norm == "mean" else lp for lp, n in sc]
                 j = max(range(len(ids)), key=lambda k: val[k])
                 be.feed(opts[j])
                 picked[what] = (j, ids[j])
