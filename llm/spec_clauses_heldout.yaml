@@ -1,0 +1,41 @@
+# Held-out clauses written independently of the verifier and the tuning set.
+- {t: "Open circuits: scrap.", d: open, m: always, a: reject}
+- {t: "Boards exhibiting a broken trace shall be rejected.", d: open, m: always, a: reject}
+- {t: "Any bridging between adjacent conductors is cause for scrap.", d: short, m: always, a: reject}
+- {t: "Shorted nets are to be held for MRB disposition.", d: short, m: always, a: review}
+- {t: "Mouse bites up to 0.15 mm are acceptable.", d: mouse_bite, m: size_mm, op: ">", v: 0.15, a: reject}
+- {t: "Edge nicks deeper than 5 mil shall be sent to the engineer for review.", d: mouse_bite, m: size_mm, op: ">", v: 0.127, a: review}
+- {t: "Notches of 3 mil or more are rejectable.", d: mouse_bite, m: size_mm, op: ">=", v: 0.0762, a: reject}
+- {t: "Conductor width reduction from nicks or bites not to exceed 30%.", d: mouse_bite, m: width_loss_pct, op: ">", v: 30, a: reject}
+- {t: "Where a nick takes out 25 percent or more of the trace width, the board goes to MRB.", d: mouse_bite, m: width_loss_pct, op: ">=", v: 25, a: review}
+- {t: "Spurs longer than 100 µm must be removed.", d: spur, m: size_mm, op: ">", v: 0.1, a: rework}
+- {t: "Copper protrusions of 4 mil and above shall be reworked.", d: spur, m: size_mm, op: ">=", v: 0.1016, a: rework}
+- {t: "Spur reducing the spacing by over 20% is a reject.", d: spur, m: spacing_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Whiskers that cut conductor clearance 15% or more: hold for review.", d: spur, m: spacing_loss_pct, op: ">=", v: 15, a: review}
+- {t: "Stray copper larger than 0.2 mm is not allowed and must be cleaned off.", d: spurious_copper, m: size_mm, op: ">", v: 0.2, a: rework}
+- {t: "Copper islands 8 mil or bigger are cause for rejection.", d: spurious_copper, m: size_mm, op: ">=", v: 0.2032, a: reject}
+- {t: "Residual copper splash shall be removed.", d: spurious_copper, m: always, a: rework}
+- {t: "More than 3 copper specks per board: scrap.", d: spurious_copper, m: count, op: ">", v: 3, a: reject}
+- {t: "Pinholes exceeding 75 microns shall be referred to engineering.", d: pin_hole, m: size_mm, op: ">", v: 0.075, a: review}
+- {t: "Pin hole 2 mil max.", d: pin_hole, m: size_mm, op: ">", v: 0.0508, a: reject}
+- {t: "Five or more pinholes on a board is rejectable.", d: pin_hole, m: count, op: ">=", v: 5, a: reject}
+- {t: "Voids in copper are acceptable up to two per board.", d: pin_hole, m: count, op: ">", v: 2, a: reject}
+- {t: "Any missing hole is cause for rejection.", d: missing_hole, m: always, a: reject}
+- {t: "Undrilled holes found shall be put on hold for MRB.", d: missing_hole, m: always, a: review}
+- {t: "Three or more missing holes per panel will result in scrap.", d: missing_hole, m: count, op: ">=", v: 3, a: reject}
+- {t: "Missing drill hits exceeding one per board are to be reviewed.", d: missing_hole, m: count, op: ">", v: 1, a: review}
+- {t: "Eroded pads are not acceptable.", d: missing_pad, m: always, a: reject}
+- {t: "Damaged land with loss of 0.25 mm or more is a reject.", d: missing_pad, m: size_mm, op: ">=", v: 0.25, a: reject}
+- {t: "Pad damage over 10 mil should be sent back for rework.", d: missing_pad, m: size_mm, op: ">", v: 0.254, a: rework}
+- {t: "Missing pads: more than two per board means scrap.", d: missing_pad, m: count, op: ">", v: 2, a: reject}
+- {t: "A single missing pad shall be escalated to the quality engineer.", d: missing_pad, m: count, op: ">=", v: 1, a: review}
+- {t: "Defects of any type larger than 0.3 mm shall cause rejection.", d: any, m: size_mm, op: ">", v: 0.3, a: reject}
+- {t: "No more than 4 defects of any kind per board are allowed.", d: any, m: count, op: ">", v: 4, a: reject}
+- {t: "Six or more flaws of any description: hold for MRB.", d: any, m: count, op: ">=", v: 6, a: review}
+- {t: "Any visible defect must be reworked before shipment.", d: any, m: always, a: rework}
+- {t: "Two or more open circuits on one board: put on hold and call the engineer.", d: open, m: count, op: ">=", v: 2, a: review}
+- {t: "Boards shall conform to IPC-A-600 Class 2.", k: class, c: 2}
+- {t: "Acceptance criteria: Class III per IPC-6012.", k: class, c: 3}
+- {t: "Class 1 general electronic product.", k: class, c: 1}
+- {t: "Inspection level - IPC Class 2 minimum.", k: class, c: 2}
+- {t: "Quality requirement: high reliability, Class 3.", k: class, c: 3}

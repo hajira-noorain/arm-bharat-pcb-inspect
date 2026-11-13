@@ -1,0 +1,86 @@
+# Benchmark: customer acceptance clauses -> gold rules (pcbinspect/spec.py rule language).
+# Written to cover the phrasings that occur in workmanship notes and purchase orders: limits stated
+# as "shall not exceed" / "up to X acceptable" (fires ABOVE X), thresholds stated as "X or more"
+# (fires AT X), units in mm / mil / micron / percent, counts written as words, and actions that are
+# implied ("must be removed" = rework) rather than named. "scrap" maps to reject.
+# Fields: k=kind (limit default), d=defect, m=measure, op, v=value (mm | % | count), a=action, c=class
+- {t: "No shorts are permitted.", d: short, m: always, a: reject}
+- {t: "Any open circuit is cause for rejection.", d: open, m: always, a: reject}
+- {t: "Nicks that reduce the conductor width by more than 20% are rejectable.", d: mouse_bite, m: width_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Conductor width reduction from nicks shall not exceed 10%.", d: mouse_bite, m: width_loss_pct, op: ">", v: 10, a: reject}
+- {t: "Spurious copper of 0.25 mm or larger must be removed by rework.", d: spurious_copper, m: size_mm, op: ">=", v: 0.25, a: rework}
+- {t: "Pin holes larger than 0.1 mm in diameter are not acceptable.", d: pin_hole, m: size_mm, op: ">", v: 0.1, a: reject}
+- {t: "Inspect all boards to Class 3.", k: class, c: 3}
+- {t: "Spurs reducing spacing by more than 20 percent shall be reworked.", d: spur, m: spacing_loss_pct, op: ">", v: 20, a: rework}
+- {t: "Missing holes: reject.", d: missing_hole, m: always, a: reject}
+- {t: "Boards with more than two mouse bites must go to the engineer for review.", d: mouse_bite, m: count, op: ">", v: 2, a: review}
+- {t: "Copper splash bigger than 4 mil is to be scrapped.", d: spurious_copper, m: size_mm, op: ">", v: 0.1016, a: reject}
+- {t: "Pinholes up to 0.05 mm are acceptable.", d: pin_hole, m: size_mm, op: ">", v: 0.05, a: reject}
+- {t: "Any damaged pad must be held for manual inspection.", d: missing_pad, m: always, a: review}
+- {t: "Spacing reduction of 10% or more caused by spurs is rejectable.", d: spur, m: spacing_loss_pct, op: ">=", v: 10, a: reject}
+- {t: "The customer requires IPC Class 2 acceptability.", k: class, c: 2}
+- {t: "Reject the board if any defect is 0.5 mm or larger.", d: any, m: size_mm, op: ">=", v: 0.5, a: reject}
+- {t: "Mouse bites deeper than 25% of the track width must be repaired.", d: mouse_bite, m: width_loss_pct, op: ">", v: 25, a: rework}
+- {t: "Bridging between conductors is not allowed under any circumstances.", d: short, m: always, a: reject}
+- {t: "Stray copper over 150 microns shall be removed (rework).", d: spurious_copper, m: size_mm, op: ">", v: 0.15, a: rework}
+- {t: "Send every open for rework; opens are acceptable only once repaired.", d: open, m: always, a: rework}
+- {t: "A board with at least three spurs goes to review.", d: spur, m: count, op: ">=", v: 3, a: review}
+- {t: "Treat this order as Class 1 (general electronics).", k: class, c: 1}
+- {t: "Residual copper of 0.2 mm or more must be reworked.", d: spurious_copper, m: size_mm, op: ">=", v: 0.2, a: rework}
+- {t: "Pin-holes exceeding 3 mil diameter are rejectable.", d: pin_hole, m: size_mm, op: ">", v: 0.0762, a: reject}
+- {t: "Nicks greater than 0.3 mm long require rework.", d: mouse_bite, m: size_mm, op: ">", v: 0.3, a: rework}
+- {t: "Shorts of any size: scrap the board.", d: short, m: always, a: reject}
+- {t: "Width reduction greater than 20% due to pin holes is non-conforming.", d: pin_hole, m: width_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Flag any spur for engineering review.", d: spur, m: always, a: review}
+- {t: "More than one open per board means scrap.", d: open, m: count, op: ">", v: 1, a: reject}
+- {t: "Spurious copper is acceptable if it does not reduce spacing by more than 30%.", d: spurious_copper, m: spacing_loss_pct, op: ">", v: 30, a: reject}
+- {t: "A protrusion that reduces clearance by 20% or more must be trimmed (rework).", d: spur, m: spacing_loss_pct, op: ">=", v: 20, a: rework}
+- {t: "Every board with a missing drill hole is rejected.", d: missing_hole, m: always, a: reject}
+- {t: "Edge notches larger than 0.15 mm: rework.", d: mouse_bite, m: size_mm, op: ">", v: 0.15, a: rework}
+- {t: "Defects of 1 mm or bigger of any type must be reviewed by QA.", d: any, m: size_mm, op: ">=", v: 1, a: review}
+- {t: "Pinholes of 2 mil or more are not permitted.", d: pin_hole, m: size_mm, op: ">=", v: 0.0508, a: reject}
+- {t: "Conductor width must not be reduced by more than 10% by any defect.", d: any, m: width_loss_pct, op: ">", v: 10, a: reject}
+- {t: "Short circuits are unacceptable.", d: short, m: always, a: reject}
+- {t: "If copper residue exceeds 0.4 mm, hold the board for review.", d: spurious_copper, m: size_mm, op: ">", v: 0.4, a: review}
+- {t: "Boards must meet Class 3 for this medical customer.", k: class, c: 3}
+- {t: "Open traces may be repaired with a jumper wire; rework all opens.", d: open, m: always, a: rework}
+- {t: "Spurs longer than 0.5 millimetres are rejectable.", d: spur, m: size_mm, op: ">", v: 0.5, a: reject}
+- {t: "Nicks reducing track width by 15 % or more are a reject.", d: mouse_bite, m: width_loss_pct, op: ">=", v: 15, a: reject}
+- {t: "Up to two pinholes per board are allowed; more than two is a reject.", d: pin_hole, m: count, op: ">", v: 2, a: reject}
+- {t: "Missing pads must be sent for rework.", d: missing_pad, m: always, a: rework}
+- {t: "Copper splash above 0.3 mm must be removed.", d: spurious_copper, m: size_mm, op: ">", v: 0.3, a: rework}
+- {t: "Any bridge between pads is a scrap condition.", d: short, m: always, a: reject}
+- {t: "Spacing loss above 25% from spurious copper requires engineering review.", d: spurious_copper, m: spacing_loss_pct, op: ">", v: 25, a: review}
+- {t: "Mouse bites up to 10% of conductor width are acceptable.", d: mouse_bite, m: width_loss_pct, op: ">", v: 10, a: reject}
+- {t: "Pin holes larger than 100 µm require repair.", d: pin_hole, m: size_mm, op: ">", v: 0.1, a: rework}
+- {t: "Use Class 2 criteria.", k: class, c: 2}
+- {t: "The board is rejected if it has any open.", d: open, m: always, a: reject}
+- {t: "Spurs that reduce spacing by at least 30% are rejectable.", d: spur, m: spacing_loss_pct, op: ">=", v: 30, a: reject}
+- {t: "Any defect larger than 0.8 mm must be reworked.", d: any, m: size_mm, op: ">", v: 0.8, a: rework}
+- {t: "Nicks: rework if over 0.25 mm.", d: mouse_bite, m: size_mm, op: ">", v: 0.25, a: rework}
+- {t: "Pinholes which reduce conductor width by more than 20% shall be rejected.", d: pin_hole, m: width_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Three or more spurious copper spots on one board: review.", d: spurious_copper, m: count, op: ">=", v: 3, a: review}
+- {t: "Missing holes are to be reviewed by the process engineer.", d: missing_hole, m: always, a: review}
+- {t: "Shorts must be reworked by cutting the bridge.", d: short, m: always, a: rework}
+- {t: "Opens longer than 0.1 mm are rejectable.", d: open, m: size_mm, op: ">", v: 0.1, a: reject}
+- {t: "Protrusions over 6 mil should be removed (rework).", d: spur, m: size_mm, op: ">", v: 0.1524, a: rework}
+- {t: "Accept spurs smaller than 0.1 mm; reject anything 0.1 mm or larger.", d: spur, m: size_mm, op: ">=", v: 0.1, a: reject}
+- {t: "Width reduction exceeding 20% from mouse bites: scrap.", d: mouse_bite, m: width_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Spurious copper which reduces spacing by more than 10% is rejectable for Class 3.", d: spurious_copper, m: spacing_loss_pct, op: ">", v: 10, a: reject}
+- {t: "More than three nicks on a single board must go for review.", d: mouse_bite, m: count, op: ">", v: 3, a: review}
+- {t: "A pinhole is acceptable as long as it is below 0.2 mm.", d: pin_hole, m: size_mm, op: ">=", v: 0.2, a: reject}
+- {t: "Damaged pads are not permitted.", d: missing_pad, m: always, a: reject}
+- {t: "Bridged conductors must be sent to MRB.", d: short, m: always, a: review}
+- {t: "Nicks reducing width by over 30% must be scrapped, regardless of class.", d: mouse_bite, m: width_loss_pct, op: ">", v: 30, a: reject}
+- {t: "Spurs: maximum allowed spacing reduction is 20%.", d: spur, m: spacing_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Copper islands of 0.5 mm or more need rework.", d: spurious_copper, m: size_mm, op: ">=", v: 0.5, a: rework}
+- {t: "Every open circuit shall be reviewed by an engineer before any decision.", d: open, m: always, a: review}
+- {t: "Pinholes larger than 0.15 mm are acceptable only for Class 1; for this job reject them.", d: pin_hole, m: size_mm, op: ">", v: 0.15, a: reject}
+- {t: "Any short must be repaired.", d: short, m: always, a: rework}
+- {t: "Spurs over 0.2 mm long: hold for review.", d: spur, m: size_mm, op: ">", v: 0.2, a: review}
+- {t: "No more than 20% reduction of conductor width is allowed for nicks.", d: mouse_bite, m: width_loss_pct, op: ">", v: 20, a: reject}
+- {t: "Customer drawing note: workmanship to IPC Class 3.", k: class, c: 3}
+- {t: "Stray copper causing more than 50% loss of clearance is a reject.", d: spurious_copper, m: spacing_loss_pct, op: ">", v: 50, a: reject}
+- {t: "Boards with two or more opens are scrap.", d: open, m: count, op: ">=", v: 2, a: reject}
+- {t: "Any defect at all must be flagged for review.", d: any, m: always, a: review}
+- {t: "Pin holes bigger than .2 mm are rejected.", d: pin_hole, m: size_mm, op: ">", v: 0.2, a: reject}
