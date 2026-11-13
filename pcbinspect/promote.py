@@ -23,7 +23,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .gate import ConformalGate
+from .gate import ConformalGate, defect_level_scores
 from .learning import FeedbackBuffer, fit_head, rescore
 
 MIN_RECALL = 0.95
@@ -72,18 +72,22 @@ def _iou(a, b) -> float:
 
 def _calibration_pass(inspector, design: str, items: list, base: Path, head) -> dict:
     """Board scores + per-defect hits on the calibration boards with a given head."""
-    d_scores, g_scores, per_defect = [], [], []
+    g_scores, per_board, per_defect = [], [], []
     for it in items:
         im = cv2.imread(str(base / it["file"]))
         if im is None:
             continue
         a = inspector.analyse(im, design, head=head, read_id=False)
-        (g_scores if it["good"] else d_scores).append(a.board_score)
-        for gt in it.get("boxes", []):
-            best = max((c.conf for c in a.candidates if c.cls == gt["cls"] and _iou(c.bbox, gt["bbox"]) >= 0.3),
-                       default=0.0)
-            per_defect.append(best)
-    return {"d": d_scores, "g": g_scores, "defect_scores": per_defect}
+        if it["good"]:
+            g_scores.append(a.board_score)
+            continue
+        # a defect counts as shown if ANY candidate covers it (same rule as the gate calibration)
+        s = [max((c.conf for c in a.candidates if _iou(c.bbox, gt["bbox"]) >= 0.3), default=0.0)
+             for gt in it.get("boxes", [])]
+        per_board.append(s)
+        per_defect += s
+    # gate calibrated per defect (one random defect per board; see gate.py)
+    return {"d": defect_level_scores(per_board), "g": g_scores, "defect_scores": per_defect}
 
 
 def try_promote(inspector, design: str, buf: FeedbackBuffer, root: Path, store=None,

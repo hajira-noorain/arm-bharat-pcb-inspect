@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.detect_bare import BareDetector  # noqa: E402
-from pcbinspect.gate import ConformalGate, clopper_pearson, evaluate  # noqa: E402
+from pcbinspect.gate import ConformalGate, clopper_pearson, defect_level_scores, evaluate  # noqa: E402
 from pcbinspect.record import BARE_CLASSES  # noqa: E402
 
 
@@ -95,6 +95,8 @@ def main():
     ap.add_argument("--backend", default="ultralytics", choices=["ultralytics", "executorch"])
     ap.add_argument("--weights", default=None)
     ap.add_argument("--tag", default=None)
+    ap.add_argument("--data", default=None, help="bare_yolo folder (default <work>/data/bare_yolo)")
+    ap.add_argument("--no-gate", action="store_true", help="detection metrics only (do not write gates)")
     args = ap.parse_args()
     work = Path(args.work)
     tag = args.tag or args.backend
@@ -105,7 +107,7 @@ def main():
         from pcbinspect.detect_bare import ExecuTorchTiles
         tiles = ExecuTorchTiles(args.weights or work / "models" / "vision" / "pcb_y26n_xnnpack.pte")
     det = BareDetector(tiles)
-    data = work / "data" / "bare_yolo"
+    data = Path(args.data) if args.data else work / "data" / "bare_yolo"
     res_dir = work / "results"
     res_dir.mkdir(exist_ok=True)
     splits = {s: run_split(det, json.loads((data / f"boards_{s}.json").read_text()),
@@ -113,7 +115,8 @@ def main():
 
     report = {"backend": args.backend, "tag": tag}
     # ---------------- detection metrics on TEST boards ----------------
-    for scope in ("all", "deeppcb", "hripcb", "mendeley"):
+    present = sorted({b["source"] for b in splits["test"]})
+    for scope in ["all"] + present:
         boards = [b for b in splits["test"] if scope == "all" or b["source"] == scope]
         per_cls_tp, per_cls_conf, per_cls_ngt = defaultdict(list), defaultdict(list), defaultdict(int)
         for b in boards:
@@ -131,19 +134,29 @@ def main():
         print(scope, f"mAP50={report[f'det_{scope}']['mAP50']}", flush=True)
 
     # ---------------- conformal gate per design ----------------
+    if args.no_gate:
+        (res_dir / f"bare_eval_{tag}.json").write_text(json.dumps(report, indent=1))
+        return
     gate_dir = work / "models" / "gate"
     gate_dir.mkdir(parents=True, exist_ok=True)
     report["gate"] = {}
     for design in ("deeppcb", "hripcb", "mendeley"):
         def scores(split):
+            """defective: one random ground-truth defect per board, scored by the strongest covering
+            detection (per-defect guarantee, see gate.py); good: board max (false-reject control)."""
             bs = [b for b in splits[split] if b["source"] == design]
             s = lambda b: max((d["conf"] for d in b["dets"]), default=0.0)  # noqa: E731
-            return ([s(b) for b in bs if not b["good"]], [s(b) for b in bs if b["good"]])
-        cal_d, cal_g = scores("cal")
-        test_d, test_g = scores("test")
+            per = [[max((d["conf"] for d in b["dets"] if iou(d["bbox"], g["bbox"]) >= 0.3), default=0.0)
+                    for g in b["boxes"]] for b in bs if not b["good"]]
+            return (defect_level_scores(per), [s(b) for b in bs if not b["good"]],
+                    [s(b) for b in bs if b["good"]])
+        cal_d, _, cal_g = scores("cal")
+        _, test_board_d, test_g = scores("test")
         g = ConformalGate(cal_d, cal_g, design)
         g.save(gate_dir / f"{design}.json")
-        report["gate"][design] = {f"alpha_{a}": evaluate(g.thresholds(a, 0.01), test_d, test_g)
+        # board-level verdict behaviour (miss = defective board PASSED, review rate) on TEST boards;
+        # the per-defect recall over ALL test defects is added below
+        report["gate"][design] = {f"alpha_{a}": evaluate(g.thresholds(a, 0.01), test_board_d, test_g)
                                   for a in (0.01, 0.05, 0.10)}
         test_boards = [b for b in splits["test"] if b["source"] == design and not b["good"]]
         for a in (0.01, 0.05, 0.10):

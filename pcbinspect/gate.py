@@ -1,13 +1,21 @@
-"""Conformal PASS / FAIL / REVIEW gate with a finite-sample miss-rate guarantee.
+"""Conformal PASS / FAIL / REVIEW gate with a finite-sample miss-rate guarantee PER DEFECT.
 
 Board score s(x) = strongest defect evidence on the board (max detector confidence / normalised
-anomaly score). From a held-out calibration set we pick two thresholds:
+anomaly score); a defect is SHOWN when its evidence is >= lam. From a held-out calibration set we
+pick two thresholds:
 
-  lam  (miss-rate threshold):  boards with s < lam are PASSED.
-       Chosen as the k-th smallest score among n calibration DEFECTIVE boards, k = floor(alpha*(n+1)).
-       For a new defective board exchangeable with the calibration set,
-           P(s_new < lam) <= k/(n+1) <= alpha        (split-conformal argument)
-       i.e. the expected fraction of defective boards that slip through is at most alpha.
+  lam  (miss-rate threshold): a defect is shown iff its score >= lam; boards with s < lam PASS.
+       The calibration "defective scores" are DEFECT scores: for each defective calibration board,
+       ONE of its ground-truth defects chosen at random, scored by the strongest detection covering
+       it (0 if none). One per board keeps the scores exchangeable (boards are the sampling unit).
+       lam = k-th smallest of these n scores, k = floor(alpha*(n+1)). For a randomly chosen defect
+       on a new board exchangeable with the calibration boards,
+           P(defect not shown) = P(score < lam) <= k/(n+1) <= alpha     (split-conformal argument)
+       and a defective board is then caught with probability >= 1 - alpha as well (it is caught
+       whenever any of its defects is shown).
+       History: the first version calibrated on BOARD max scores. That guaranteed the board verdict
+       but, on DeepPCB at alpha 5%, showed only 34% of individual defects (boards carry several
+       defects and the max is high). The detection-limit "eye test" exposed it; see docs.
 
   tau  (false-reject threshold): boards with s >= max(lam, tau) are FAILED automatically.
        Chosen from m calibration GOOD boards so that P(s_good >= tau) <= beta.
@@ -27,6 +35,12 @@ from pathlib import Path
 
 import numpy as np
 from scipy.stats import beta as beta_dist
+
+
+def defect_level_scores(per_board: list[list[float]], seed: int = 0) -> list[float]:
+    """One randomly chosen defect score per defective board (boards with no labelled defect skipped)."""
+    rng = np.random.default_rng(seed)
+    return [float(s[rng.integers(len(s))]) for s in per_board if len(s)]
 
 
 def miss_threshold(defective_scores: np.ndarray, alpha: float) -> float:

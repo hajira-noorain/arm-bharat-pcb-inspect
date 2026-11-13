@@ -24,7 +24,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.anomaly import torch_feature_fn  # noqa: E402
-from pcbinspect.gate import ConformalGate, evaluate  # noqa: E402
+from pcbinspect.gate import ConformalGate, defect_level_scores, evaluate  # noqa: E402
 from pcbinspect.learning import FeedbackBuffer, combine, crop_embedding, fit_head  # noqa: E402
 from training.eval_bare import iou  # noqa: E402
 
@@ -97,6 +97,20 @@ def board_scores(boards, embs, head):
     return d, g
 
 
+def gate_scores(boards, embs, head):
+    """Calibration scores for the per-defect gate (see pcbinspect/gate.py): one random ground-truth
+    defect per defective board, scored by the strongest (rescored) covering detection; good: board max."""
+    per, g = [], []
+    for b, e in zip(boards, embs):
+        confs = rescored(b, e, head)
+        if b["good"]:
+            g.append(max(confs, default=0.0))
+        else:
+            per.append([max((c for c, d in zip(confs, b["dets"]) if iou(d["bbox"], gt["bbox"]) >= 0.3), default=0.0)
+                        for gt in b["boxes"]])
+    return defect_level_scores(per), g
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", default=r"C:\Users\sulai\pcb_work")
@@ -124,7 +138,7 @@ def main():
         e_te = embed_boards(test, fn, res / f"emb_{design}_te_{args.tag}.npz")
 
         # BEFORE: detector only, gate calibrated on the calibration half
-        g0 = ConformalGate(*board_scores(calib, e_cb, None), design)
+        g0 = ConformalGate(*gate_scores(calib, e_cb, None), design)
         th0 = g0.thresholds(0.05, 0.01)
         before = {"shown": shown_stats(test, e_te, None, th0.lam),
                   "gate": evaluate(th0, *board_scores(test, e_te, None))}
@@ -145,7 +159,7 @@ def main():
             head = fit_head(buf, version=1)
             if head is None:
                 continue
-            g = ConformalGate(*board_scores(calib, e_cb, head), design)
+            g = ConformalGate(*gate_scores(calib, e_cb, head), design)
             th = g.thresholds(0.05, 0.01)
             curve.append({"labels": n, "confirmed": head.n_pos, "false_alarms_labelled": head.n_neg,
                           **shown_stats(test, e_te, head, th.lam),
