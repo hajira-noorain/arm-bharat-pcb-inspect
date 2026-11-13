@@ -54,9 +54,9 @@ Everything in this segment is the station as built: the Teach a board screen (Se
 
 | Time | Shot | Narration |
 |---|---|---|
-| 2:00 | Screen: Customer rules tab; paste "Reject any board with an open circuit wider than 0.1 mm" | "Customers write their acceptance rules in plain English." |
-| 2:07 | Screen: the compiled rule rendered back as a sentence, green "checked" chips; footer "Llama 3.2 3B on this device" | "Llama 3.2 3B, on the Pi, turns each clause into a rule, and our checks verify every number and defect against the clause." |
-| 2:17 | Screen: a clause asking for a smaller size than the card certified; the capability flag the station shows: "proven to find these from [x] mm; smaller ones may be missed" | "And when a rule asks for a defect smaller than the eye test showed it can see, the station says so, instead of silently accepting a promise it cannot keep." |
+| 2:00 | Screen: Customer rules tab; paste "Reject mouse bites that remove more than 20% of the trace width" | "Customers write their acceptance rules in plain English." |
+| 2:07 | Screen: the compiled rule rendered back as a sentence, green "checked" chips; footer "Llama 3.2 3B on this device" | "Llama 3.2 3B, on the Pi, turns each clause into a rule. It can only pick answers the clause supports, and our checks verify every number and defect against the clause." |
+| 2:17 | Screen: a second clause, "Rework any mouse bite larger than 0.1 mm", which asks for a smaller size than the station certified; the capability flag the station shows: "proven to find these from [x] mm; smaller ones may be missed" | "And when a rule asks for a defect smaller than the eye test showed it can see, the station says so, instead of silently accepting a promise it cannot keep." |
 
 ## 2:30 to 2:50: Measured on the Pi
 

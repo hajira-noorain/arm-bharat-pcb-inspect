@@ -20,7 +20,7 @@ For each board it:
 And it proves what it can do:
 
 - **Eye test.** Photograph a printed card of 252 defects of known size. The station states, per defect type, the smallest size it finds 90% of the time with 95% confidence (MIL-HDBK-1823A a90/95), and which sizes it cannot certify.
-- **Customer rules.** Plain-English acceptance clauses are compiled by **Llama 3.2 3B on ExecuTorch** into executable rules, verified by deterministic checks, and compared with the measured limit. A rule asking for smaller defects than the station can see is flagged, not silently accepted.
+- **Customer rules.** Plain-English acceptance clauses are compiled by **Llama 3.2 3B on ExecuTorch** into executable rules. Llama can only choose answers the clause supports (constrained decoding on the exported model's next-token scores), the result is verified by deterministic checks, and it is compared with the measured limit. A rule asking for smaller defects than the station can see is flagged, not silently accepted. On 40 held-out clauses: 62.5% exactly right, 1 silently wrong, the rest sent to the operator to confirm.
 
 ## How it covers PS5
 
@@ -60,7 +60,7 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 | Golden-board comparison and fusion on held-out DeepPCB boards | Copper segmentation on solder-masked boards under shop lighting |
 | Eye-test reader on simulated photos of the card; in-silico detection limits under three camera conditions | Component presence/polarity and solder-joint judgement on assembled boards (anomaly flag only) |
 | Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
-| Llama advice grounding and choice vs chance; Llama rule compiler on 80 tuning and 40 held-out clauses | |
+| Llama advice grounding and choice vs chance; Llama rule reader (free, constrained, grounded) on 80 tuning and 40 held-out clauses | A taught board's gate and limits on real boards (built and tested on camera-like synthetic pictures; first real use is the Pi session) |
 | Learning from operator feedback, simulated on held-out boards (DeepPCB: boards sent to a person 20% to 4%, no defective board passed) | |
 | Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
 
