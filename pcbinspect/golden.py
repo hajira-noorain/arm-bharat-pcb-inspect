@@ -97,8 +97,10 @@ def _ecc(a, b, warp, motion, iters, gauss):
         return None
 
 
-def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray, float]:
-    """Warp `golden` onto `test`. Returns (warped, cc); cc 0.0 = no alignment found.
+def align_warp(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray | None, float]:
+    """Find where `golden` sits in `test`. Returns (warp, cc): warp is the 2x3 matrix taking a point of the
+    test picture to the same point of the golden picture (golden resized to the test's size if they differ);
+    None with cc 0.0 = no alignment found.
 
     Coarse to fine, so a board put down a few millimetres off or a few degrees turned still locks on:
       0. `max_side` px from the identity: accepted when it already correlates well (board nearly in place)
@@ -124,9 +126,7 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
     if r is not None and r[0] >= NEAR_CC:
         cc, warp = r
         warp[:, 2] /= s1
-        out = cv2.warpAffine(golden, warp, (test.shape[1], test.shape[0]),
-                             flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
-        return out, float(cc)
+        return warp, float(cc)
 
     a, b, s0 = level(160)
     best = None
@@ -141,7 +141,7 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
         if best is not None and best[0] > 0.9:
             break
     if best is None:
-        return golden, 0.0
+        return None, 0.0
     cc, warp = best
     prev = s0
     for side, motion, iters, gauss in ((400, cv2.MOTION_EUCLIDEAN, 40, 5), (max_side, cv2.MOTION_AFFINE, 30, 3)):
@@ -151,12 +151,30 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
         prev = s
         r = _ecc(a, b, warp, motion, iters, gauss)
         if r is None:
-            return golden, 0.0
+            return None, 0.0
         cc, warp = r
     warp[:, 2] /= prev
+    return warp, float(cc)
+
+
+def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray, float]:
+    """Warp `golden` onto `test`. Returns (warped, cc); cc 0.0 = no alignment found (golden comes back as is)."""
+    warp, cc = align_warp(test, golden, max_side)
+    if test.shape[:2] != golden.shape[:2]:
+        golden = cv2.resize(golden, (test.shape[1], test.shape[0]))
+    if warp is None:
+        return golden, 0.0
     out = cv2.warpAffine(golden, warp, (test.shape[1], test.shape[0]),
                          flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
-    return out, float(cc)
+    return out, cc
+
+
+def golden_to_test(warp: np.ndarray) -> np.ndarray:
+    """The 3x3 matrix taking a point of the golden picture to the same point of the test picture
+    (align_warp's matrix goes the other way)."""
+    return np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
+
+
 
 
 def align_single_scale(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray, float]:
