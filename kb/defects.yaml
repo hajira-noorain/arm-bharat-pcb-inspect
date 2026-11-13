@@ -170,3 +170,29 @@ defects:
       - {id: ANOM-A1, short: "inspect under magnification", text: "Inspect the highlighted area under magnification and compare it with a known-good board."}
       - {id: ANOM-A2, short: "label it so the station learns", text: "Label the defect in the system (or mark it a false alarm) so the device learns this case."}
       - {id: ANOM-A3, short: "hold until a person clears it", text: "Hold the board until a person has confirmed or cleared the finding."}
+
+  missing_part:
+    name: "Missing part"
+    what: "A part that is on the taught good board is not on this board."
+    process_step: assembly
+    causes:
+      - {id: MPART-C1, step: assembly, short: "part was never placed", text: "The placement machine did not place the part: empty or jammed feeder, or a nozzle that failed to pick it up."}
+      - {id: MPART-C2, step: assembly, short: "part moved or stood up in reflow", text: "The part shifted, stood on end or floated off its pads during reflow: uneven paste, pad design or profile."}
+      - {id: MPART-C3, step: handling, short: "part knocked off after soldering", text: "The part was knocked off the board after soldering, in handling, depanelling or packing."}
+    actions:
+      - {id: MPART-A1, short: "fit the part and re-inspect", text: "Fit the missing part by hand rework to the assembly drawing, then inspect the board again."}
+      - {id: MPART-A2, short: "check the feeder and nozzle", text: "Check the feeder and pick-up nozzle for this part on the placement machine before running more boards."}
+      - {id: MPART-A3, short: "check paste and reflow at this position", text: "Check the solder paste print and the reflow profile at this position on the next boards."}
+
+  extra_part:
+    name: "Unexpected part"
+    what: "Something that looks like a part sits where the taught good board has none."
+    process_step: assembly
+    causes:
+      - {id: XPART-C1, step: assembly, short: "loose part dropped on the board", text: "A loose part fell onto the board from the placement head or a feeder and was soldered or is lying there."}
+      - {id: XPART-C2, step: assembly, short: "wrong build variant", text: "The board was built to a different variant of the design: a position left empty on the good board is populated here."}
+      - {id: XPART-C3, step: handling, short: "debris or a solder ball", text: "Debris or a solder ball that looks like a small part."}
+    actions:
+      - {id: XPART-A1, short: "remove it and check for shorts", text: "Remove the loose part or debris and check the area for solder bridges."}
+      - {id: XPART-A2, short: "check the build variant", text: "Check the board's build variant against the parts list for this order."}
+      - {id: XPART-A3, short: "hold until a person clears it", text: "Hold the board until a person has confirmed or cleared the finding."}

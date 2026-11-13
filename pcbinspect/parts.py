@@ -158,3 +158,92 @@ def warp_boxes(dets: list[dict], matrix) -> list[dict]:
         out.append({**d, "bbox": [float(pts[:, 0].min()), float(pts[:, 1].min()),
                                   float(pts[:, 0].max()), float(pts[:, 1].max())]})
     return out
+
+
+# ------------------------------------------------------------------ running the models
+TRAIN_PX_PER_MM = 16.0   # the scale the part detector was trained at (training/prepare_components.py)
+
+
+def find_parts(detector, bgr, mm_per_px: float | None = None) -> tuple[list[dict], float]:
+    """Parts on a picture, as [{"bbox", "conf"}] in that picture's own pixels, and the time taken (ms).
+    When the picture's scale is known it is resampled to the detector's training scale first, so a part
+    looks the size the detector learned it at, whatever the camera height."""
+    import time
+
+    import cv2
+    t = time.perf_counter()
+    s = 1.0
+    if mm_per_px:
+        s = TRAIN_PX_PER_MM * mm_per_px                       # (px/mm wanted) / (px/mm here)
+        s = 1.0 if 0.8 <= s <= 1.25 else min(max(s, 0.25), 3.0)
+    img = bgr if s == 1.0 else cv2.resize(bgr, None, fx=s, fy=s,
+                                          interpolation=cv2.INTER_AREA if s < 1 else cv2.INTER_CUBIC)
+    dets, _ = detector.detect(img)
+    out = [{"bbox": [v / s for v in d.bbox], "conf": float(d.conf)} for d in dets]
+    return dedupe(out), (time.perf_counter() - t) * 1e3
+
+
+def part_crops(bgr, dets: list[dict], size: int = 64, margin: float = 1.4):
+    """Square crops around each part, the way the classifier's training crops were cut."""
+    import cv2
+    import numpy as np
+    out = []
+    for d in dets:
+        x0, y0, x1, y1 = d["bbox"]
+        side = max(x1 - x0, y1 - y0) * margin
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        xa, ya = int(max(cx - side / 2, 0)), int(max(cy - side / 2, 0))
+        crop = bgr[ya:int(cy + side / 2), xa:int(cx + side / 2)]
+        if crop.size == 0:
+            crop = np.zeros((size, size, 3), np.uint8)
+        out.append(cv2.resize(crop, (size, size), interpolation=cv2.INTER_AREA))
+    return out
+
+
+class PartKindClassifier:
+    """The part-kind classifier exported to ExecuTorch. Used once per taught board, never during inspection."""
+
+    def __init__(self, pte_path, names: list[str], batch: int = 1):
+        from executorch.runtime import Runtime
+        self.names = list(names)
+        self._m = Runtime.get().load_program(str(pte_path)).load_method("forward")
+
+    def __call__(self, crops) -> list[tuple[str, float]]:
+        import numpy as np
+        import torch
+        out = []
+        for c in crops:
+            x = np.ascontiguousarray(c[:, :, ::-1].transpose(2, 0, 1)[None].astype(np.float32) / 255.0)
+            p = np.asarray(self._m.execute([torch.from_numpy(x)])[0]).reshape(-1)
+            if p.min() < 0 or abs(float(p.sum()) - 1.0) > 1e-3:       # logits, not probabilities
+                e = np.exp(p - p.max())
+                p = e / e.sum()
+            i = int(p.argmax())
+            out.append((self.names[i], float(p[i])))
+        return out
+
+
+def teach_parts(detector, classifier, good_bgr, mm_per_px: float | None = None) -> PartsMap:
+    """The parts map of a good board: find its parts, name the ones the classifier is sure of."""
+    dets, _ = find_parts(detector, good_bgr, mm_per_px)
+    kinds = classifier(part_crops(good_bgr, dets)) if classifier is not None and dets else None
+    h, w = good_bgr.shape[:2]
+    return build_map(dets, (w, h), (1.0 / mm_per_px) if mm_per_px else None, kinds)
+
+
+def moved(pmap: PartsMap, matrix, size: tuple[int, int]) -> PartsMap:
+    """The same map carried into another picture (the board under inspection) through a 3x3 matrix taking
+    the good picture's points to that picture's points."""
+    boxes = warp_boxes([{"bbox": p.box, "conf": p.conf} for p in pmap.parts], matrix)
+    parts = [Part(b["bbox"], p.kind, p.kind_conf, p.conf) for p, b in zip(pmap.parts, boxes)]
+    return PartsMap([int(size[0]), int(size[1])], pmap.px_per_mm, parts)
+
+
+def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, int]) -> list[PartFinding]:
+    """Missing and extra parts on the inspected picture, in ITS pixels. warp: golden.align_warp's 2x3 matrix
+    (inspected -> good, with the good picture resized to the inspected one's size)."""
+    import numpy as np
+    w, h = test_size
+    to_test = np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
+    resize = np.diag([w / pmap.size[0], h / pmap.size[1], 1.0])        # good picture -> its resized self
+    return compare(moved(pmap, to_test @ resize, (w, h)), dets)

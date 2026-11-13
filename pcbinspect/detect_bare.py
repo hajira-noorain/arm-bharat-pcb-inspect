@@ -158,9 +158,10 @@ class UltralyticsTiles:
 
 
 class BareDetector:
-    def __init__(self, tiles: TileModel, merge_iou: float = 0.5):
+    def __init__(self, tiles: TileModel, merge_iou: float = 0.5, names: tuple[str, ...] = BARE_CLASSES):
         self.tiles = tiles
         self.merge_iou = merge_iou
+        self.names = names              # ("part",) for the assembled-board part detector
 
     def detect(self, bgr: np.ndarray, only_near: list[tuple] | None = None) -> tuple[list[Det], dict[str, float]]:
         """only_near: boxes (x1, y1, x2, y2); when given, only tiles touching one of them are run (the
@@ -191,7 +192,7 @@ class BareDetector:
                 sub = a[m]
                 for i in nms(sub[:, :4], sub[:, 4], self.merge_iou):
                     x1, y1, x2, y2, conf, _ = sub[i]
-                    dets.append(Det(BARE_CLASSES[int(c)], (int(x1), int(y1), int(x2), int(y2)),
+                    dets.append(Det(self.names[int(c)], (int(x1), int(y1), int(x2), int(y2)),
                                     float(conf)))
         dets.sort(key=lambda d: -d.conf)
         return dets, {"detector_tiles": (t1 - t0) * 1e3, "detector_merge": (time.perf_counter() - t1) * 1e3,

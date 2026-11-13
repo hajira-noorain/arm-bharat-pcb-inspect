@@ -52,9 +52,11 @@ class Station:
         self.kb = default_kb()
         self.designs = load_designs(self.root / cfg["designs_dir"])
         self.feature_fn, self.detector = self._load_vision()
+        self.parts_detector, self.parts_classifier = self._load_parts()
         self.light = StackLight(cfg.get("gpio", True))
         self.inspector = Inspector(self.root, self.designs, self.detector, self.feature_fn,
                                    self.store, self.light)
+        self.inspector.parts_detector = self.parts_detector
         for name, d in self.designs.items():
             self.store.upsert_design(name, d.kind, d.rules.min_trace_width_mm, d.rules.min_spacing_mm)
         self.llm = self._load_llm()
@@ -108,6 +110,26 @@ class Station:
                         log.warning("Arm runtime unavailable (%s); using ExecuTorch for vision", exc)
         log.info("vision: detector=%s backbone=%s", det is not None, feature_fn is not None)
         return feature_fn, det
+
+    def _load_parts(self):
+        """The assembled-board parts check: a one-class part detector, and a classifier that names parts when
+        a board is taught. Both are optional: without them assembled boards keep the anomaly check alone."""
+        cfg, root = self.cfg, self.root
+        det = cls = None
+        try:
+            from .detect_bare import BareDetector, ExecuTorchTiles
+            p = root / cfg.get("parts_detector_pte", "models/vision/parts_y26n_xnnpack.pte")
+            if p.is_file():
+                det = BareDetector(ExecuTorchTiles(p, conf_thr=0.1), names=("part",))
+            c = root / cfg.get("parts_classifier_pte", "models/vision/parts_kind_xnnpack.pte")
+            if det is not None and c.is_file() and c.with_suffix(".json").is_file():
+                from .parts import PartKindClassifier
+                cls = PartKindClassifier(c, json.loads(c.with_suffix(".json").read_text())["names"])
+        except Exception as exc:    # noqa: BLE001
+            log.exception("parts check unavailable (%s)", exc)
+            det = cls = None
+        log.info("parts check: detector=%s classifier=%s", det is not None, cls is not None)
+        return det, cls
 
     def _load_llm(self):
         from .llm_select import load_llama
@@ -533,6 +555,18 @@ class Station:
         d = Design(name, kind, kind == "bare" and self.detector is not None, rel, None, 20.0,
                    self.inspector.severity.default_rules, None,
                    description=f"enrolled on the device from {n_images} good boards")
+        parts_info = None
+        if kind == "assembled" and self.parts_detector is not None:
+            # the first good picture becomes the parts reference: where each part sits, and what kind it is
+            from .calib import detect_scale
+            from .parts import teach_parts
+            sc = detect_scale(imgs[0], d.marker_mm)
+            pm = teach_parts(self.parts_detector, self.parts_classifier, imgs[0], sc.mm_per_px if sc else None)
+            if pm.parts:
+                pm.save(self.root / rel / "parts.json")
+                cv2.imwrite(str(self.root / rel / "parts_ref.jpg"), imgs[0], [cv2.IMWRITE_JPEG_QUALITY, 95])
+                d.parts_map = f"{rel}/parts.json"
+                parts_info = pm.summary()
         save_design(self.root / self.cfg["designs_dir"], d)
         self.designs[name] = d
         self.inspector.designs[name] = d
@@ -541,7 +575,7 @@ class Station:
         self.store.record_model_version(f"anomaly_bank:{name}", "1", {"bank_size": int(len(m.bank)),
                                         "images": n_images, "seconds": secs}, True, "enrolled")
         return {"design": name, "images": n_images, "seconds": round(secs, 2),
-                "bank_size": int(len(m.bank)),
+                "bank_size": int(len(m.bank)), "parts": parts_info,
                 "note": "No calibrated gate yet: boards with evidence go to REVIEW until it is calibrated."}
 
 

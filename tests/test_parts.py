@@ -83,3 +83,47 @@ def test_boxes_follow_the_alignment_into_the_good_boards_picture():
 def test_duplicates_from_overlapping_tiles_collapse_to_the_most_confident():
     d = dedupe([det(10, 10, conf=0.6), det(12, 11, conf=0.9), det(200, 200, conf=0.5)])
     assert [x["conf"] for x in d] == [0.9, 0.5]
+
+
+def test_a_board_put_down_shifted_is_checked_where_its_parts_actually_are():
+    from pcbinspect.parts import check_board
+    m = make_map()
+    # the board under inspection sits 15 px right and 8 px down of where the good board was photographed:
+    # a point of the inspected picture maps to (x - 15, y - 8) in the good picture
+    warp = np.array([[1, 0, -15], [0, 1, -8]], float)
+    here = [{"bbox": [d["bbox"][0] + 15, d["bbox"][1] + 8, d["bbox"][2] + 15, d["bbox"][3] + 8], "conf": 0.9}
+            for d in GOOD]
+    assert check_board(m, here, warp, (800, 600)) == []
+    f = check_board(m, here[:1] + here[2:], warp, (800, 600))
+    assert len(f) == 1 and f[0].kind == "resistor" and f[0].box == [315.0, 108.0, 355.0, 128.0]   # in ITS pixels
+
+
+def test_a_good_picture_of_another_size_is_scaled_before_comparing():
+    from pcbinspect.parts import check_board
+    m = make_map()                                             # taught at 800 x 600
+    half = [{"bbox": [v / 2 for v in d["bbox"]], "conf": 0.9} for d in GOOD]      # inspected at 400 x 300
+    assert check_board(m, half, np.array([[1, 0, 0], [0, 1, 0]], float), (400, 300)) == []
+
+
+class FakeDetector:
+    def __init__(self):
+        self.shapes = []
+
+    def detect(self, img):
+        from types import SimpleNamespace
+        self.shapes.append(img.shape[:2])
+        s = img.shape[1] / 800
+        return [SimpleNamespace(bbox=tuple(v * s for v in d["bbox"]), conf=d["conf"]) for d in GOOD], {}
+
+
+def test_parts_are_found_at_the_detectors_training_scale_and_reported_in_the_pictures_own_pixels():
+    from pcbinspect.parts import find_parts, teach_parts
+    img = np.zeros((600, 800, 3), np.uint8)
+    det = FakeDetector()
+    found, ms = find_parts(det, img, mm_per_px=1 / 32)         # 32 px/mm here, the detector learned 16 px/mm
+    assert det.shapes[-1] == (300, 400) and ms >= 0
+    assert [round(v) for v in found[0]["bbox"]] in ([100, 100, 140, 120], [100, 300, 180, 380], [300, 100, 340, 120], [500, 400, 540, 420])
+    find_parts(det, img)                                       # no scale known: the picture is used as it is
+    assert det.shapes[-1] == (600, 800)
+    m = teach_parts(det, lambda crops: [("capacitor", 0.9)] * len(crops), img)
+    assert len(m.parts) == 4 and m.summary()["by_kind"] == {"capacitor": 4}

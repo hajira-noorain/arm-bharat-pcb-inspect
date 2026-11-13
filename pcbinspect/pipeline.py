@@ -48,6 +48,7 @@ class Design:
     gate_golden: str | None = None         # gate calibrated on detector+golden-difference evidence
     detector_tiles: str = "all"            # 'all' | 'guided' (golden-first: only tiles holding a difference;
     #                                        the gate must be calibrated under the same policy)
+    parts_map: str | None = None           # assembled boards: the taught good board's parts (pcbinspect/parts.py)
 
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
@@ -59,7 +60,7 @@ class Design:
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
                    d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0), rules,
                    d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
-                   d.get("golden"), d.get("gate_golden"), d.get("detector_tiles", "all"))
+                   d.get("golden"), d.get("gate_golden"), d.get("detector_tiles", "all"), d.get("parts_map"))
 
 
 @dataclass
@@ -74,6 +75,7 @@ class Candidate:
     diff_score: float | None = None  # golden-difference evidence for this area, if any
     topo_cls: str | None = None      # what the golden comparison says it is (netlist / shape)
     diff_size_px: float | None = None  # characteristic size of the golden difference (px)
+    part: str | None = None            # parts check: the kind of the missing / extra part
 
 
 @dataclass
@@ -88,6 +90,9 @@ class Analysis:
     golden_used: bool = False        # the golden-difference channel contributed (selects the gate)
     golden_note: str = ""
     golden_aligned: np.ndarray | None = None   # the golden image warped onto this capture (reused for mm)
+    parts_only: list = field(default_factory=list)   # parts findings no calibrated evidence backs: shown, and
+    #                                                   the board goes to a person; they never change the score
+    parts_note: str = ""                             # why the parts check did not run, if it could not
 
 
 def _overlaps(a, b) -> bool:
@@ -112,6 +117,8 @@ class Inspector:
         self.heads: dict[str, RescoreHead] = {}
         self._auto_id = itertools.count(1)
         self._golden_cache: dict[str, tuple] = {}
+        self.parts_detector = None          # one-class part detector (set by the app when its model is present)
+        self.parts: dict[str, tuple] = {}   # design -> (PartsMap, the good board's picture)
         for name, d in designs.items():
             self.reload_design(name)
 
@@ -124,6 +131,11 @@ class Inspector:
             self.gates[name] = ConformalGate.load(self.root / d.gate_file)
         if d.gate_golden and (self.root / d.gate_golden).exists():
             self.gates_golden[name] = ConformalGate.load(self.root / d.gate_golden)
+        if d.parts_map and (self.root / d.parts_map).exists():
+            from .parts import PartsMap
+            ref = cv2.imread(str((self.root / d.parts_map).with_name("parts_ref.jpg")))
+            if ref is not None:
+                self.parts[name] = (PartsMap.load(self.root / d.parts_map), ref)
         head_p = self.root / "models" / "heads" / f"{name}.json"
         if head_p.exists():
             self.heads[name] = RescoreHead.load(head_p)
@@ -197,6 +209,8 @@ class Inspector:
                 cands.append(Candidate(ANOMALY_CLASS, "anomaly-image", (0, 0, 0, 0),
                                        anomaly_res.norm_score, anomaly_res.norm_score))
 
+        parts_only, parts_note = self._parts_check(bgr, design, mm_per_px, cands, lat)
+
         h = self.heads.get(design) if head == "active" else head
         if h is not None and self.feature_fn is not None:
             t = time.perf_counter()
@@ -222,7 +236,40 @@ class Inspector:
 
         score = max((c.conf for c in cands), default=0.0)
         return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat, golden_used, golden_note,
-                        golden_aligned)
+                        golden_aligned, parts_only, parts_note)
+
+    def _parts_check(self, bgr: np.ndarray, design: str, mm_per_px: float | None, cands: list[Candidate],
+                     lat: dict[str, float]) -> tuple[list[Candidate], str]:
+        """Assembled boards with a taught parts map: is every part still there, is anything extra?
+
+        A finding that falls on an area the anomaly memory already flags NAMES that area ("missing capacitor"
+        instead of "unknown anomaly") and keeps the anomaly's calibrated score. A finding nothing else backs is
+        returned separately: it is shown and sends the board to a person, but it never enters the board score,
+        because the part detector's confidence is not on the calibrated scale."""
+        if design not in self.parts or self.parts_detector is None:
+            return [], ""
+        from .golden import align_warp
+        from .parts import check_board, find_parts
+        pmap, ref = self.parts[design]
+        t = time.perf_counter()
+        warp, cc = align_warp(bgr, ref)
+        lat["parts_align"] = (time.perf_counter() - t) * 1e3
+        if warp is None or cc < MIN_ALIGN_CC:
+            return [], f"parts check skipped: the board could not be lined up with the taught one (cc {cc:.2f})"
+        dets, ms = find_parts(self.parts_detector, bgr, mm_per_px)
+        lat["parts_detector"] = ms
+        h, w = bgr.shape[:2]
+        alone: list[Candidate] = []
+        for f in check_board(pmap, dets, warp, (w, h)):
+            box = tuple(int(round(min(max(v, 0), lim))) for v, lim in zip(f.box, (w, h, w, h)))
+            if box[2] - box[0] < 2 or box[3] - box[1] < 2:
+                continue
+            hit = next((c for c in cands if c.source == "anomaly" and _overlaps(c.bbox, box)), None)
+            if hit is not None:
+                hit.cls, hit.part = f.what, f.kind
+            else:
+                alone.append(Candidate(f.what, "parts", box, f.confidence, f.confidence, part=f.kind))
+        return alone, ""
 
     def golden_evidence(self, bgr: np.ndarray, golden: np.ndarray, aligned: bool = False,
                         guided: bool = True) -> list[tuple[tuple, float]]:
@@ -277,10 +324,17 @@ class Inspector:
         else:  # uncalibrated design: never auto-pass anything with evidence
             verdict = "REVIEW" if a.board_score >= MIN_SHOW_CONF else "PASS"
             show_thr = MIN_SHOW_CONF
+        if a.parts_only and not force_review:
+            n_miss = sum(c.cls == "missing_part" for c in a.parts_only)
+            force_review = "parts check: " + ", ".join(x for x in (
+                f"{n_miss} part(s) look missing" if n_miss else "",
+                f"{len(a.parts_only) - n_miss} unexpected part(s)" if len(a.parts_only) - n_miss else "") if x)
         if force_review and verdict == "PASS":
             verdict = "REVIEW"
         shown = [] if verdict == "PASS" else [
             c for c in a.candidates if c.conf >= show_thr and c.source != "anomaly-image"]
+        if verdict != "PASS":
+            shown += a.parts_only
 
         t = time.perf_counter()
         h, w = bgr.shape[:2]
@@ -297,7 +351,8 @@ class Inspector:
             x1, y1, x2, y2 = c.bbox
             mmpp = a.mm_per_px
             defect = Defect(
-                id=f"D{i + 1}", cls=c.cls, source=c.source if c.source in ("detector", "golden") else "anomaly",
+                id=f"D{i + 1}", cls=c.cls, part=c.part,
+                source=c.source if c.source in ("detector", "golden", "parts") else "anomaly",
                 bbox=c.bbox, confidence=round(c.conf, 4),
                 size_mm=None if mmpp is None else round(max(x2 - x1, y2 - y1) * mmpp, 3),
                 width_mm=None if mmpp is None else round(min(x2 - x1, y2 - y1) * mmpp, 3),
@@ -331,6 +386,8 @@ class Inspector:
         if capture_info:
             insp.model_versions["capture"] = json.dumps(capture_info, default=str)[:500]
         parts = (["detector"] if d.use_detector and self.detector is not None else []) +                 (["golden"] if a.golden_used else []) + (["anomaly memory"] if a.anomaly is not None else [])
+        if design in self.parts and self.parts_detector is not None:
+            parts.append("parts check" if not a.parts_note else f"parts check not run ({a.parts_note})")
         insp.model_versions["evidence"] = ("+".join(parts) or "none") + (
             f" ({a.golden_note})" if a.golden_note and not a.golden_used else "")
         a.latency_ms["total_to_verdict"] = (time.perf_counter() - t_all) * 1e3
@@ -396,6 +453,6 @@ def save_design(config_dir: Path, d: Design) -> None:
                       "min_spacing_mm": d.rules.min_spacing_mm} if d.rules.rules_from_design else None),
            "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
            "golden": d.golden, "gate_golden": d.gate_golden,
-           "detector_tiles": d.detector_tiles}
+           "detector_tiles": d.detector_tiles, "parts_map": d.parts_map}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     json  # noqa: B018 (keep import for callers that serialise designs)

@@ -24,8 +24,10 @@ BARE_CLASSES: tuple[str, ...] = (
 )
 # Anything the anomaly model flags that the detector cannot name.
 ANOMALY_CLASS = "unknown_anomaly"
+# Assembled boards: a part of the taught good board is not there, or something is where the good board has none.
+PART_CLASSES: tuple[str, ...] = ("missing_part", "extra_part")
 
-Source = Literal["detector", "golden", "anomaly"]
+Source = Literal["detector", "golden", "anomaly", "parts"]
 Severity = Literal["minor", "major", "critical"]
 Verdict = Literal["PASS", "FAIL", "REVIEW"]
 
@@ -46,6 +48,7 @@ class Defect:
     severity_reason: str = ""
     disposition: str | None = None    # ACCEPT | REWORK | SCRAP | REVIEW for the design's customer class
     uncertainty_mm: float | None = None   # +/- one pixel at the measurement scale
+    part: str | None = None               # missing / extra part: its kind ("capacitor"), or "part" if not known
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -84,6 +87,7 @@ class Inspection:
                     "location": d.location,
                     "ipc": d.ipc,
                     "disposition": d.disposition,
+                    **({"part": d.part} if d.part else {}),
                 }
                 for d in self.defects
             ],
