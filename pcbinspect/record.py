@@ -38,8 +38,10 @@ class Defect:
     area_mm2: float | None = None
     location: str = ""               # coarse zone, e.g. "top-left"
     severity: Severity | None = None
-    ipc: dict[str, str] = field(default_factory=dict)   # {"class1": "accept", "class2": "reject", ...}
+    ipc: dict[str, str] = field(default_factory=dict)   # {"class1": "accept", "class2": "reject"|"uncertain", ...}
     severity_reason: str = ""
+    disposition: str | None = None    # ACCEPT | REWORK | SCRAP | REVIEW for the design's customer class
+    uncertainty_mm: float | None = None   # +/- one pixel at the measurement scale
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -59,6 +61,8 @@ class Inspection:
     mm_per_px: float | None
     latency_ms: dict[str, float] = field(default_factory=dict)
     model_versions: dict[str, str] = field(default_factory=dict)
+    disposition: str | None = None    # worst defect disposition for the customer class
+    customer_class: int = 2
 
     def to_llm_record(self) -> dict:
         """The compact, numbers-only record Llama sees. No pixels, no paths."""
@@ -75,6 +79,7 @@ class Inspection:
                     "size_mm": None if d.size_mm is None else round(d.size_mm, 2),
                     "location": d.location,
                     "ipc": d.ipc,
+                    "disposition": d.disposition,
                 }
                 for d in self.defects
             ],

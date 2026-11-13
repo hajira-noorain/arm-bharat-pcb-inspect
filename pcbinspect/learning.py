@@ -23,7 +23,15 @@ import numpy as np
 
 from .anomaly import FeatureFn, preprocess
 
-MIN_PER_CLASS = 5   # don't fit a head until we have at least this many of each label
+MIN_PER_CLASS = 15  # don't fit a head until we have at least this many of each label
+# Defect types the head may only make MORE suspicious, never less: a wrongly taught "false alarm"
+# must not be able to hide a short, an open or a missing hole.
+PROTECTED_TYPES = {"short", "open", "missing_hole"}
+
+
+def rescore(cls: str, conf: float, p_real: float) -> float:
+    c = combine(conf, p_real)
+    return max(conf, c) if cls in PROTECTED_TYPES else c
 
 
 def crop_embedding(feature_fn: FeatureFn, bgr: np.ndarray, bbox, pad: float = 0.5) -> np.ndarray:
@@ -71,29 +79,40 @@ class RescoreHead:
 
 
 class FeedbackBuffer:
-    """Labelled crop embeddings: 1 = operator confirmed a real defect, 0 = false alarm."""
+    """Labelled crop embeddings: 1 = operator confirmed a real defect, 0 = false alarm.
+
+    Each example also keeps the detector's own confidence (so a new head is compared against the
+    detector, not a constant) and the board it came from (so validation folds never share a board).
+    """
 
     def __init__(self, path: Path | None = None):
         self.path = Path(path) if path else None
         self.X: list[np.ndarray] = []
         self.y: list[int] = []
         self.event_ids: list[int | None] = []
+        self.conf: list[float] = []
+        self.group: list[int] = []
         if self.path and self.path.exists():
             d = np.load(self.path, allow_pickle=False)
             self.X = list(d["X"])
             self.y = list(d["y"].astype(int))
             self.event_ids = [None if e < 0 else int(e) for e in d["ev"]]
+            self.conf = list(d["conf"]) if "conf" in d else [0.5] * len(self.y)
+            self.group = list(d["group"]) if "group" in d else list(range(len(self.y)))
 
-    def add(self, emb: np.ndarray, label: int, event_id: int | None = None) -> None:
+    def add(self, emb: np.ndarray, label: int, event_id: int | None = None,
+            conf: float = 0.5, group: int | None = None) -> None:
         self.X.append(emb.astype(np.float32))
         self.y.append(int(label))
         self.event_ids.append(event_id)
+        self.conf.append(float(conf))
+        self.group.append(int(group) if group is not None else len(self.y))
         self._flush()
 
     def remove_event(self, event_id: int) -> bool:
         for i, e in enumerate(self.event_ids):
             if e == event_id:
-                del self.X[i], self.y[i], self.event_ids[i]
+                del self.X[i], self.y[i], self.event_ids[i], self.conf[i], self.group[i]
                 self._flush()
                 return True
         return False
@@ -108,7 +127,8 @@ class FeedbackBuffer:
         tmp = self.path.with_suffix(".tmp.npz")
         np.savez(tmp, X=np.array(self.X, np.float32).reshape(len(self.X), -1),
                  y=np.array(self.y, np.int8),
-                 ev=np.array([-1 if e is None else e for e in self.event_ids], np.int64))
+                 ev=np.array([-1 if e is None else e for e in self.event_ids], np.int64),
+                 conf=np.array(self.conf, np.float32), group=np.array(self.group, np.int64))
         tmp.replace(self.path)
 
 

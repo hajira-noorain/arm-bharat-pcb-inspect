@@ -63,6 +63,35 @@ def test_alignment_recovers_a_shift():
     assert m is not None and m.defect_mm == pytest.approx(3 * MM, abs=1.0 * MM)
 
 
+def test_poor_alignment_refuses_to_measure():
+    golden = board()
+    test = np.full((200, 300, 3), 255, np.uint8)
+    test[30:40, :] = 0                                   # a completely different layout
+    gm = GoldenMeasurer(test, golden, MM, 0.20)
+    assert not gm.ok
+    assert gm.measure("mouse_bite", (138, 86, 154, 98)) is None
+    assert "alignment" in gm.last_reason
+
+
+def test_one_pixel_sliver_is_not_a_defect():
+    golden, test = board(), board()
+    test[90:91, 140:160] = 255                            # 1-px edge difference (registration)
+    gm = GoldenMeasurer(test, golden, MM, 0.20, aligned=True)
+    assert gm.measure("mouse_bite", (138, 86, 162, 98)) is None
+    assert "sliver" in gm.last_reason
+
+
+def test_nick_next_to_a_pad_uses_the_trace_width():
+    golden = board()
+    golden[80:110, 40:70] = 0                             # a 30 px pad on trace A at x 40..69
+    test = golden.copy()
+    test[90:93, 76:88] = 255                              # 3 px nick on the 10 px trace, beside the pad
+    m = GoldenMeasurer(test, golden, MM, 0.20, aligned=True).measure("mouse_bite", (74, 86, 90, 98))
+    assert m is not None
+    assert m.ref_mm == pytest.approx(10 * MM, abs=2.5 * MM), m   # not the 30 px pad
+    assert m.pct > 20
+
+
 def test_severity_uses_measurement():
     eng = SeverityEngine()
     golden, test = board(), board()
@@ -70,5 +99,5 @@ def test_severity_uses_measurement():
     meas = GoldenMeasurer(test, golden, MM, 0.20, aligned=True).measure("mouse_bite", (138, 86, 154, 98))
     d = eng.grade(Defect("D1", "mouse_bite", "detector", (138, 86, 154, 98), 0.9), DesignRules(0.2, 0.2),
                   measurement=meas)
-    assert d.ipc["class3"] == "reject" and d.ipc["class1"] == "accept"
+    assert d.ipc["class1"] == "accept" and d.ipc["class3"] in ("reject", "uncertain")
     assert "nick" in d.severity_reason

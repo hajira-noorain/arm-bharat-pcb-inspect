@@ -1,47 +1,55 @@
 # Severity and IPC-style acceptance rules.
 #
-# HONESTY NOTE: we do not have the licensed IPC-A-600 text. The limits below are the commonly
-# quoted conductor-width-reduction / spacing-reduction acceptability limits from secondary sources:
+# HONESTY NOTE: we do not have the licensed IPC-A-600 text. The Class 2 / Class 3 limits below are
+# the commonly quoted conductor-width-reduction / spacing-reduction acceptability limits from a
+# secondary source (20% / 10% of the minimum design value):
 #   - https://atlaspcb.com/blog/ipc-a-600-class-2-vs-class-3-pcb-acceptability
-#   - https://resources.pcb.cadence.com/blog/2023-ipc-standard-tolerance-effects
-# Every number here is editable per customer/design. The report states this explicitly.
+# That source gives NO numeric Class 1 limit (Class 1 is "functional"), so Class 1 here rejects only
+# functional failures: a conductor cut through or a gap bridged. Every number is editable per
+# customer; the customer's own specification always wins.
 
-# Maximum allowed reduction (%) of the minimum design conductor width (nicks, pinholes, mouse bites)
+# Maximum allowed reduction (%) of the conductor width (nicks, pinholes, mouse bites).
+# null = functional only (reject at >= 100%: the conductor is cut through).
 width_reduction_limit_pct:
-  class1: 30
+  class1: null
   class2: 20
   class3: 10
 
-# Maximum allowed reduction (%) of the minimum design conductor spacing (spurs, spurious copper)
+# Maximum allowed reduction (%) of the minimum design spacing (spurs, spurious copper).
+# null = functional only (reject at >= 100%: the gap is bridged).
 spacing_reduction_limit_pct:
-  class1: 30
+  class1: null
   class2: 20
   class3: 10
 
-# Nominal design rules used when the design profile does not provide its own.
-# 0.2 mm (~8 mil) trace/space is a common low-cost fab default.
+# Nominal design rules used only when the design profile does not provide its own. A real customer
+# design must set these from its Gerber/DRC; the UI flags designs still on defaults.
 default_design_rules:
   min_trace_width_mm: 0.20
   min_spacing_mm: 0.20
 
-# How each class is judged.
-#   rule: reject_all      -> functional defect, rejected at every IPC class
-#         width_reduction -> judged against width_reduction_limit_pct using the defect's short side
-#         spacing_reduction -> judged against spacing_reduction_limit_pct using the defect's short side
-#         area            -> anomaly: judged on area thresholds below (our assumption, not IPC)
-#   fallback_severity: used when no mm scale is available
+# How each defect type is judged.
+#   rule: reject_all        functional defect, rejected at every IPC class
+#         width_reduction   measured width loss vs width_reduction_limit_pct
+#         spacing_reduction measured spacing loss vs spacing_reduction_limit_pct
+#         fixed             graded by type until a dedicated measurement exists
+#         area              unnamed anomaly: area thresholds below (our assumption, NOT IPC)
+#   fallback_severity: used when there is no trustworthy measurement
+#   repair: what to do when the defect is rejected at the customer's class
+#           rework = repairable under IPC-7711/7721 if the customer permits repair
+#           scrap  = not repairable to the required class
+#           review = a person decides (unnamed anomalies)
 classes:
-  short:            {rule: reject_all,        fallback_severity: critical}
-  open:             {rule: reject_all,        fallback_severity: critical}
-  missing_hole:     {rule: reject_all,        fallback_severity: critical}
-  mouse_bite:       {rule: width_reduction,   fallback_severity: major}
-  pin_hole:         {rule: width_reduction,   fallback_severity: minor}
-  # The bbox of a damaged pad measures the pad, not the damage, so a mm rule would mislead:
-  # grade by class until a pad-area measurement exists.
-  missing_pad:      {rule: fixed,             fallback_severity: major}
-  spur:             {rule: spacing_reduction, fallback_severity: major}
-  spurious_copper:  {rule: spacing_reduction, fallback_severity: major}
-  unknown_anomaly:  {rule: area,              fallback_severity: major}
+  short:            {rule: reject_all,        fallback_severity: critical, repair: {class1: rework, class2: rework, class3: rework}}
+  open:             {rule: reject_all,        fallback_severity: critical, repair: {class1: rework, class2: rework, class3: scrap}}
+  missing_hole:     {rule: reject_all,        fallback_severity: critical, repair: {class1: scrap,  class2: scrap,  class3: scrap}}
+  mouse_bite:       {rule: width_reduction,   fallback_severity: major,    repair: {class1: rework, class2: rework, class3: scrap}}
+  pin_hole:         {rule: width_reduction,   fallback_severity: minor,    repair: {class1: rework, class2: rework, class3: scrap}}
+  # The box of a damaged pad measures the pad, not the damage: graded by type for now.
+  missing_pad:      {rule: fixed,             fallback_severity: major,    repair: {class1: rework, class2: rework, class3: scrap}}
+  spur:             {rule: spacing_reduction, fallback_severity: major,    repair: {class1: rework, class2: rework, class3: rework}}
+  spurious_copper:  {rule: spacing_reduction, fallback_severity: major,    repair: {class1: rework, class2: rework, class3: rework}}
+  unknown_anomaly:  {rule: area,              fallback_severity: major,    repair: {class1: review, class2: review, class3: review}}
 
 # Our own assumption for unnamed anomalies on assembled boards (NOT from IPC).
 anomaly_area_mm2:

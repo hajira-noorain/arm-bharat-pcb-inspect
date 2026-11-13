@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS inspections (
     mm_per_px REAL,
     latency_json TEXT,
     model_versions_json TEXT,
-    final_verdict TEXT            -- operator's decision for REVIEW boards (or an override)
+    final_verdict TEXT,           -- operator's decision for REVIEW boards (or an override)
+    disposition TEXT,             -- ACCEPT | REWORK | SCRAP | REVIEW for the customer class
+    customer_class INTEGER
 );
 CREATE INDEX IF NOT EXISTS ix_insp_ts ON inspections(ts);
 CREATE INDEX IF NOT EXISTS ix_insp_board ON inspections(board_id);
@@ -51,7 +53,9 @@ CREATE TABLE IF NOT EXISTS defects (
     severity TEXT,
     ipc_json TEXT,
     severity_reason TEXT,
-    operator_label TEXT           -- 'confirmed' | 'false_alarm' | 'relabel:<cls>' | NULL
+    operator_label TEXT,          -- 'confirmed' | 'false_alarm' | 'relabel:<cls>' | NULL
+    disposition TEXT,
+    uncertainty_mm REAL
 );
 CREATE INDEX IF NOT EXISTS ix_def_insp ON defects(inspection_id);
 CREATE INDEX IF NOT EXISTS ix_def_cls ON defects(cls);
@@ -111,6 +115,17 @@ class Store:
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after a station database was created (idempotent)."""
+        for table, col, typ in (("inspections", "disposition", "TEXT"),
+                                ("inspections", "customer_class", "INTEGER"),
+                                ("defects", "disposition", "TEXT"),
+                                ("defects", "uncertainty_mm", "REAL")):
+            cols = {r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if col not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
 
     # ---------- images ----------
     def put_image(self, data: bytes, ext: str = ".jpg") -> str:
@@ -145,18 +160,21 @@ class Store:
             self.conn.execute("BEGIN")
             cur = self.conn.execute(
                 "INSERT INTO inspections(ts, board_id, design, image_sha, verdict, board_score, alpha, "
-                "mm_per_px, latency_json, model_versions_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "mm_per_px, latency_json, model_versions_json, disposition, customer_class) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (time.time(), insp.board_id, insp.design, image_sha, insp.verdict, insp.board_score,
                  insp.alpha, insp.mm_per_px, json.dumps(insp.latency_ms),
-                 json.dumps(insp.model_versions)))
+                 json.dumps(insp.model_versions), insp.disposition, insp.customer_class))
             iid = cur.lastrowid
             for d in insp.defects:
                 self.conn.execute(
                     "INSERT INTO defects(inspection_id, defect_key, cls, source, x1, y1, x2, y2, "
                     "confidence, size_mm, width_mm, area_mm2, location, severity, ipc_json, "
-                    "severity_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "severity_reason, disposition, uncertainty_mm) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (iid, d.id, d.cls, d.source, *d.bbox, d.confidence, d.size_mm, d.width_mm,
-                     d.area_mm2, d.location, d.severity, json.dumps(d.ipc), d.severity_reason))
+                     d.area_mm2, d.location, d.severity, json.dumps(d.ipc), d.severity_reason,
+                     d.disposition, d.uncertainty_mm))
         return iid
 
     def inspection(self, iid: int) -> dict | None:

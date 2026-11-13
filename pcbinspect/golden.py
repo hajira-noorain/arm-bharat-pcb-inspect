@@ -1,18 +1,22 @@
-"""Golden-board measurement: measure what a defect actually does to the copper, in millimetres.
+"""Golden-board measurement: estimate what a defect does to the copper, in millimetres.
 
-A detector box is drawn loosely around a defect, so its size is not the defect's size. Industrial
-AOI compares the board with a known-good ("golden") image of the same design instead:
+A detection box is drawn loosely around a defect, so its size is not the defect's size. Like
+golden-board AOI, we compare with a known-good image of the same design:
 
-  1. align the board to the golden image (ECC, affine)
-  2. copper masks of both; their difference inside the detection box IS the defect
-  3a. missing copper (mouse bite, pinhole, open): depth = short side of the missing region's
-      min-area rectangle; local trace width = 2 x golden distance-transform there;
-      width reduction % = depth / local width                                   (IPC width rule)
-  3b. extra copper (spur, spurious copper, short): remaining spacing = shortest distance from the
-      extra copper to a DIFFERENT golden conductor (not the one it grows from);
-      spacing reduction % = (minimum spacing - remaining) / minimum spacing     (IPC spacing rule)
+  1. global alignment (ECC, affine); the correlation is checked, and below MIN_ALIGN_CC no
+     measurement is made at all (the defect is graded by type and flagged)
+  2. per-defect refinement: phase correlation of the crop at full resolution removes the residual
+     shift the global affine leaves (lens distortion, warpage)
+  3. copper masks; inside the box, golden-minus-board is missing copper, board-minus-golden is extra
+     copper; differences thinner than MIN_THICK_PX are registration slivers, not defects
+  4a. missing copper: depth = short side of the region's min-area rectangle; local conductor width
+      = typical ridge (centre-line) width of the conductor next to the nick, not the widest copper
+      nearby (a pad would understate the damage)
+  4b. extra copper: remaining gap = shortest distance to a DIFFERENT golden conductor
+  5. every value carries +/-1 pixel; a class limit inside that band is reported 'uncertain'
 
-No golden image -> no millimetre claim (severity falls back to the defect-type default).
+Validated so far on binarised scans and bare-copper scans. NOT yet validated on solder-masked
+boards under in-line lighting: there, copper under the mask is a faint ridge and glare dominates.
 """
 from __future__ import annotations
 
@@ -23,34 +27,53 @@ import numpy as np
 
 MISSING_TYPES = {"mouse_bite", "pin_hole", "open", "missing_pad"}
 EXTRA_TYPES = {"spur", "spurious_copper", "short"}
+MIN_ALIGN_CC = 0.85
+MIN_THICK_PX = 2.0
+MAX_REFINE_SHIFT_PX = 6.0
 
 
 @dataclass
 class Measurement:
     kind: str            # 'width' | 'spacing'
     defect_mm: float     # nick depth (width) or remaining gap (spacing)
-    ref_mm: float        # local trace width (width) or minimum spacing (spacing)
-    pct: float           # reduction in percent (>=100 means fully cut / bridged)
+    ref_mm: float        # local conductor width (width) or minimum spacing (spacing)
+    pct: float           # reduction in percent (100 = cut through / bridged)
+    px_mm: float         # one pixel in mm: the measurement uncertainty
     method: str = "golden-diff"
 
+    @property
+    def unc_pct(self) -> float:
+        return 100.0 * self.px_mm / max(self.ref_mm, 1e-9)
+
+    def decide(self, limit_pct: float) -> str:
+        """'accept' | 'reject' | 'uncertain' against a reduction limit (100 = functional only)."""
+        if self.pct >= 100.0:
+            return "reject"                     # cut through / bridged: no ambiguity
+        if abs(self.pct - limit_pct) <= self.unc_pct:
+            return "uncertain"
+        return "reject" if self.pct > limit_pct else "accept"
+
     def text(self) -> str:
+        u = f" (+/-{self.px_mm:.3f} mm)"
         if self.kind == "width":
             if self.pct >= 100:
                 return f"cuts the full {self.ref_mm:.2f} mm conductor"
-            return f"{self.defect_mm:.3f} mm nick in a {self.ref_mm:.2f} mm conductor ({self.pct:.0f}% width lost)"
+            return (f"{self.defect_mm:.3f} mm nick in a {self.ref_mm:.2f} mm conductor{u}: "
+                    f"{self.pct:.0f}% of the width lost")
         if self.pct >= 100:
             return "bridges the gap to the next conductor"
-        return f"leaves {self.defect_mm:.3f} mm gap against {self.ref_mm:.2f} mm minimum ({self.pct:.0f}% spacing lost)"
+        return (f"leaves a {self.defect_mm:.3f} mm gap against a {self.ref_mm:.2f} mm minimum{u}: "
+                f"{self.pct:.0f}% of the spacing lost")
 
 
 def copper_mask(bgr: np.ndarray) -> np.ndarray:
-    """Copper (or the dark/bright conductor layer) as a binary mask, robust across binarised scans,
-    bare copper on laminate and green solder mask: Otsu on the channel with most contrast."""
+    """Conductor layer as a binary mask: Otsu on the LAB channel with the most contrast.
+    Works on binarised scans and bare copper on laminate; not validated under solder mask."""
     lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
     best, best_sep = None, -1.0
     for ch in (lab[:, :, 0], lab[:, :, 1], lab[:, :, 2]):
         c8 = cv2.GaussianBlur(ch, (3, 3), 0)
-        t, m = cv2.threshold(c8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, m = cv2.threshold(c8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         a, b = c8[m > 0], c8[m == 0]
         if len(a) < 10 or len(b) < 10:
             continue
@@ -58,8 +81,7 @@ def copper_mask(bgr: np.ndarray) -> np.ndarray:
         if sep > best_sep:
             best, best_sep = m, sep
     m = best if best is not None else np.zeros(bgr.shape[:2], np.uint8)
-    # conductor = the minority phase on most boards; flip if the "copper" covers most of the image
-    if (m > 0).mean() > 0.5:
+    if (m > 0).mean() > 0.5:                    # conductor is the minority phase on most boards
         m = 255 - m
     return m
 
@@ -88,66 +110,97 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
 
 class GoldenMeasurer:
     def __init__(self, test_bgr: np.ndarray, golden_bgr: np.ndarray, mm_per_px: float,
-                 min_spacing_mm: float, aligned: bool = False):
+                 min_spacing_mm: float, aligned: bool = False, min_align_cc: float = MIN_ALIGN_CC):
         self.mm = mm_per_px
         self.min_spacing_mm = min_spacing_mm
         if aligned:
             g, self.align_cc = golden_bgr, 1.0
         else:
             g, self.align_cc = align(test_bgr, golden_bgr)
+        self.ok = self.align_cc >= min_align_cc
+        self.reason = "" if self.ok else f"golden alignment too poor to measure (cc {self.align_cc:.2f})"
+        self.t_gray = cv2.cvtColor(test_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+        self.g_gray = cv2.cvtColor(g, cv2.COLOR_BGR2GRAY).astype(np.float32)
         self.t = copper_mask(test_bgr) > 0
         self.g = copper_mask(g) > 0
-        self.g_dt = cv2.distanceTransform(self.g.astype(np.uint8), cv2.DIST_L2, 5)
-        self.g_lab = cv2.connectedComponents(self.g.astype(np.uint8), connectivity=8)[1]
+        self.last_reason = ""
 
-    def measure(self, cls: str, bbox, pad: int = 6) -> Measurement | None:
+    def _refined_golden_crop(self, x1, y1, x2, y2):
+        """Golden mask crop shifted by the residual translation found by phase correlation."""
+        a, b = self.t_gray[y1:y2, x1:x2], self.g_gray[y1:y2, x1:x2]
+        g = self.g[y1:y2, x1:x2]
+        if min(a.shape) < 16:
+            return g, (0.0, 0.0)
+        win = cv2.createHanningWindow((a.shape[1], a.shape[0]), cv2.CV_32F)
+        (dx, dy), resp = cv2.phaseCorrelate(b, a, win)
+        if resp < 0.1 or max(abs(dx), abs(dy)) > MAX_REFINE_SHIFT_PX or max(abs(dx), abs(dy)) < 0.5:
+            return g, (0.0, 0.0)
+        M = np.float32([[1, 0, dx], [0, 1, dy]])
+        g2 = cv2.warpAffine(g.astype(np.uint8), M, (g.shape[1], g.shape[0]), flags=cv2.INTER_NEAREST,
+                            borderMode=cv2.BORDER_REPLICATE) > 0
+        return g2, (dx, dy)
+
+    def measure(self, cls: str, bbox, pad: int = 12) -> Measurement | None:
+        """Measurement, or None with self.last_reason explaining why no mm claim is made."""
+        self.last_reason = ""
+        if not self.ok:
+            self.last_reason = self.reason
+            return None
+        if cls not in MISSING_TYPES and cls not in EXTRA_TYPES:
+            return None
         h, w = self.t.shape
         x1, y1, x2, y2 = [int(v) for v in bbox]
         x1, y1 = max(0, x1 - pad), max(0, y1 - pad)
         x2, y2 = min(w, x2 + pad), min(h, y2 + pad)
-        t, g = self.t[y1:y2, x1:x2], self.g[y1:y2, x1:x2]
-        if cls in MISSING_TYPES:
-            region = g & ~t
-        elif cls in EXTRA_TYPES:
-            region = t & ~g
-        else:
-            return None
-        # no morphological opening: an even kernel shifts the region by a pixel, which matters at
-        # this scale; tiny noise components are removed by the area filter instead
+        t = self.t[y1:y2, x1:x2]
+        g, _ = self._refined_golden_crop(x1, y1, x2, y2)
+        region = (g & ~t) if cls in MISSING_TYPES else (t & ~g)
         n, lab, stats, _ = cv2.connectedComponentsWithStats(region.astype(np.uint8), connectivity=8)
         if n <= 1:
+            self.last_reason = "no copper difference found at the defect"
             return None
         k = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-        if stats[k, cv2.CC_STAT_AREA] < 4:
-            return None
         comp = lab == k
         ys, xs = np.nonzero(comp)
-        ring = cv2.dilate(comp.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0   # 2 px around it
-        gl = self.g_lab[y1:y2, x1:x2]
+        pts = np.stack([xs, ys], 1).astype(np.float32)
+        (_, _), (rw, rh), _ = cv2.minAreaRect(pts)
+        thick = min(rw, rh) + 1.0                       # rect is fitted through pixel centres
+        if stats[k, cv2.CC_STAT_AREA] < 6 or thick < MIN_THICK_PX:
+            self.last_reason = "difference is a 1-pixel sliver (registration), not measurable"
+            return None
+        g_lab = cv2.connectedComponents(g.astype(np.uint8), connectivity=8)[1]
+        ring = cv2.dilate(comp.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
         if cls in MISSING_TYPES:
-            pts = np.stack([xs, ys], 1).astype(np.float32)
-            (_, _), (rw, rh), _ = cv2.minAreaRect(pts)
-            depth_px = max(1.0, min(rw, rh) + 1.0)      # rect is fitted through pixel centres
-            # local width of the conductor the nick is cut into: its golden distance-transform peak
-            parents = set(np.unique(gl[ring])) - {0}
+            parents = set(np.unique(g_lab[ring])) - {0}
             if not parents:
+                self.last_reason = "conductor next to the defect not found in the golden image"
                 return None
-            on_parent = np.isin(gl, list(parents))
-            local_w_px = 2.0 * float(self.g_dt[y1:y2, x1:x2][on_parent].max())
+            on_parent = np.isin(g_lab, list(parents))
+            dt = cv2.distanceTransform(on_parent.astype(np.uint8), cv2.DIST_L2, 5)
+            ridge = on_parent & (dt >= cv2.dilate(dt, np.ones((3, 3), np.uint8)) - 1e-6) & (dt >= 1)
+            r = int(3 * thick + 6)
+            near = cv2.dilate(comp.astype(np.uint8), np.ones((2 * r + 1, 2 * r + 1), np.uint8)) > 0
+            widths = 2.0 * dt[ridge & near]
+            if len(widths) == 0:
+                widths = 2.0 * dt[on_parent]
+            local_w_px = float(np.percentile(widths, 25))     # the conductor, not a nearby pad
             if local_w_px <= 0:
                 return None
+            depth_px = thick
             if cls == "open":
-                depth_px = max(depth_px, local_w_px)     # an open is a full cut by definition
+                depth_px = max(depth_px, local_w_px)          # an open is a full cut by definition
             pct = 100.0 * min(depth_px / local_w_px, 1.0) if cls == "open" else 100.0 * depth_px / local_w_px
-            return Measurement("width", depth_px * self.mm, local_w_px * self.mm, round(pct, 1))
+            return Measurement("width", depth_px * self.mm, local_w_px * self.mm, round(pct, 1), self.mm)
         # extra copper: distance to the nearest DIFFERENT golden conductor
-        touch = set(np.unique(gl[ring])) - {0}
-        others = (self.g_lab > 0) & ~np.isin(self.g_lab, list(touch))
-        dist = cv2.distanceTransform((~others).astype(np.uint8), cv2.DIST_L2, 5)
-        remaining_px = float(dist[y1:y2, x1:x2][comp].min())
+        touch = set(np.unique(g_lab[ring])) - {0}
+        others = (g_lab > 0) & ~np.isin(g_lab, list(touch))
         min_sp = self.min_spacing_mm
-        remaining_mm = remaining_px * self.mm
         if cls == "short" or len(touch) >= 2:
-            remaining_mm = 0.0                             # touches two conductors: bridged
+            return Measurement("spacing", 0.0, min_sp, 100.0, self.mm)     # touches two conductors
+        if not others.any():
+            self.last_reason = "no neighbouring conductor inside the measured window"
+            return None
+        dist = cv2.distanceTransform((~others).astype(np.uint8), cv2.DIST_L2, 5)
+        remaining_mm = float(dist[comp].min()) * self.mm
         pct = 100.0 * max(0.0, min_sp - remaining_mm) / min_sp
-        return Measurement("spacing", remaining_mm, min_sp, round(pct, 1))
+        return Measurement("spacing", remaining_mm, min_sp, round(pct, 1), self.mm)

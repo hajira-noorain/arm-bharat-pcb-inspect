@@ -240,7 +240,7 @@ class Station:
         if row["source"] == "detector" and self.feature_fn is not None:
             label = 0 if action == "false_alarm" else 1
             emb = crop_embedding(self.feature_fn, bgr, (row["x1"], row["y1"], row["x2"], row["y2"]))
-            self.buffer(design).add(emb, label, ev)
+            self.buffer(design).add(emb, label, ev, conf=float(row["confidence"] or 0.5), group=iid)
             npos, nneg = self.buffer(design).counts()
             result.update({"learned": "stored for the next model update", "examples": {
                 "confirmed": npos, "false_alarms": nneg}})

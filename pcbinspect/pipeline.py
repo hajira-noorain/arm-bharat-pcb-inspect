@@ -20,7 +20,7 @@ from .calib import detect_scale, read_board_id
 from .detect_bare import BareDetector
 from .gate import ConformalGate, GateThresholds
 from .golden import GoldenMeasurer
-from .learning import RescoreHead, combine, crop_embedding
+from .learning import RescoreHead, crop_embedding, rescore
 from .record import ANOMALY_CLASS, Defect, Inspection, zone_of
 from .severity import DesignRules, SeverityEngine
 
@@ -46,10 +46,12 @@ class Design:
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
         d = yaml.safe_load(Path(p).read_text())
-        r = d.get("rules", {})
+        r = d.get("rules") or {}
+        rules = DesignRules(r.get("min_trace_width_mm", 0.2), r.get("min_spacing_mm", 0.2),
+                            int(d.get("customer_class", 2)),
+                            "min_trace_width_mm" in r and "min_spacing_mm" in r)
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
-                   d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0),
-                   DesignRules(r.get("min_trace_width_mm", 0.2), r.get("min_spacing_mm", 0.2)),
+                   d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0), rules,
                    d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
                    d.get("golden"))
 
@@ -161,7 +163,7 @@ class Inspector:
             for c in sorted((c for c in cands if c.source == "detector"),
                             key=lambda c: -c.raw_conf)[:RESCORE_TOP_K]:
                 c.embedding = crop_embedding(self.feature_fn, bgr, c.bbox)
-                c.conf = combine(c.raw_conf, h.p_real(c.embedding))
+                c.conf = rescore(c.cls, c.raw_conf, h.p_real(c.embedding))
             lat["rescore"] = (time.perf_counter() - t) * 1e3
 
         score = max((c.conf for c in cands), default=0.0)
@@ -209,7 +211,12 @@ class Inspector:
                 area_mm2=None if mmpp is None else round((x2 - x1) * (y2 - y1) * mmpp * mmpp, 3),
                 location=zone_of(c.bbox, w, h))
             meas = gm.measure(c.cls, c.bbox) if gm is not None and c.source == "detector" else None
-            defects.append(self.severity.grade(defect, d.rules, measurement=meas))
+            self.severity.grade(defect, d.rules, measurement=meas)
+            if gm is not None and meas is None and gm.last_reason and c.source == "detector":
+                defect.severity_reason += f"; no mm measurement: {gm.last_reason}"
+            if not d.rules.rules_from_design and meas is not None:
+                defect.severity_reason += "; design rules are generic defaults, set them from the Gerber"
+            defects.append(defect)
         a.latency_ms["severity"] = (time.perf_counter() - t) * 1e3
 
         bid = board_id or a.board_id or f"{design}-{int(time.time())}-{next(self._auto_id)}"
@@ -217,7 +224,9 @@ class Inspector:
             board_id=bid, design=design, image_path="", defects=defects,
             board_score=round(a.board_score, 4), verdict=verdict,
             alpha=th.alpha if th else (alpha or d.alpha), mm_per_px=a.mm_per_px,
-            latency_ms={}, model_versions=self.model_versions(design))
+            latency_ms={}, model_versions=self.model_versions(design),
+            disposition=SeverityEngine.board_disposition(defects) if verdict != "PASS" else "ACCEPT",
+            customer_class=d.rules.customer_class)
         a.latency_ms["total_to_verdict"] = (time.perf_counter() - t_all) * 1e3
 
         iid = None
@@ -257,8 +266,9 @@ def save_design(config_dir: Path, d: Design) -> None:
     Path(config_dir).mkdir(parents=True, exist_ok=True)
     doc = {"name": d.name, "kind": d.kind, "detector": d.use_detector, "anomaly_dir": d.anomaly_dir,
            "mm_per_px": d.mm_per_px, "marker_mm": d.marker_mm,
-           "rules": {"min_trace_width_mm": d.rules.min_trace_width_mm,
-                     "min_spacing_mm": d.rules.min_spacing_mm},
+           "customer_class": d.rules.customer_class,
+           "rules": ({"min_trace_width_mm": d.rules.min_trace_width_mm,
+                      "min_spacing_mm": d.rules.min_spacing_mm} if d.rules.rules_from_design else None),
            "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
            "golden": d.golden}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
