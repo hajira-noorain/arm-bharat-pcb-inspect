@@ -10,7 +10,7 @@ This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and
 
 1. **It measures its own detection limit, like an eye test.** The operator photographs a printed test card carrying 252 defects of known size. The station reads the card and states, per defect type, the smallest size it finds 90% of the time with 95% confidence (the a90/95 figure from the US military's non-destructive-testing handbook, MIL-HDBK-1823A). It also says plainly which sizes it cannot certify.
 2. **It says when it is unsure, with a guaranteed miss rate.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.0% of defects.
-3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject any open wider than 0.1 mm"). Llama on ExecuTorch turns each clause into an executable rule. Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
+3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject mouse bites that remove more than 20% of the trace width"). Llama on ExecuTorch turns each clause into an executable rule, choosing only among answers the clause supports (constrained decoding on the exported model). Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
 
 | What a reviewer can check | Where |
 |---|---|
@@ -240,12 +240,32 @@ Customers state acceptance rules in plain English. Turning them into machine rul
 
 **How it works:**
 
-1. **Llama 3.2 3B on ExecuTorch fills a fixed form** for each clause: kind, defect, measure (always, size in mm, % width loss, % spacing loss, count), comparison, value, action. Each field is generated separately, so the model never writes free text.
-2. **Deterministic checks.** The schema must be valid. Every number must appear in the clause (with unit conversion: mil to mm). The defect named must be in the clause. The rule must agree with a second, independent keyword reading.
-3. **Capability check.** A rule that asks for defects smaller than the measured detection limit (section 5.2) is flagged: the station cannot keep that promise on this camera.
-4. **The operator confirms** every rule that is not auto-accepted, seeing it rendered back as a plain sentence.
+1. **Llama 3.2 3B on ExecuTorch fills a fixed form** for each clause: kind, defect, measure (always, size in mm, % width loss, % spacing loss, count), comparison, value, action.
+2. **It can only choose legal answers (constrained decoding).** The official Python runner returns text only, so the station calls the same exported `.pte` through `executorch.runtime`, which returns the score of every next token with the KV cache kept inside the program (`pcbinspect/llm_logits.py`). At each step only tokens that continue one of the allowed answers are admitted (a prefix tree), and the best one wins. A field can therefore never be off the list, and no parsing is needed.
+3. **The clause's own words narrow the lists first (grounding).** Only defects the clause names are offered; only measures that fit a number in the clause (25% means width or spacing loss, 0.1 mm or 3 mil means size, a bare number means a count); only numbers written in the clause; the unit is the one written next to the chosen number. Llama decides what the words leave open: which named defect, width or spacing, which number, "more than" or "at least", and the action.
+4. **Deterministic checks.** The schema must be valid, every number must appear in the clause (with unit conversion), the defect must be named in the clause, and the rule must agree with an independent keyword reading.
+5. **Capability check.** A rule that asks for defects smaller than the measured detection limit (section 5.2, or the limit measured when the board was taught) is flagged: the station cannot keep that promise on this camera.
+6. **The operator confirms** every rule that is not auto-accepted, seeing it rendered back as a plain sentence.
 
-**Measured** (Llama 3.2 3B SpinQuant on ExecuTorch, CPU): with worked examples in the prompt, 51% of the 80 tuning clauses were compiled exactly right and auto-accepted, 6% were wrong but passed the checks, and the rest went to the operator (33%) or produced no rule (10%). On the 40 held-out clauses, run once after the prompt was fixed: 47.5% exactly right, 32.5% auto-accepted and right, 5% (2 clauses) wrong but passing the checks, 52.5% sent to the operator, 10% with no rule. The keyword reader alone was silently wrong on 45% of the same clauses. On deliberately corrupted correct rules, the checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect, but only 89% of flipped comparisons and 69% of wrong actions; those two are what the operator's read-back is for. Llama 3.2 1B cannot do this task (5% exact), so the station uses 1B for advice and 3B for rules.
+**Measured** (Llama 3.2 3B SpinQuant on ExecuTorch, CPU; 80 tuning clauses used during development, 40 held-out clauses written independently):
+
+| Reader | Set | Exactly right | Accepted by the checks and right | Silently wrong | Sent to the operator | No rule |
+|---|---|---|---|---|---|---|
+| Keyword reader | held-out | 52.5% | 55.0% | 45.0% | 0% | 0% |
+| Llama, free generation with worked examples | tuning | 51.2% | 51.2% | 6.2% | 32.5% | 10.0% |
+| Llama, free generation with worked examples | held-out | 47.5% | 32.5% | 5.0% | 52.5% | 10.0% |
+| Llama, constrained decoding, full lists | tuning | 46.3% | 46.3% | 5.0% | 43.8% | 5.0% |
+| Llama, grounded choice (deployed) | tuning | 77.5% | 77.5% | 2.5% | 20.0% | 0% |
+| Llama, grounded choice (deployed) | held-out | 62.5% | 55.0% | 2.5% | 42.5% | 0% |
+
+What this shows, including what did not work:
+
+- **Constrained decoding alone did not help.** It removed half of the "no rule" failures but the model still misread the clause (defect name right 75% of the time), and exact rules fell slightly. It was not taken to the held-out set.
+- **Grounding did.** The method was chosen on the tuning set, then the held-out set was run once: exact rules rose from 47.5% to 62.5%, rules accepted by the checks and right from 32.5% to 55%, silently wrong fell from 2 clauses to 1 in 40, and "no rule" disappeared. With 40 clauses these percentages carry wide intervals (one clause is 2.5 points).
+- **The remaining weak field is the comparison** ("more than" against "at least": 61% right on held-out). That is why a rule is only auto-accepted when the independent keyword reading agrees, and why the operator reads every other rule back.
+- Grounding uses the same vocabulary as the keyword checks, so for the defect field the two readers are no longer independent; they remain independent for the comparison and the action.
+
+On deliberately corrupted correct rules, the checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect, but only 89% of flipped comparisons and 69% of wrong actions; those two are what the operator's read-back is for. Llama 3.2 1B cannot do this task (5% exact by free generation), so the station uses 1B for advice and 3B for rules.
 
 ## 6. Llama on ExecuTorch: advice the operator can check
 
