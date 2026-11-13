@@ -25,6 +25,7 @@ from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.anomaly import enrol, torch_feature_fn  # noqa: E402
+from pcbinspect.gate import ConformalGate, evaluate  # noqa: E402
 
 
 def read_split(visa: Path, obj: str):
@@ -116,6 +117,17 @@ def main():
             split = "cal" if j < half else "test"
             gate[split]["defective" if labels[i] else "good"].append(float(norm[i]))
         (out / "results" / f"gate_scores_{obj}.json").write_text(json.dumps(gate))
+        g = ConformalGate(gate["cal"]["defective"], gate["cal"]["good"], f"visa_{obj}")
+        (out / "models" / "gate").mkdir(parents=True, exist_ok=True)
+        g.save(out / "models" / "gate" / f"visa_{obj}.json")
+        report["gate"] = {}
+        for a in (0.01, 0.05, 0.10):
+            th = g.thresholds(a, 0.01)
+            report["gate"][f"alpha_{a}"] = {**evaluate(th, gate["test"]["defective"], gate["test"]["good"]),
+                                            "lam": th.lam, "tau": th.tau}
+        r5 = report["gate"]["alpha_0.05"]
+        print(f"   gate @5%: test miss {r5['miss_rate']:.3f}, review {r5['review_rate']:.2f}, "
+              f"good failed {r5['false_reject_rate']:.3f}", flush=True)
 
         # few-shot curve: "teach a new board" from k good images
         report["fewshot"] = {}
