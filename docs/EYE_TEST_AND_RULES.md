@@ -130,10 +130,11 @@ We measured Llama choosing defect causes from a list: it was at chance level (`a
   - Rules are compared with gold rules, both field by field and by executing them on a probe grid of defects.
   - The checks are also tested on deliberately corrupted gold rules.
 - **The key number is "silently wrong":** the checks passed, but the rule is wrong.
-- Results: `spec_eval_keyword.json`, `spec_eval_1b.json`, `spec_eval_3b.json`.
+- Results: `spec_eval_keyword.json`, `spec_eval_1b.json`, `spec_eval_3b.json` (zero-shot) and `spec_eval_3b_fewshot.json` (worked examples, deployed). The choice between zero-shot and worked examples was made on the tuning set only (51% exactly right against 30%); the held-out set was then run once.
 
 ### Bugs found by the benchmark
 
 - **A yes/no "class only?" first field.** Llama 1B answered "yes" for every clause.
 - **Few-shot examples were copied.** 1B answered "none", the first example's answer, for every clause, and 3B over-answered the example's defect.
 - **Every answer was fed back into the model**, although the generated tokens were already in the KV cache. Each answer appeared twice in the context and the model began repeating itself.
+- **Worked examples, revisited.** After the KV-cache fix, two worked examples no longer get copied by 3B and raise exact rules on the tuning set from 30% to 51%. They stay on for 3B; 1B still cannot do the task.

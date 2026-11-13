@@ -207,7 +207,7 @@ Customers state acceptance rules in plain English. Turning them into machine rul
 
 **Grounding checker.** It rejects choices that are out of range or do not parse, a summary containing a number not in the record or its history, and a summary naming a defect type not on the board. A rejected answer is replaced by standard knowledge-base advice; the reason is logged and shown. The operator always reads knowledge-base text verbatim for every cause and action, so instructions are never invented.
 
-**Measured** (60 seeded defect records): 88% of answers pass grounding. Llama picks the process cause for a repeating defect 71% of the time against 65% by chance, a modest gain stated as such. `docs/RESULTS.md` has the table. What failed on the way: asking for knowledge-base IDs as strings passed grounding about 15% of the time, and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
+**Measured** (60 seeded defect records): 88% of answers pass grounding. Llama's choice of cause is not distinguishable from chance: for a repeating defect it picked the process cause 71% of the time against 65% by chance (n = 14), and it picked whichever option was listed first 78% of the time against 42% by chance. The value of the 1B model is a grounded, readable summary; the causes and actions the operator reads always come from the knowledge base. `docs/RESULTS.md` has the table. What failed on the way: asking for knowledge-base IDs as strings passed grounding about 15% of the time, and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
 
 If Llama fails to load on the device, the dashboard shows a red banner and the functional check (`deploy/arm_check.py`) fails loudly. The station never silently pretends to run Llama.
 
@@ -242,6 +242,6 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - The conformal guarantee is marginal and holds only for boards like the calibration boards.
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
-- The 1B model's choice among causes is only modestly better than chance; its value is a grounded, readable summary. The 3B rule reader sends many clauses to the operator rather than guessing.
+- The 1B model's choice among causes is not distinguishable from chance; its value is a grounded, readable summary. The 3B rule reader sends many clauses to the operator rather than guessing.
 - HRIPCB's physical scale is not published, so its severities use defect-type defaults rather than millimetres.
 - Real-IAD (CC BY-NC-SA) is used for evaluation only and is never used to train or ship anything.
