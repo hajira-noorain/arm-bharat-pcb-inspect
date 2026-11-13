@@ -279,8 +279,9 @@ class Inspector:
             insp.model_versions["capture_check"] = force_review
         if capture_info:
             insp.model_versions["capture"] = json.dumps(capture_info, default=str)[:500]
-        insp.model_versions["evidence"] = "detector+golden" if a.golden_used else (
-            "detector" + (f" ({a.golden_note})" if a.golden_note else ""))
+        parts = (["detector"] if d.use_detector and self.detector is not None else []) +                 (["golden"] if a.golden_used else []) + (["anomaly memory"] if a.anomaly is not None else [])
+        insp.model_versions["evidence"] = ("+".join(parts) or "none") + (
+            f" ({a.golden_note})" if a.golden_note and not a.golden_used else "")
         a.latency_ms["total_to_verdict"] = (time.perf_counter() - t_all) * 1e3
 
         iid = None
