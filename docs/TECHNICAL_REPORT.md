@@ -193,7 +193,19 @@ A dataset score says how a model did on someone else's photos. A factory needs t
 
 **The statement.** For each defect type the hits and misses are fitted with a bias-reduced (Firth) logistic curve of hit probability against log size, following MIL-HDBK-1823A. The station reports a90/95: the size above which it finds 90% of defects with 95% confidence. When the curve cannot be fitted honestly, it falls back to a model-free window (Clopper-Pearson), and when even that cannot certify a size, it says so. A statement reads, for example: "Finds mouse bites from 0.50 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n = 180 trials)."
 
-**In silico, before the card is printed.** The same pipeline was run on defects drawn onto held-out DeepPCB patterns, under clean, webcam-like and half-resolution conditions: [[PENDING pod v3 summary]].
+**In silico, before the card is printed.** The same pipeline was run on about 1,700 defects drawn onto held-out DeepPCB patterns and re-judged under three camera conditions: clean, webcam-like (defocus blur, sensor noise, JPEG at quality 60, 0.75x resolution, a lighting shift) and half resolution. Smallest size certified (a90/95):
+
+| Defect | Clean | Webcam-like | Half resolution |
+|---|---|---|---|
+| Opens | 0.06 mm | 0.06 mm | 0.06 mm |
+| Shorts across gaps | 0.15 mm | 0.15 mm | 0.15 mm |
+| Spurs | 0.17 mm | 0.14 mm | 0.14 mm |
+| Spurious copper | 0.30 mm | 0.18 mm | 0.18 mm |
+| Pin holes | 0.30 mm | 0.19 mm | 0.18 mm |
+| Mouse bites | 0.45 mm | 0.48 mm | 0.43 mm |
+| False calls per clean board | 0.09 | 0.17 | 0.21 |
+
+These are with the golden board. The detector alone certified no open-ended size for any type under any condition. For shorts, spurs and spurious copper it found only a band of small sizes (shorts across gaps from 0.15 to 0.45 mm, for example) and missed larger ones significantly more often: a learned detector knows the defects it was trained on, not "anything bigger". This is why the station leads with the golden comparison.
 
 **Simulated photos of the card.** A print and camera model (inkjet dot gain, perspective, blur, noise, JPEG) checks the reader end to end. With the golden board, every defect type gets a stated limit; the detector alone certifies none:
 
