@@ -72,7 +72,7 @@ def main():
         for i, b in enumerate(x for x in cal if x["source"] == design):
             name = f"{i:04d}.jpg"
             shutil.copy2(b["path"], cdir / name)
-            items.append({"file": name, "good": b["good"]})
+            items.append({"file": name, "good": b["good"], "boxes": b["boxes"]})
         (cdir / "manifest.json").write_text(json.dumps(items))
 
     # demo boards: held-out TEST images only, a mix of defective and good

@@ -352,6 +352,10 @@ def create_app(cfg: dict) -> FastAPI:
     def state():
         designs = [{"name": n, "kind": d.kind, "alpha": d.alpha, "description": d.description,
                     "calibrated": n in st.inspector.gates,
+                    "n_defective": len(st.inspector.gates[n].defective) if n in st.inspector.gates else 0,
+                    "n_good": len(st.inspector.gates[n].good) if n in st.inspector.gates else 0,
+                    "customer_class": d.rules.customer_class,
+                    "rules_from_design": d.rules.rules_from_design,
                     "detector": d.use_detector and st.detector is not None,
                     "anomaly": n in st.inspector.anomaly} for n, d in st.designs.items()]
         return {"designs": designs,

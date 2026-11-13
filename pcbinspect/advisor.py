@@ -100,15 +100,42 @@ def option_orders(record: dict, kb: KnowledgeBase, shuffle: bool = True) -> dict
     return out
 
 
+FEWSHOT = False   # worked example in the prompt; switched on only if the evaluation shows it helps
+EXAMPLE_TYPES = ("open", "short", "spurious_copper", "unknown_anomaly")   # have process + handling causes
+
+
+def _worked_example(record: dict, history: dict | None, kb: KnowledgeBase, window: int = 20) -> str:
+    """One worked example matched to the situation (repeating vs one-off), on a defect type that is
+    NOT on this board, so the model learns the reasoning rather than copying a position."""
+    present = {d["type"] for d in record["defects"]}
+    ex_type = next((t for t in EXAMPLE_TYPES if t not in present), None)
+    if ex_type is None:
+        return ""
+    repeating = bool(history) and any(t in present for t in history)
+    causes = list(kb.entry(ex_type)["causes"])
+    random.Random(f"example|{ex_type}").shuffle(causes)
+    want = next(i for i, c in enumerate(causes, 1)
+                if (c.get("step") != "handling") == repeating)
+    hist = (f" History: {ex_type.replace('_', ' ')} on 6 of the last {window} boards." if repeating
+            else " It has not been seen on recent boards.")
+    why = "it keeps repeating, so the process is the likely cause" if repeating else \
+        "it is a one-off, so a local or handling cause is likely"
+    return ("Worked example from a different board (do not mention it in your answer): D9: "
+            f"{ex_type.replace('_', ' ')}. causes: " +
+            "; ".join(f"{i} {c['short']}" for i, c in enumerate(causes, 1)) + f".{hist} "
+            f"Answer cause {want} because {why}.\n")
+
+
 def build_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase,
                  window: int = 20, style: str | None = None,
                  orders: dict[str, tuple[list, list]] | None = None,
-                 prefix: str | None = None) -> str:
+                 prefix: str | None = None, fewshot: bool | None = None) -> str:
     """Compact Llama 3.2 Instruct chat prompt (prefill dominates on a Pi, so every token counts).
 
     history = {defect_type: number of the last `window` boards on which it appeared}.
     """
     style = style or PROMPT_STYLE
+    fewshot = FEWSHOT if fewshot is None else fewshot
     if style == "numbered" and orders is None:
         orders = option_orders(record, kb, shuffle=False)
     defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
@@ -138,9 +165,10 @@ def build_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase
         pick = "For each defect pick one cause ID and one action ID from its own lists. "
         fmt = ('JSON format: {"steps": [{"defect": "D1", "cause": "<cause ID>", "action": "<action ID>"}], '
                '"summary": "..."}')
+    example = _worked_example(record, history, kb) if (fewshot and style == "numbered") else ""
     user = (
         f"Board {record['board_id']} verdict {record['verdict']}. Defects:\n" + "\n".join(lines) +
-        "\n" + hist + pick +
+        "\n" + hist + example + pick +
         "A defect that keeps repeating points to a process cause; a one-off points to handling or "
         "a local cause. Then a summary of one or two sentences for the operator using only the "
         "facts above.\n" + fmt
@@ -210,7 +238,8 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
 
 class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
-                 max_new_tokens: int = 160, summary_tokens: int = 90):
+                 max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None):
+        self.fewshot = fewshot
         self.backend = backend
         self.kb = kb or default_kb()
         self.max_new_tokens = max_new_tokens
@@ -240,7 +269,8 @@ class Advisor:
         defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
         orders = option_orders(record, kb, shuffle=True)
         start = '{"steps": ['
-        prompt = build_prompt(record, history, kb, style="numbered", orders=orders, prefix=start)
+        prompt = build_prompt(record, history, kb, style="numbered", orders=orders, prefix=start,
+                              fewshot=self.fewshot)
         t0 = time.perf_counter()
         be.reset()
         raw, carry = start, ""

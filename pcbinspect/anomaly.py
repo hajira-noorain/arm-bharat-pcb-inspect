@@ -34,8 +34,12 @@ def preprocess(bgr: np.ndarray, size: int = INPUT) -> np.ndarray:
     return ((rgb - MEAN) / STD).transpose(2, 0, 1)[None]
 
 
-def build_torch_backbone():
-    """The exact module we export to ExecuTorch. Imported lazily so the Pi runtime needs no torchvision."""
+def build_torch_backbone(arch: str = "resnet18"):
+    """The exact module we export to ExecuTorch. Imported lazily so the Pi runtime needs no torchvision.
+
+    arch: 'resnet18' (fast, 384-d patches) or 'wide_resnet50_2' (the PatchCore paper's backbone,
+    1536-d patches, about 3-4x the compute).
+    """
     import torch
     import torch.nn.functional as F
     import torchvision
@@ -43,7 +47,13 @@ def build_torch_backbone():
     class Backbone(torch.nn.Module):
         def __init__(self):
             super().__init__()
-            m = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
+            if arch == "resnet18":
+                m = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
+            elif arch == "wide_resnet50_2":
+                m = torchvision.models.wide_resnet50_2(
+                    weights=torchvision.models.Wide_ResNet50_2_Weights.IMAGENET1K_V1)
+            else:
+                raise ValueError(arch)
             self.stem = torch.nn.Sequential(m.conv1, m.bn1, m.relu, m.maxpool, m.layer1)
             self.layer2, self.layer3 = m.layer2, m.layer3
             self.pool = torch.nn.AvgPool2d(3, stride=1, padding=1)
@@ -57,9 +67,9 @@ def build_torch_backbone():
     return Backbone().eval()
 
 
-def torch_feature_fn(device: str = "cpu") -> FeatureFn:
+def torch_feature_fn(device: str = "cpu", arch: str = "resnet18") -> FeatureFn:
     import torch
-    net = build_torch_backbone().to(device)
+    net = build_torch_backbone(arch).to(device)
 
     def fn(x: np.ndarray) -> np.ndarray:
         with torch.inference_mode():
@@ -149,8 +159,11 @@ class AnomalyResult:
 
 class AnomalyModel:
     def __init__(self, feature_fn: FeatureFn, bank: np.ndarray, norm_scale: float,
-                 pixel_thr: float, design: str, version: int = 1, novelty_factor: float = 3.0):
+                 pixel_thr: float, design: str, version: int = 1, novelty_factor: float = 3.0,
+                 input_size: int = INPUT, arch: str = "resnet18"):
         self.feature_fn = feature_fn
+        self.input_size = int(input_size)
+        self.arch = arch
         self.bank = bank.astype(np.float32)
         self.nn = NearestNeighbour(self.bank)
         self.norm_scale = float(norm_scale)    # raw distance that maps to norm 0.5
@@ -166,18 +179,24 @@ class AnomalyModel:
 
     def score(self, bgr: np.ndarray) -> AnomalyResult:
         t0 = time.perf_counter()
-        x = preprocess(bgr)
+        x = preprocess(bgr, self.input_size)
         t1 = time.perf_counter()
         feat = self.feature_fn(x)
         t2 = time.perf_counter()
         _, c, gh, gw = feat.shape
-        desc = descriptors(feat)
+        res = self.score_desc(descriptors(feat), gh, gw, bgr.shape[1], bgr.shape[0])
+        res.latency_ms = {"anomaly_pre": (t1 - t0) * 1e3, "anomaly_backbone": (t2 - t1) * 1e3,
+                          **res.latency_ms}
+        return res
+
+    def score_desc(self, desc: np.ndarray, gh: int, gw: int, img_w: int, img_h: int) -> AnomalyResult:
+        """Score pre-computed patch descriptors (used by evaluation to avoid recomputing features)."""
+        t2 = time.perf_counter()
         d = self.nn.dist(desc).reshape(gh, gw)
         t3 = time.perf_counter()
-        regions = self._regions(d, bgr.shape[1], bgr.shape[0])
+        regions = self._regions(d, img_w, img_h)
         raw = float(d.max())
         return AnomalyResult(raw, float(self.normalise(raw)), d, regions, desc, {
-            "anomaly_pre": (t1 - t0) * 1e3, "anomaly_backbone": (t2 - t1) * 1e3,
             "anomaly_knn": (t3 - t2) * 1e3, "anomaly_post": (time.perf_counter() - t3) * 1e3})
 
     def _regions(self, d: np.ndarray, img_w: int, img_h: int) -> list[Region]:
@@ -235,27 +254,36 @@ class AnomalyModel:
         (d / "meta.json").write_text(json.dumps({
             "design": self.design, "version": self.version, "norm_scale": self.norm_scale,
             "pixel_thr": self.pixel_thr, "novelty_factor": self.novelty_factor,
-            "history": self.history}))
+            "input_size": self.input_size, "arch": self.arch, "history": self.history}))
 
     @classmethod
     def load(cls, d: Path, feature_fn: FeatureFn) -> "AnomalyModel":
         d = Path(d)
         m = json.loads((d / "meta.json").read_text())
         obj = cls(feature_fn, np.load(d / "bank.npy"), m["norm_scale"], m["pixel_thr"], m["design"],
-                  m["version"], m.get("novelty_factor", 3.0))
+                  m["version"], m.get("novelty_factor", 3.0), m.get("input_size", INPUT),
+                  m.get("arch", "resnet18"))
         obj.history = m.get("history", [])
         return obj
 
 
 def enrol(feature_fn: FeatureFn, good_images: list[np.ndarray], design: str,
           coreset_ratio: float = 0.1, max_bank: int = 16384, pixel_q: float = 99.9,
-          seed: int = 0) -> AnomalyModel:
+          seed: int = 0, input_size: int = INPUT, arch: str = "resnet18") -> AnomalyModel:
     """Build a model for a new design from good boards only (works with 5-10 images).
 
     Calibration uses leave-one-out: each good image is scored against a bank built WITHOUT it, so
     the normal-score statistics are honest even with very few images.
     """
-    feats = [descriptors(feature_fn(preprocess(im))) for im in good_images]
+    feats = [descriptors(feature_fn(preprocess(im, input_size))) for im in good_images]
+    return enrol_from_desc(feature_fn, feats, design, coreset_ratio, max_bank, pixel_q, seed,
+                           input_size, arch)
+
+
+def enrol_from_desc(feature_fn: FeatureFn, feats: list[np.ndarray], design: str,
+                    coreset_ratio: float = 0.1, max_bank: int = 16384, pixel_q: float = 99.9,
+                    seed: int = 0, input_size: int = INPUT, arch: str = "resnet18") -> AnomalyModel:
+    """enrol() on pre-computed per-image descriptors."""
 
     def build(fs):
         x = np.concatenate(fs)
@@ -286,4 +314,4 @@ def enrol(feature_fn: FeatureFn, good_images: list[np.ndarray], design: str,
         held_img_scores = [float(patch_d.max())]
     pixel_thr = float(np.percentile(patch_d, pixel_q))
     norm_scale = float(np.median(held_img_scores))
-    return AnomalyModel(feature_fn, bank, norm_scale, pixel_thr, design)
+    return AnomalyModel(feature_fn, bank, norm_scale, pixel_thr, design, input_size=input_size, arch=arch)

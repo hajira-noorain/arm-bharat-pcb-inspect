@@ -84,6 +84,10 @@ section[hidden] { display: none; }
 .ipc { display: inline-flex; gap: 4px; margin-left: 4px; }
 .ipc b { font-weight: 400; font-size: 13px; border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; }
 .ipc b.reject { border-color: var(--fail); color: var(--fail); }
+.ipc b.uncertain { border-color: #B07D00; color: #8A6200; }
+.disp { display: inline-block; font: 700 15px/1 var(--display); letter-spacing: .03em; padding: 4px 8px 3px; border-radius: 4px; color: #fff; margin-left: 6px; vertical-align: 2px; }
+.disp.SCRAP { background: var(--fail); } .disp.REWORK { background: var(--sev-major); }
+.disp.REVIEW { background: #8A6200; } .disp.ACCEPT { background: var(--pass); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .btn { border: 2px solid var(--mask); background: var(--panel); color: var(--mask); border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; min-height: 44px; }
 .btn:hover { background: #E7EFEB; }
@@ -262,11 +266,26 @@ async function loadState() {
   const sel = $("#design"), keep = sel.value;
   sel.innerHTML = state.designs.map((d) => `<option value="${esc(d.name)}">${esc(d.name)}${d.calibrated ? "" : " (not calibrated)"}</option>`).join("");
   if (keep && state.designs.some((d) => d.name === keep)) sel.value = keep;
+  syncAlpha();
   const on = (id, ok, text) => { const el = $(id); el.className = ok ? "on" : ""; el.textContent = text; };
   on("#st-camera", !!state.camera, state.camera ? `Camera: ${state.camera}` : "No camera");
   on("#st-vision", !!state.vision.detector || state.vision.backbone, state.vision.detector ? `Vision: ${state.vision.detector}` : "Vision: anomaly only");
   on("#st-llm", !!state.llm, state.llm ? `Llama: ${state.llm}` : "Llama not loaded");
 }
+
+// Only offer miss rates the calibration set can support: alpha needs at least 1/alpha - 1
+// defective calibration boards, otherwise the guarantee is empty and nothing would auto-pass.
+function syncAlpha() {
+  const d = state?.designs.find((x) => x.name === $("#design").value);
+  const opts = [...$("#alpha").options];
+  opts.forEach((o) => {
+    const a = parseFloat(o.value), need = Math.ceil(1 / a) - 1;
+    o.disabled = !d || d.n_defective < need;
+    o.textContent = `${Math.round(a * 100)}%${o.disabled ? ` (needs ${need} calibration boards)` : ""}`;
+  });
+  if ($("#alpha").selectedOptions[0]?.disabled) { const ok = opts.find((o) => !o.disabled); if (ok) $("#alpha").value = ok.value; }
+}
+$("#design").addEventListener("change", syncAlpha);
 
 // ---------------- inspection ----------------
 async function inspect() {
@@ -282,10 +301,11 @@ async function inspect() {
 
 function verdictText(r) {
   const n = r.defects.length;
+  const disp = r.disposition && r.disposition !== "ACCEPT" ? ` Class ${r.customer_class}: ${r.disposition.toLowerCase()}.` : "";
   if (r.verdict === "PASS") return { word: "PASS", what: "No defect found at the chosen miss rate." };
   if (r.verdict === "REVIEW") return { word: "CHECK", what: `<strong>A person needs to decide.</strong><br>${n ? `${n} possible defect${n > 1 ? "s" : ""} marked` : "Evidence is borderline"}.` };
   const worst = r.defects[0];
-  return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.</strong><br>Most serious: ${esc(words(worst.cls))}${worst.severity ? `, ${worst.severity}` : ""}.` };
+  return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.${disp}</strong><br>Most serious: ${esc(words(worst.cls))}.` };
 }
 
 function showInspection(r, fresh) {
@@ -303,12 +323,12 @@ function showInspection(r, fresh) {
 }
 
 function defectRow(d) {
-  const ipc = Object.entries(d.ipc || {}).map(([k, v]) => `<b class="${v}" title="IPC ${k.replace("class", "Class ")}: ${v}">C${k.slice(-1)} ${v === "reject" ? "reject" : "ok"}</b>`).join("");
+  const ipc = Object.entries(d.ipc || {}).map(([k, v]) => `<b class="${v}" title="IPC ${k.replace("class", "Class ")}: ${v}">Class ${k.slice(-1)} ${v === "reject" ? "reject" : v === "uncertain" ? "unsure" : "ok"}</b>`).join("");
   const size = d.size_mm != null ? `${d.size_mm.toFixed(2)} mm, ` : "";
   const labelled = d.operator_label ? `<span class="done">Marked ${d.operator_label === "false_alarm" ? "false alarm" : "confirmed"}.</span>` :
     `<button class="btn" data-fb="confirmed" data-d="${d.id}">Confirm defect</button><button class="btn" data-fb="false_alarm" data-d="${d.id}">False alarm</button>`;
   return `<div class="defect"><div class="ref">${esc(d.defect_key)}</div>
-    <div class="title">${esc(d.name)}${d.severity ? `<span class="sev ${d.severity}">${d.severity}</span>` : ""}</div>
+    <div class="title">${esc(d.name)}${d.disposition ? `<span class="disp ${d.disposition}">${d.disposition.toLowerCase()}</span>` : ""}</div>
     <div class="facts">${size}${esc(d.location)}, confidence ${Math.round(d.confidence * 100)}%<span class="ipc">${ipc}</span><br>${esc(d.severity_reason)}</div>
     <div class="actions">${labelled}</div></div>`;
 }

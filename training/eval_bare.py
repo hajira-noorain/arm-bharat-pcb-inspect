@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.detect_bare import BareDetector  # noqa: E402
-from pcbinspect.gate import ConformalGate, evaluate  # noqa: E402
+from pcbinspect.gate import ConformalGate, clopper_pearson, evaluate  # noqa: E402
 from pcbinspect.record import BARE_CLASSES  # noqa: E402
 
 
@@ -145,10 +145,33 @@ def main():
         g.save(gate_dir / f"{design}.json")
         report["gate"][design] = {f"alpha_{a}": evaluate(g.thresholds(a, 0.01), test_d, test_g)
                                   for a in (0.01, 0.05, 0.10)}
+        test_boards = [b for b in splits["test"] if b["source"] == design and not b["good"]]
         for a in (0.01, 0.05, 0.10):
             th = g.thresholds(a, 0.01)
-            report["gate"][design][f"alpha_{a}"]["lam"] = th.lam
-            report["gate"][design][f"alpha_{a}"]["tau"] = th.tau
+            r = report["gate"][design][f"alpha_{a}"]
+            r["lam"], r["tau"] = th.lam, th.tau
+            # is the calibration set big enough for this alpha / beta at all?
+            r["supported_alpha"] = len(cal_d) >= int(np.ceil(1 / a)) - 1
+            r["supported_beta"] = len(cal_g) >= int(np.ceil(1 / 0.01)) - 1
+            # PER-DEFECT recall at the operating threshold: a defect counts as found only if a
+            # shown detection (conf >= lam) overlaps it (IoU >= 0.3); 'typed' also needs the class
+            found = typed = total = 0
+            for b in test_boards:
+                shown = [dd for dd in b["dets"] if dd["conf"] >= th.lam]
+                for gt in b["boxes"]:
+                    total += 1
+                    hits = [dd for dd in shown if iou(dd["bbox"], gt["bbox"]) >= 0.3]
+                    found += bool(hits)
+                    typed += any(dd["cls"] == gt["cls"] for dd in hits)
+            r["defect_recall"] = found / max(total, 1)
+            r["defect_recall_ci95"] = clopper_pearson(found, total)
+            r["defect_recall_typed"] = typed / max(total, 1)
+            r["n_defects"] = total
+            shown_fa = sum(sum(1 for dd in b["dets"] if dd["conf"] >= th.lam and not any(
+                iou(dd["bbox"], gt["bbox"]) >= 0.3 for gt in b["boxes"])) for b in
+                [x for x in splits["test"] if x["source"] == design])
+            r["false_alarms_per_board"] = shown_fa / max(len([x for x in splits["test"]
+                                                               if x["source"] == design]), 1)
         r5 = report["gate"][design]["alpha_0.05"]
         print(f"gate {design}: cal {len(cal_d)}d/{len(cal_g)}g  test miss@5%={r5['miss_rate']:.3f} "
               f"CI{tuple(round(x, 3) for x in r5['miss_rate_ci95'])} review={r5['review_rate']:.2f}",

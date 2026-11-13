@@ -27,16 +27,26 @@ class Camera:
 class PiCamera(Camera):
     name = "picamera2"
 
-    def __init__(self, still_size=(2028, 1520), preview_size=(1014, 760)):
+    def __init__(self, still_size=None, preview_size=(1014, 760), settle_s: float = 2.0):
+        import time
         from picamera2 import Picamera2  # only on Raspberry Pi OS
         self.cam = Picamera2()
+        # full sensor resolution by default: small defects need every pixel
+        still_size = tuple(still_size or self.cam.sensor_resolution)
         cfg = self.cam.create_still_configuration(main={"size": still_size, "format": "RGB888"},
                                                   lores={"size": preview_size, "format": "YUV420"},
                                                   display="lores")
         self.cam.configure(cfg)
         self.cam.start()
-        # lock exposure/white balance after settling so lighting changes don't drift the model input
-        self.cam.set_controls({"AeEnable": True, "AwbEnable": True})
+        # let auto-exposure / white balance settle once, then LOCK them, so a change in room light
+        # does not change what the model and the golden comparison see
+        time.sleep(settle_s)
+        md = self.cam.capture_metadata()
+        self.locked = {"ExposureTime": md.get("ExposureTime"), "AnalogueGain": md.get("AnalogueGain"),
+                       "ColourGains": md.get("ColourGains")}
+        self.cam.set_controls({"AeEnable": False, "AwbEnable": False,
+                               **{k: v for k, v in self.locked.items() if v is not None}})
+        self.still_size = still_size
 
     def preview(self):
         yuv = self.cam.capture_array("lores")
@@ -52,12 +62,17 @@ class PiCamera(Camera):
 class USBCamera(Camera):
     name = "usb"
 
-    def __init__(self, index: int = 0, size=(1920, 1080)):
+    def __init__(self, index: int = 0, size=(3840, 2160)):   # the driver picks the nearest it supports
         self.cap = cv2.VideoCapture(index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, size[1])
         if not self.cap.isOpened():
             raise RuntimeError(f"cannot open USB camera {index}")
+        # lock exposure where the driver allows it (V4L2: 1 = manual), after letting it settle
+        for _ in range(15):
+            self.cap.read()
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        self.cap.set(cv2.CAP_PROP_AUTO_WB, 0)
         self._lock = threading.Lock()
 
     def preview(self):

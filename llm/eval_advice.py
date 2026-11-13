@@ -67,11 +67,12 @@ def main():
     ap.add_argument("--tok", required=True)
     ap.add_argument("--n", type=int, default=60)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--fewshot", action="store_true")
     args = ap.parse_args()
     from pcbinspect.llm import ExecuTorchLlama
     kb = default_kb()
     llm = ExecuTorchLlama(args.pte, args.tok)
-    adv = Advisor(llm, kb)
+    adv = Advisor(llm, kb, fewshot=args.fewshot)
     rows = []
     t0 = time.time()
     for i, (rec, hist) in enumerate(make_records(args.n)):
@@ -115,7 +116,7 @@ def main():
         return {"n": n, "rate": hit / n if n else None, "chance": chance / n if n else None}
 
     summary = {
-        "model": Path(args.pte).name, "n": len(rows), "load_ms": llm.load_ms,
+        "model": Path(args.pte).name, "fewshot": args.fewshot, "n": len(rows), "load_ms": llm.load_ms,
         "accepted_rate": len(acc) / len(rows),
         "rejection_reasons": dict(reasons),
         "choices_parsed": len(choices),
