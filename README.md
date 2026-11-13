@@ -10,7 +10,7 @@ For each board it:
 - **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;
 - **grades severity** against IPC-style limits for the customer's class;
 - **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.2% missed at the 5% setting with the known-good board; 6.5% with the detector alone; each beside the level that calibration can promise with 95% confidence, see `docs/RESULTS.md`);
-- **explains each finding with Llama 3.2 1B**: the causes and actions the operator reads are knowledge-base text, word for word; Llama selects among them and writes the summary, and a checker rejects any answer that states something not in the findings. (Measured: its choice of cause is no better than chance, so the knowledge base orders the options and Llama is not credited with diagnosis.);
+- **explains each finding with Llama 3.2 3B**: the causes and actions the operator reads are knowledge-base text, word for word; Llama chooses among them from the evidence and writes the summary, and a checker rejects any answer that states something not in the findings. (Measured on 150 held-out records: a defect that keeps repeating gets a process cause 95% of the time and a one-off gets a handling cause 88% of the time, against about 50% for picking blind. The 1B model we started with stayed at chance, which is why it is now only the fallback.);
 - **logs everything** on the device and lights a green, amber or red stack light;
 - **learns on the floor**:
   - a new bare board is taught in minutes from two or more pictures of a good board. The first becomes the reference picture; the station then draws test defects of known size onto the pictures to set that board's pass and fail thresholds and to state what size of defect it finds on it;
@@ -31,7 +31,7 @@ And it proves what it can do:
 | Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `advisor.py`, `grounding.py` |
 | Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
 | Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; timings, memory and a 30-minute soak are measured on the device | `bench/`, `deploy/measure_on_pi.sh` |
-| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoints) exported with ExecuTorch `export_llm`, run through `TextLLMRunner`: 1B for advice, 3B for compiling customer rules | `pcbinspect/llm.py`, `spec_llm.py`, `llm/` |
+| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoints) exported with ExecuTorch `export_llm`, run on the same `.pte` through `executorch.runtime` so decisions are read from next-token scores: one 3B model for advice, shift questions and compiling customer rules, 1B as the fallback | `pcbinspect/llm_logits.py`, `llm_select.py`, `advisor.py`, `spec_llm.py`, `llm/` |
 
 ## Two pipelines
 
@@ -39,7 +39,7 @@ And it proves what it can do:
 VISION (ExecuTorch / Arm runtime, Arm CPU)            REASONING (ExecuTorch, Llama 3.2, Arm CPU)
 camera (focus + exposure locked) -> ArUco scale, QR   structured defect record (no pixels)
   -> YOLO26n on tiles -> named defects                  + knowledge-base options for each defect
-  -> golden-board comparison + connectivity check     -> 1B picks causes / actions, writes a summary
+  -> golden-board comparison + connectivity check     -> 3B judges causes / actions, writes a summary
   -> fused evidence, size in mm                       -> checker: options valid, numbers and defect
   -> ResNet-18 patch memory -> unusual areas             types must come from the record
   -> IPC-style class limits -> disposition

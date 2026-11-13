@@ -63,9 +63,11 @@ PS5 asks for the vision and Llama pipelines to be documented separately, so they
 
 **Reasoning pipeline (ExecuTorch, Llama 3.2 Instruct SpinQuant INT4, Arm CPU)**
 
-1. **Advice (1B).** Llama reads a structured defect record (type, size, severity, location, recent history), never pixels, and picks causes and actions from knowledge-base options. A grounding checker validates the answer.
-2. **Customer rules (3B).** Llama fills a fixed rule form from each plain-English clause. The rule is verified and compared with the measured detection limit.
-3. **Other uses.** Questions about the shift over the log (whitelisted read-only queries) and wording for drift alerts.
+One Llama 3.2 3B model does all three jobs; the 1B model is the fallback.
+
+1. **Advice.** Llama reads a structured defect record (type, size, severity, location, recent history), never pixels, and chooses causes and actions from knowledge-base options. Its choices are read from next-token scores, not parsed from text. A grounding checker validates the answer.
+2. **Customer rules.** Llama fills a fixed rule form from each plain-English clause. The rule is verified and compared with the measured detection limit.
+3. **Shift questions and alerts.** Llama picks one of the station's fixed read-only queries for a typed question and words the rows; it also words drift alerts.
 
 The verdict never waits for Llama. Advice is produced on a background thread and appears seconds later.
 
@@ -286,18 +288,48 @@ On deliberately corrupted correct rules, the checks caught every corrupted value
 
 ## 6. Llama on ExecuTorch: advice the operator can check
 
-**Model.** Llama 3.2 1B Instruct, Meta's SpinQuant INT4 checkpoint, exported with ExecuTorch's `export_llm` (8da4w, XNNPACK, KV cache, custom SDPA; `llm/export_llama.sh`) to a 1.07 GB `.pte`, run through the Python `TextLLMRunner`.
+**Model.** Llama 3.2 3B Instruct, Meta's SpinQuant INT4 checkpoint, exported with ExecuTorch's `export_llm` (8da4w, XNNPACK, KV cache, custom SDPA; `llm/export_llama.sh`) to a 2.4 GB `.pte`. One loaded copy serves advice, shift questions and the customer-rule reader of section 5.3. The 1B model (1.07 GB) is packaged as the fallback and is what the first version used; the measurements below are the reason it was replaced.
 
-**Design principle.** The mentor guidance was to give Llama structured findings, not raw pixels. We go one step further: **give Llama choices, not a blank page.** For each defect the knowledge base (`kb/defects.yaml`) lists 2 to 4 possible causes and 3 to 4 actions, each with an ID and tied to a process step.
+**Design principle.** The mentor guidance was to give Llama structured findings, not raw pixels. We go one step further: **Llama decides, but it cannot write anything the station cannot check.** For each defect the knowledge base (`kb/defects.yaml`) lists 2 to 4 possible causes and 3 to 4 actions, each tied to a process step. Llama's job is to choose between them from the evidence, and to word a short summary.
 
-1. The board context is prefilled once.
-2. For each defect, most severe first, Llama fills in two option numbers. Generation stops from the token callback as soon as both are written.
-3. Llama writes a one-to-two sentence summary.
-4. On the station, options are listed in the order a process rule ranks them (a defect that keeps repeating on the line puts process causes first). In evaluation they are shuffled per board instead, so that a habit of picking the first option cannot look like a good choice.
+**How a decision is read.** The station does not ask Llama to write its choice as text and then parse it. It runs the same `.pte` through `executorch.runtime` and reads the next-token scores directly (`pcbinspect/llm_logits.py`):
 
-**Grounding checker.** It rejects choices that are out of range or do not parse, a summary containing a number not in the record or its history, and a summary naming a defect type not on the board. A rejected answer is replaced by standard knowledge-base advice; the reason is logged and shown. The operator always reads knowledge-base text verbatim for every cause and action, so instructions are never invented.
+1. **Context.** The defect record is fed once: type, severity, size, location, and for each defect whether that type keeps repeating on recent boards or is a one-off. A repeating defect points to a process cause (imaging, etching, drilling, plating); a one-off points to handling.
+2. **Cause.** Each candidate cause is put to Llama alone, as a yes/no question, and the station reads how much more likely "yes" is than "no". The cause with the strongest yes wins. There is no list in the prompt, so there is no first entry to copy.
+3. **Action.** The actions for that defect are scored by the probability of their own text, and the most probable one is taken.
+4. **Summary.** Llama writes one or two sentences freely, with two limits applied while it writes: a number that is not in the findings cannot be produced, and the text cannot end before it says something.
 
-**Measured** (60 seeded defect records): 88% of answers pass grounding. Llama's choice of cause is not distinguishable from chance: for a repeating defect it picked the process cause 71% of the time against 65% by chance (n = 14), and it picked whichever option was listed first 78% of the time against 42% by chance. The value of the 1B model is a grounded, readable summary; the causes and actions the operator reads always come from the knowledge base. `docs/RESULTS.md` has the table. What failed on the way: asking for knowledge-base IDs as strings passed grounding about 15% of the time, and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
+**Grounding checker.** It still runs on the finished answer. It rejects a cause or action that does not belong to that defect type, a summary containing a number not in the record or its history, and a summary naming a defect type that is not on the board (the words of the cause Llama itself chose are allowed: "handling scratch" is a cause of an open, not a claim that a scratch was found). A rejected answer is replaced by standard knowledge-base advice; the reason is logged and shown. The operator always reads knowledge-base text verbatim for every cause and action, so instructions are never invented. The summary is stored with the inspection and goes into the exported log as the note for that board, with who wrote it (Llama or the fallback).
+
+**Measured: does the advice follow the evidence?** 150 seeded defect records were used to develop the method and a second 150 were run once, afterwards. Candidate causes are shuffled per record, so a model that ignores the evidence scores the "chance" figure.
+
+| How Llama decides | Records | Advice shown | First-listed cause chosen (chance) | Repeating defect gets a process cause (chance) | One-off gets a handling cause (chance) |
+|---|---|---|---|---|---|
+| 1B writes JSON text | development | 89.3% | 68% (39%) | at chance | at chance |
+| 1B, listed causes scored by their text | development | 97.3% | 75% (39%) | at chance | at chance |
+| 3B, each cause judged alone | development | 100% | 37.5% (39.1%) | 89.2% (51.8%) | 90.4% (47.7%) |
+| **3B, each cause judged alone (deployed)** | **held out** | **100%** | **35.2% (36.9%)** | **95.3% (51.0%)** | **88.4% (46.6%)** |
+
+What this shows, plainly:
+
+- **The 1B model does not use the evidence.** However it is asked, it mostly picks whichever cause is listed first. Scoring its choices instead of parsing its text made the output valid more often, but not better informed. We tested it one cause at a time as well, and it still could not tell a repeating defect from a one-off.
+- **The 3B model does.** Asked one cause at a time, it follows the repeating/one-off evidence about nine times in ten and shows no pull towards the first option.
+- **Two faults were found on the development records and fixed before the held-out run.** One in five answers was thrown away because the summary came out empty, and others because the summary repeated the chosen cause's own words. Advice shown went from 78.7% to 100% on the development records, and stayed at 100% on the held-out ones.
+- **What is not checked.** The checker verifies numbers and defect types in the summary, not every phrase. One development summary said two shorts were "one on each side", which the record does not say. The causes and actions the operator acts on are immune to this, because they are knowledge-base text.
+
+Median time per board in these runs was about 7 s on an x86 cloud CPU. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
+
+**Shift questions.** The operator can type a question ("how many boards failed in the last 3 hours?"). Llama may only choose one of the station's fixed read-only database queries and its settings, by the same scored choice, and then words the rows it gets back with the same number limit. If its choice cannot be used, a keyword rule chooses instead.
+
+| How the query is chosen | Questions | Right query | Keyword rule alone | Answer worded by Llama |
+|---|---|---|---|---|
+| 1B writes JSON text | 30 development | 83.3% (Llama's own choice usable for 6.7%) | 83.3% | |
+| 3B, scored choice | 30 development | 90.0% | 83.3% | 100% |
+| **3B, scored choice (deployed)** | **20 held out** | **80.0%** | **75.0%** | **100%** |
+
+The gain over the keyword rule is small and the held-out set is only 20 questions, so we claim no more than this: Llama is at least as good as the rule, and every answer it words contains only numbers from the rows.
+
+`docs/RESULTS.md` has the full tables, including the earlier 1B variants. What failed on the way: asking for knowledge-base IDs as strings passed grounding about 15% of the time, and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
 
 If Llama fails to load on the device, the dashboard shows a red banner and the functional check (`deploy/arm_check.py`) fails loudly. The station never silently pretends to run Llama.
 

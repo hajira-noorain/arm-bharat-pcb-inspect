@@ -88,7 +88,7 @@ The eye test was built to certify the station. Its first job was to find what wa
 
 ### Why this job for Llama
 
-We measured Llama choosing defect causes from a list: it was at chance level (`advice_eval_*.json`). A small model is better used where its output can be checked. Turning a sentence into a few fields is such a task: the number, defect, comparison and action can each be checked against the text.
+We first measured the 1B model choosing defect causes from a list: it was at chance level (`advice_eval_*.json`). The 3B model, asked about one cause at a time, does follow the evidence (technical report, section 6). Either way, a small model is best used where its output can be checked. Turning a sentence into a few fields is such a task: the number, defect, comparison and action can each be checked against the text.
 
 ### How
 
