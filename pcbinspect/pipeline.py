@@ -249,18 +249,23 @@ class Inspector:
         if design not in self.parts or self.parts_detector is None:
             return [], ""
         from .golden import align_warp
-        from .parts import check_board, find_parts
+        from .parts import MIN_ALIGN_CC_PARTS, MISMATCH_SHARE, check_board, find_parts
         pmap, ref = self.parts[design]
         t = time.perf_counter()
         warp, cc = align_warp(bgr, ref)
         lat["parts_align"] = (time.perf_counter() - t) * 1e3
-        if warp is None or cc < MIN_ALIGN_CC:
+        if warp is None or cc < MIN_ALIGN_CC_PARTS:
             return [], f"parts check skipped: the board could not be lined up with the taught one (cc {cc:.2f})"
         dets, ms = find_parts(self.parts_detector, bgr, scale=pmap.scale)   # the scale it was taught at
         lat["parts_detector"] = ms
         h, w = bgr.shape[:2]
         alone: list[Candidate] = []
-        for f in check_board(pmap, dets, warp, (w, h), ref=ref, test=bgr):
+        found = check_board(pmap, dets, warp, (w, h), ref=ref, test=bgr)
+        differ = sum(f.what in ("missing_part", "changed_part") for f in found)
+        if len(pmap.parts) >= 4 and differ >= MISMATCH_SHARE * len(pmap.parts):
+            return [], (f"parts check: {differ} of {len(pmap.parts)} taught parts are missing or look different; "
+                        "this is not the taught board, or it is badly placed or unpopulated")
+        for f in found:
             box = tuple(int(round(min(max(v, 0), lim))) for v, lim in zip(f.box, (w, h, w, h)))
             if box[2] - box[0] < 2 or box[3] - box[1] < 2:
                 continue

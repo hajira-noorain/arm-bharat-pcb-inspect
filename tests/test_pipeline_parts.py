@@ -40,11 +40,11 @@ class BrightBoxes:
                 for x, y, w, h, a in st[1:] if a > 200], {}
 
 
-def make(tmp_path, kinds=None):
+def make(tmp_path, kinds=None, goods=1):
     good = board()
     d = tmp_path / "models" / "anomaly" / "asm"
     d.mkdir(parents=True)
-    pm = teach_parts(BrightBoxes(), kinds, good)
+    pm = teach_parts(BrightBoxes(), kinds, [good, board(shift=(5, 3)), board(shift=(-4, 6))][:goods])
     assert len(pm.parts) == len(PARTS)
     pm.save(d / "parts.json")
     cv2.imwrite(str(d / "parts_ref.jpg"), good, [cv2.IMWRITE_JPEG_QUALITY, 98])
@@ -187,7 +187,7 @@ def swapped(shift=(0, 0)):
 
 
 def test_a_part_that_is_there_but_looks_unlike_the_good_one_is_reported_as_looking_different(tmp_path):
-    insp = make(tmp_path)
+    insp = make(tmp_path, goods=3)                            # several good boards: each part's own range is known
     r, a, _ = insp.inspect(swapped(shift=(5, 4)), "asm", log=False)
     assert [d.cls for d in r.defects] == ["changed_part"] and r.verdict == "REVIEW"
     assert "1 part(s) look different" in r.model_versions["capture_check"]
@@ -239,3 +239,16 @@ def test_what_the_detector_half_sees_on_the_good_board_is_never_called_unexpecte
     from pcbinspect.parts import compare
     later, _ = det.detect(board())
     assert compare(pm, [{"bbox": list(d.bbox), "conf": d.conf} for d in later]) == []
+
+
+def test_a_board_taught_from_one_picture_does_not_guess_that_a_part_looks_different(tmp_path):
+    insp = make(tmp_path, goods=1)                            # no measured range for any part
+    r, a, _ = insp.inspect(swapped(shift=(5, 4)), "asm", log=False)
+    assert not any(d.cls == "changed_part" for d in r.defects)
+
+
+def test_a_board_with_most_of_its_parts_gone_is_called_a_mismatch_not_a_list_of_findings(tmp_path):
+    insp = make(tmp_path)
+    r, a, _ = insp.inspect(board(skip=(0, 1, 3)), "asm", log=False)       # three of the five parts are not there
+    assert r.verdict == "REVIEW" and r.defects == []
+    assert "3 of 5 taught parts" in a.parts_note and "not the taught board" in r.model_versions["capture_check"]

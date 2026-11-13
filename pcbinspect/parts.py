@@ -150,6 +150,10 @@ def build_map(dets: list[dict], size: tuple[int, int], px_per_mm: float | None =
 LIKE_DEFAULT = 0.7       # likeness below this = "does not look like the good board here" (no good-board range known)
 LIKE_MARGIN = 0.15       # ... or this far below the lowest likeness the part showed across the good boards
 CHANGED_EXTRA = 0.2      # a part that IS detected must look this much worse still before it is called changed
+# Two colour photographs of the same good assembled board correlate 0.75 to 0.95 once lined up (VisA training
+# photos, 20 per design); the 0.85 the bare-board comparison demands of copper scans refused most of them.
+MIN_ALIGN_CC_PARTS = 0.6
+MISMATCH_SHARE = 0.5     # this share of the map missing or changed = not the taught board / badly placed
 
 
 def unlike_below(p: Part) -> float:
@@ -221,7 +225,9 @@ def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_
             # bad moment and nothing is reported; if the pictures could not be compared, the detector decides.
             if like is None or like < unlike_below(p):
                 out.append(PartFinding("missing_part", list(p.box), p.label, p.conf, mm(p.box), like))
-        elif like is not None and like < unlike_below(p) - CHANGED_EXTRA:
+        elif like is not None and p.sim_min is not None and like < unlike_below(p) - CHANGED_EXTRA:
+            # only for a board taught from several good pictures: without each part's own measured range, real
+            # photographs of good boards trip this (30 such calls on 20 good photos of one VisA design)
             out.append(PartFinding("changed_part", list(p.box), p.label, p.conf, mm(p.box), like))
     for d in dedupe([d for d in dets if d["conf"] >= extra_conf]):
         if any(_same_place(d["bbox"], z) for z in pmap.ignore):
@@ -341,10 +347,10 @@ def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max
     h, w = ref.shape[:2]
     warps = []
     if others:
-        from .golden import MIN_ALIGN_CC, align_warp
+        from .golden import align_warp
         for g in others:
             warp, cc = align_warp(g, ref)
-            if warp is not None and cc >= MIN_ALIGN_CC:
+            if warp is not None and cc >= MIN_ALIGN_CC_PARTS:
                 warps.append((g, warp))
     best = None
     for s in ([scale_for(mm_per_px)] if mm_per_px else SEARCH_SCALES):

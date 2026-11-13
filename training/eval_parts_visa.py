@@ -24,8 +24,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from pcbinspect.golden import MIN_ALIGN_CC, align_warp  # noqa: E402
-from pcbinspect.parts import check_board, find_parts, teach_parts  # noqa: E402
+from pcbinspect.golden import align_warp  # noqa: E402
+from pcbinspect.parts import MIN_ALIGN_CC_PARTS as MIN_ALIGN_CC, check_board, find_parts, teach_parts  # noqa: E402
 
 
 MODES = ("detector only", "detector and likeness")

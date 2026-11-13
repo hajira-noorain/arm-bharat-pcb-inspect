@@ -25,8 +25,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from pcbinspect.golden import MIN_ALIGN_CC, align_warp  # noqa: E402
-from pcbinspect.parts import MIN_KIND_CONF, check_board, iou, teach_parts, find_parts  # noqa: E402
+from pcbinspect.golden import align_warp  # noqa: E402
+from pcbinspect.parts import MIN_ALIGN_CC_PARTS as MIN_ALIGN_CC, MIN_KIND_CONF, check_board, iou, teach_parts, find_parts  # noqa: E402
 from training.prepare_components import NAME_RE, read_outlines  # noqa: E402
 
 csv.field_size_limit(sys.maxsize)
