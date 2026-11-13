@@ -114,6 +114,14 @@ class Station:
         if not p.is_file():
             log.warning("Llama .pte not found at %s: advice will use templates", p)
             return None
+        if self.cfg.get("llm_backend", "runner") == "logits":
+            # The same .pte through executorch.runtime, with next-token scores (pcbinspect/llm_logits.py):
+            # advice choices by option text, summaries that cannot contain a number that is not a fact.
+            try:
+                from .llm_logits import LogitLlama
+                return LogitLlama(p, self.root / self.cfg["llm_tokenizer"])
+            except Exception as exc:    # noqa: BLE001
+                log.exception("Llama (scores) failed to load (%s): trying the text runner", exc)
         from .llm import ExecuTorchLlama
         try:
             return ExecuTorchLlama(p, self.root / self.cfg["llm_tokenizer"],
