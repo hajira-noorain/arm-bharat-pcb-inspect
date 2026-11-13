@@ -132,6 +132,18 @@ def random_defect_miss(found_per_board: list[list[bool]]) -> float | None:
     return float(np.mean([1 - sum(f) / len(f) for f in rows])) if rows else None
 
 
+def random_defect_miss_ci(found_per_board: list[list[bool]], n_boot: int = 4000, seed: int = 0,
+                          level: float = 0.95) -> tuple[float, float] | None:
+    """Percentile bootstrap over boards (the unit that was sampled) for random_defect_miss."""
+    per = np.array([1 - sum(f) / len(f) for f in found_per_board if f], dtype=float)
+    if per.size == 0:
+        return None
+    rng = np.random.default_rng(seed)
+    means = per[rng.integers(0, per.size, size=(n_boot, per.size))].mean(axis=1)
+    lo, hi = np.quantile(means, [(1 - level) / 2, 1 - (1 - level) / 2])
+    return float(lo), float(hi)
+
+
 def evaluate(th: GateThresholds, defective_scores, good_scores) -> dict:
     """Empirical behaviour of a gate on a TEST set (never the calibration set)."""
     d = np.asarray(defective_scores, dtype=float)

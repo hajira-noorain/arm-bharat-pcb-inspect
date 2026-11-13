@@ -24,7 +24,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.detect_bare import BareDetector  # noqa: E402
 from pcbinspect.gate import (ConformalGate, clopper_pearson, defect_level_scores, evaluate,  # noqa: E402
-                             random_defect_miss)
+                             random_defect_miss, random_defect_miss_ci)
 from pcbinspect.record import BARE_CLASSES  # noqa: E402
 
 
@@ -182,6 +182,7 @@ def main():
                     typed += any(dd["cls"] == gt["cls"] for dd in hits)
                 per_board.append(flags)
             r["random_defect_miss"] = random_defect_miss(per_board)
+            r["random_defect_miss_ci95"] = random_defect_miss_ci(per_board)
             r["defect_recall"] = found / max(total, 1)
             r["defect_recall_ci95"] = clopper_pearson(found, total)
             r["defect_recall_typed"] = typed / max(total, 1)

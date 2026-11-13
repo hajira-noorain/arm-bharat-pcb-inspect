@@ -90,3 +90,15 @@ def test_random_defect_miss_weights_boards_not_defects():
     from pcbinspect.gate import random_defect_miss
     assert random_defect_miss([[True], [True, False, False, False], []]) == pytest.approx(0.375)
     assert random_defect_miss([]) is None
+
+
+def test_random_defect_miss_interval_covers_the_estimate_and_narrows_with_boards():
+    from pcbinspect.gate import random_defect_miss, random_defect_miss_ci
+    rng = np.random.default_rng(1)
+    small = [list(rng.random(rng.integers(1, 6)) > 0.06) for _ in range(40)]
+    big = [list(rng.random(rng.integers(1, 6)) > 0.06) for _ in range(800)]
+    for boards in (small, big):
+        lo, hi = random_defect_miss_ci(boards)
+        assert lo <= random_defect_miss(boards) <= hi
+    assert (lambda c: c[1] - c[0])(random_defect_miss_ci(big)) < (lambda c: c[1] - c[0])(random_defect_miss_ci(small))
+    assert random_defect_miss_ci([[], []]) is None

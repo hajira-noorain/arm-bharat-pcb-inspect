@@ -22,7 +22,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.fusion import fuse  # noqa: E402
-from pcbinspect.gate import ConformalGate, clopper_pearson, defect_level_scores, random_defect_miss  # noqa: E402
+from pcbinspect.gate import (ConformalGate, clopper_pearson, defect_level_scores,  # noqa: E402
+                             random_defect_miss, random_defect_miss_ci)
 from pcbinspect.golden_diff import diff_candidates  # noqa: E402
 from training.eval_bare import iou  # noqa: E402
 
@@ -109,6 +110,7 @@ def main():
             rows[f"alpha_{alpha}"] = {
                 "lam": th.lam, "defect_miss": 1 - found / max(total, 1),
                 "random_defect_miss": random_defect_miss(per_board),
+                "random_defect_miss_ci95": random_defect_miss_ci(per_board),
                 "defect_miss_ci95": [1 - x for x in clopper_pearson(found, total)[::-1]],
                 "typed_correct_share_of_found": typed / max(found, 1),
                 "false_calls_per_board": fa / max(len(test), 1),
