@@ -104,7 +104,22 @@ def greedy_coreset(x: np.ndarray, k: int, seed: int = 0, proj_dim: int = 128) ->
     rng = np.random.default_rng(seed)
     p = rng.standard_normal((x.shape[1], min(proj_dim, x.shape[1]))).astype(np.float32)
     z = x @ p
-    sel = [int(rng.integers(n))]
+    first = int(rng.integers(n))
+    if n * k > 2e7:   # large banks (offline evaluation): use a GPU if there is one; same algorithm
+        try:
+            import torch
+            if torch.cuda.is_available():
+                zt = torch.from_numpy(z).cuda()
+                sel_t = [first]
+                d = torch.linalg.norm(zt - zt[first], dim=1)
+                for _ in range(k - 1):
+                    i = int(torch.argmax(d))
+                    sel_t.append(i)
+                    d = torch.minimum(d, torch.linalg.norm(zt - zt[i], dim=1))
+                return np.array(sel_t)
+        except ImportError:
+            pass
+    sel = [first]
     d = np.linalg.norm(z - z[sel[0]], axis=1)
     for _ in range(k - 1):
         i = int(d.argmax())

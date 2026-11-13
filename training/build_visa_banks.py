@@ -148,10 +148,11 @@ def main():
             print(f"   {k}-shot: image AUROC {np.mean(aurocs):.4f} (min {np.min(aurocs):.4f})", flush=True)
         report["seconds_total"] = time.time() - t_obj
         (out / "results" / f"anomaly_{obj}{suffix}.json").write_text(json.dumps(report, indent=1))
-        if args.save:
-            model.save(out / "models" / "anomaly" / obj)
-            (out / "models" / "gate").mkdir(parents=True, exist_ok=True)
-            g.save(out / "models" / "gate" / f"visa_{obj}.json")
+        if args.save:   # with --tag, each configuration keeps its own memory and gate
+            sub = Path(args.tag) if args.tag else Path()
+            model.save(out / "models" / "anomaly" / sub / obj)
+            (out / "models" / "gate" / sub).mkdir(parents=True, exist_ok=True)
+            g.save(out / "models" / "gate" / sub / f"visa_{obj}.json")
 
 
 if __name__ == "__main__":
