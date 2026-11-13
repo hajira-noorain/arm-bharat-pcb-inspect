@@ -130,9 +130,18 @@ def main():
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--keyword-only", action="store_true")
     ap.add_argument("--no-shuffle", action="store_true")
+    ap.add_argument("--constrained", action="store_true",
+                    help="grammar-constrained decoding through executorch.runtime (pcbinspect/llm_logits.py)")
+    ap.add_argument("--sets", default="", help="comma list of clause sets to run (default: all); "
+                    "choose a method on 'tuning' alone, then run 'heldout' once")
+    ap.add_argument("--limit", type=int, default=0, help="first N clauses per set (functional probe)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     sets = {k: yaml.safe_load(p.read_text("utf-8")) for k, p in SETS.items() if p.exists()}
+    if a.sets:
+        sets = {k: v for k, v in sets.items() if k in a.sets.split(",")}
+    if a.limit:
+        sets = {k: v[:a.limit] for k, v in sets.items()}
     report = {"sets": {k: len(v) for k, v in sets.items()}, "compilers": {}}
 
     # verifier on corrupted gold rules (no model involved)
@@ -151,7 +160,26 @@ def main():
     print("verifier flags on correct gold:", report["verifier_flags_on_gold"])
 
     compilers = {"keyword": lambda t, i: (keyword_compile(t), {})}
-    if not a.keyword_only:
+    if a.constrained:
+        from pcbinspect.llm_logits import LogitLlama
+        from pcbinspect.spec_llm import ConstrainedSpecCompiler
+        if a.threads:
+            try:
+                from executorch.extension.pybindings import portable_lib as _pl   # threadpool size, if exposed
+                _pl._unsafe_reset_threadpool(a.threads)
+            except Exception:   # noqa: BLE001
+                pass
+        be = LogitLlama(a.pte, a.tok)
+        comp = ConstrainedSpecCompiler(be)
+        name = Path(a.pte).stem + "_constrained"
+
+        def llm_fn(t, i):
+            r = comp.compile(t, order_seed=None if a.no_shuffle else 1000 + i)
+            return r.rule, {"answers": r.answers, "error": r.error, "prompt_tokens": r.prompt_tokens,
+                            "generated_tokens": r.generated_tokens, "decode_tps": None}
+        compilers[name] = llm_fn
+        report["llm_load_ms"] = be.load_ms
+    elif not a.keyword_only:
         from pcbinspect.llm import ExecuTorchLlama
         from pcbinspect.spec_llm import LlamaSpecCompiler
         be = ExecuTorchLlama(a.pte, a.tok, a.threads)

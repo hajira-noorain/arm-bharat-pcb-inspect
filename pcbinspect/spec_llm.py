@@ -217,3 +217,68 @@ class LlamaSpecCompiler:
         res.rule, res.error = assemble(ans)
         res.latency_ms = (time.perf_counter() - t0) * 1e3
         return res
+
+
+NUM_TOKEN_RE = re.compile(r"\d+(?:[.,]\d+)?")
+WORD_NUMBERS = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+
+
+def numbers_as_written(clause: str) -> list[str]:
+    """Every number the clause actually contains, as written (digits first, then number words)."""
+    out = list(dict.fromkeys(m.group(0) for m in NUM_TOKEN_RE.finditer(clause)))
+    low = clause.lower()
+    out += [w for w in WORD_NUMBERS if re.search(rf"\b{w}\b", low)]
+    return out
+
+
+class ConstrainedSpecCompiler:
+    """Same fields and prompt as LlamaSpecCompiler, but every answer is chosen by grammar-constrained
+    decoding (llm_logits.LogitLlama.choose): a listed defect, measure, unit, comparison or action, and a
+    number that is written in the clause. The model cannot answer off the list, so there is no parsing
+    failure, and each choice comes with a margin (how decisively it won) that is kept in the answers."""
+
+    def __init__(self, backend):
+        self.be = backend
+
+    def compile(self, clause: str, order_seed: int | None = None) -> CompileResult:
+        lists = _lists(random.Random(order_seed) if order_seed is not None else None)
+        t0 = time.perf_counter()
+        res = CompileResult(None)
+        be = self.be
+        be.reset()
+        n0 = be.n_forward
+        be.feed(build_prompt(clause, lists))
+        res.prompt_tokens = be.pos
+        ans, margins = {}, {}
+        first = True
+
+        def ask(label, options):
+            nonlocal first
+            be.feed(f"{label}:" if first else f"\n{label}:")
+            first = False
+            opt, m = be.choose([" " + o for o in options])
+            ans[label], margins[label] = opt.strip(), round(float(min(m, 99.0)), 3)
+            return ans[label]
+
+        nums = numbers_as_written(clause)
+        if ask("Defect", lists["Defect"]) == "none":
+            ask("Class number", ["1", "2", "3"])
+        else:
+            # a measure that needs a number is only offered when the clause contains one
+            measures = lists["Measure"] if nums else ["always"]
+            if len(measures) == 1:
+                ans["Measure"], margins["Measure"] = "always", 99.0
+            if MEASURE_MAP[ans.get("Measure") or ask("Measure", measures)] != "always":
+                ask("Number as written", nums) if len(nums) > 1 else ans.update({"Number as written": nums[0]})
+                ask("Unit", lists["Unit"])
+                ask("Comparison", lists["Comparison"])
+            ask("Action", lists["Action"])
+        ans = {k: (WORD_NUM_VALUE.get(v, v) if k == "Number as written" else v) for k, v in ans.items()}
+        res.answers = {**ans, "_margins": margins}
+        res.rule, res.error = assemble(ans)
+        res.generated_tokens = be.n_forward - n0 - 1
+        res.latency_ms = (time.perf_counter() - t0) * 1e3
+        return res
+
+
+WORD_NUM_VALUE = {w: str(i + 1) for i, w in enumerate(WORD_NUMBERS)}
