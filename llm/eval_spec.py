@@ -132,6 +132,8 @@ def main():
     ap.add_argument("--no-shuffle", action="store_true")
     ap.add_argument("--constrained", action="store_true",
                     help="grammar-constrained decoding through executorch.runtime (pcbinspect/llm_logits.py)")
+    ap.add_argument("--grounded", action="store_true",
+                    help="with --constrained: the clause's own words narrow each option list first")
     ap.add_argument("--sets", default="", help="comma list of clause sets to run (default: all); "
                     "choose a method on 'tuning' alone, then run 'heldout' once")
     ap.add_argument("--limit", type=int, default=0, help="first N clauses per set (functional probe)")
@@ -170,8 +172,8 @@ def main():
             except Exception:   # noqa: BLE001
                 pass
         be = LogitLlama(a.pte, a.tok)
-        comp = ConstrainedSpecCompiler(be)
-        name = Path(a.pte).stem + "_constrained"
+        comp = ConstrainedSpecCompiler(be, grounded=a.grounded)
+        name = Path(a.pte).stem + ("_grounded" if a.grounded else "_constrained")
 
         def llm_fn(t, i):
             r = comp.compile(t, order_seed=None if a.no_shuffle else 1000 + i)

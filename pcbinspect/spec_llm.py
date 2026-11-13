@@ -231,14 +231,53 @@ def numbers_as_written(clause: str) -> list[str]:
     return out
 
 
+CLASS_NUM_RE = re.compile(r"\bclass\s*([123])\b", re.I)
+
+
+def grounded_numbers(clause: str) -> list[tuple[str, str | None]]:
+    """(number as written, unit) for every number in the clause that is not an IPC class number.
+    unit: 'mm' | 'mil' | 'micron' | '%' | None (a bare count)."""
+    from .spec import NUM_RE
+    class_spans = [m.span(1) for m in CLASS_NUM_RE.finditer(clause)]
+    out, seen = [], set()
+    for m in NUM_RE.finditer(clause):
+        if any(a0 <= m.start(1) < b0 for a0, b0 in class_spans):
+            continue
+        val, unit = numbers_in(m.group(0))[0]
+        key = (m.group(1), unit)
+        if key not in seen:
+            seen.add(key)
+            out.append(key)
+    low = clause.lower()
+    for w in WORD_NUMBERS:
+        if re.search(rf"\b{w}\b", low) and (w, None) not in seen:
+            out.append((w, None))
+    return out
+
+
+UNIT_MEASURES = {"%": ["width loss", "spacing loss"], "mm": ["size"], "mil": ["size"], "micron": ["size"],
+                 None: ["count"]}
+UNIT_NAME = {"%": "percent", "mm": "mm", "mil": "mil", "micron": "micron", None: "none"}
+
+
 class ConstrainedSpecCompiler:
     """Same fields and prompt as LlamaSpecCompiler, but every answer is chosen by grammar-constrained
-    decoding (llm_logits.LogitLlama.choose): a listed defect, measure, unit, comparison or action, and a
-    number that is written in the clause. The model cannot answer off the list, so there is no parsing
-    failure, and each choice comes with a margin (how decisively it won) that is kept in the answers."""
+    decoding (llm_logits.LogitLlama.choose), so the model cannot answer off the list.
 
-    def __init__(self, backend):
+    grounded=False  the lists are the full vocabularies (and the numbers written in the clause).
+    grounded=True   the clause's own words narrow the lists before the model chooses:
+                      defect    only defects the clause names (full list if it names none or several ways)
+                      measure   only measures that fit a number in the clause (25% -> width/spacing loss,
+                                0.1 mm / 3 mil -> size, a bare number -> count; no number -> always)
+                      number    only numbers whose unit fits the chosen measure
+                      unit      the unit written next to the chosen number (not asked)
+                    The model still decides everything the words leave open: which of the named defects,
+                    width or spacing loss, which number, more-than or at-least, and the action.
+    Each choice keeps its margin (how decisively it won) in answers['_margins']."""
+
+    def __init__(self, backend, grounded: bool = False):
         self.be = backend
+        self.grounded = grounded
 
     def compile(self, clause: str, order_seed: int | None = None) -> CompileResult:
         lists = _lists(random.Random(order_seed) if order_seed is not None else None)
@@ -256,25 +295,43 @@ class ConstrainedSpecCompiler:
             nonlocal first
             be.feed(f"{label}:" if first else f"\n{label}:")
             first = False
+            if len(options) == 1:          # nothing to decide: write it into the context and move on
+                be.feed(" " + options[0])
+                ans[label], margins[label] = options[0], 99.0
+                return options[0]
             opt, m = be.choose([" " + o for o in options])
             ans[label], margins[label] = opt.strip(), round(float(min(m, 99.0)), 3)
             return ans[label]
 
-        nums = numbers_as_written(clause)
-        if ask("Defect", lists["Defect"]) == "none":
-            ask("Class number", ["1", "2", "3"])
+        gnums = grounded_numbers(clause)
+        defects = lists["Defect"]
+        if self.grounded:
+            named = [DISPLAY[d] for d in sorted(defects_mentioned(clause)) if d in DISPLAY]
+            if named:
+                defects = [d for d in lists["Defect"] if d in named]
+            elif not gnums and CLASS_NUM_RE.search(clause):
+                defects = ["none", "any defect"]
+        if ask("Defect", defects) == "none":
+            cls = list(dict.fromkeys(CLASS_NUM_RE.findall(clause))) if self.grounded else []
+            ask("Class number", cls or ["1", "2", "3"])
         else:
-            # a measure that needs a number is only offered when the clause contains one
-            measures = lists["Measure"] if nums else ["always"]
-            if len(measures) == 1:
-                ans["Measure"], margins["Measure"] = "always", 99.0
-            if MEASURE_MAP[ans.get("Measure") or ask("Measure", measures)] != "always":
-                ask("Number as written", nums) if len(nums) > 1 else ans.update({"Number as written": nums[0]})
-                ask("Unit", lists["Unit"])
+            if self.grounded:
+                fit = [m for m in lists["Measure"] if any(m in UNIT_MEASURES[u] for _, u in gnums)]
+                measures = fit or ["always"]
+            else:
+                measures = lists["Measure"] if gnums else ["always"]
+            if MEASURE_MAP[ask("Measure", measures)] != "always":
+                cands = [(n, u) for n, u in gnums if not self.grounded or ans["Measure"] in UNIT_MEASURES[u]]
+                num = ask("Number as written", list(dict.fromkeys(n for n, _ in cands)))
+                unit = next(u for n, u in cands if n == num)
+                if self.grounded:
+                    ask("Unit", [UNIT_NAME[unit]])
+                else:
+                    ask("Unit", lists["Unit"])
                 ask("Comparison", lists["Comparison"])
             ask("Action", lists["Action"])
         ans = {k: (WORD_NUM_VALUE.get(v, v) if k == "Number as written" else v) for k, v in ans.items()}
-        res.answers = {**ans, "_margins": margins}
+        res.answers = {**ans, "_margins": margins, "_grounded": self.grounded}
         res.rule, res.error = assemble(ans)
         res.generated_tokens = be.n_forward - n0 - 1
         res.latency_ms = (time.perf_counter() - t0) * 1e3

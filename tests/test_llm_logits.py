@@ -71,11 +71,11 @@ class FakeBackend:
 def test_constrained_compiler_builds_the_rule_and_never_offers_a_number_that_is_not_in_the_clause():
     be = FakeBackend({"Defect": "open", "Measure": "size", "Number as written": "0.15", "Unit": "mm",
                       "Comparison": "more than", "Action": "reject"})
-    r = ConstrainedSpecCompiler(be).compile("Reject any open wider than 0.15 mm on a Class 2 board.", order_seed=3)
+    r = ConstrainedSpecCompiler(be).compile("Reject any open wider than 0.15 mm or longer than 3 mm on a Class 2 board.", order_seed=3)
     assert r.error is None and (r.rule.defect, r.rule.measure, r.rule.op, r.rule.value, r.rule.action) == \
         ("open", "size_mm", ">", 0.15, "reject")
     offered = dict(be.asked)["Number as written"]
-    assert sorted(offered) == ["0.15", "2"]
+    assert sorted(offered) == ["0.15", "3"]          # numbers written in the clause; the IPC class number is not one
     assert r.answers["_margins"]["Defect"] == 2.5
 
 
@@ -83,3 +83,33 @@ def test_a_clause_without_a_number_can_only_be_an_always_rule():
     be = FakeBackend({"Defect": "short", "Action": "reject"})
     r = ConstrainedSpecCompiler(be).compile("Any short is a reject.")
     assert r.rule.measure == "always" and r.rule.defect == "short" and "Measure" not in dict(be.asked)
+
+
+def test_grounded_numbers_skip_the_class_number_and_keep_units():
+    from pcbinspect.spec_llm import grounded_numbers
+    assert grounded_numbers("On Class 3 boards reject opens wider than 0.15 mm or nicks over 20%.") == \
+        [("0.15", "mm"), ("20", "%")]
+    assert grounded_numbers("More than two pin holes on a board: hold for review.") == [("two", None)]
+    assert grounded_numbers("Spurs of 4 mil or more must be reworked.") == [("4", "mil")]
+
+
+def test_grounded_compiler_only_offers_what_the_clause_supports():
+    be = FakeBackend({"Measure": "width loss", "Comparison": "more than", "Action": "reject"})
+    be.fed = []
+    orig = be.feed
+    be.feed = lambda t: (be.fed.append(t), orig(t))[1]
+    r = ConstrainedSpecCompiler(be, grounded=True).compile(
+        "Mouse bites may not remove more than 20% of the trace width on a Class 2 board.", order_seed=1)
+    asked = dict(be.asked)
+    assert "Defect" not in asked and "Number as written" not in asked and "Unit" not in asked   # nothing to decide
+    assert sorted(asked["Measure"]) == ["spacing loss", "width loss"]
+    assert (r.rule.defect, r.rule.measure, r.rule.op, r.rule.value, r.rule.action) == \
+        ("mouse_bite", "width_loss_pct", ">", 20.0, "reject")
+    assert " mouse bite" in be.fed and " percent" in be.fed and " 20" in be.fed          # forced answers enter the context
+
+
+def test_grounded_compiler_reads_a_class_only_clause():
+    be = FakeBackend({"Defect": "none"})
+    r = ConstrainedSpecCompiler(be, grounded=True).compile("Build and inspect to Class 3.")
+    assert dict(be.asked)["Defect"] == ["none", "any defect"] or sorted(dict(be.asked)["Defect"]) == ["any defect", "none"]
+    assert r.rule.kind == "class" and r.rule.customer_class == 3
