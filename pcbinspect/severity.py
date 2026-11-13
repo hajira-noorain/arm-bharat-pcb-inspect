@@ -30,13 +30,26 @@ class SeverityEngine:
         dr = self.cfg["default_design_rules"]
         self.default_rules = DesignRules(dr["min_trace_width_mm"], dr["min_spacing_mm"])
 
-    def grade(self, d: Defect, rules: DesignRules | None = None) -> Defect:
-        """Fill d.severity, d.ipc and d.severity_reason in place and return d."""
+    def grade(self, d: Defect, rules: DesignRules | None = None, measurement=None) -> Defect:
+        """Fill d.severity, d.ipc and d.severity_reason in place and return d.
+
+        measurement: a golden.Measurement (golden-board comparison). When present it replaces the
+        bounding-box proxy, because it measures the copper actually lost or added.
+        """
         rules = rules or self.default_rules
         spec = self.cfg["classes"].get(d.cls)
         if spec is None:  # operator relabel to a class we have no rule for: be conservative
             spec = {"rule": "reject_all", "fallback_severity": "critical"}
         rule = spec["rule"]
+
+        if measurement is not None and rule in ("width_reduction", "spacing_reduction", "fixed"):
+            limits = self.cfg["width_reduction_limit_pct" if measurement.kind == "width"
+                              else "spacing_reduction_limit_pct"]
+            d.ipc = {c: ("reject" if measurement.pct > limits[c] else "accept") for c in IPC_CLASSES}
+            d.severity = self._severity_from_ipc(d.ipc)
+            d.width_mm = round(measurement.defect_mm, 3)
+            d.severity_reason = measurement.text()
+            return d
 
         if rule == "reject_all":
             d.ipc = {c: "reject" for c in IPC_CLASSES}

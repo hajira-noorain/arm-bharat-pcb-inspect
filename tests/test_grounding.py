@@ -162,6 +162,70 @@ def test_advisor_falls_back_to_template_on_hallucination(kb):
     assert adv.backend == "template" and adv.rejected_reasons
 
 
+class FakeStepwise:
+    """Simulates the ExecuTorch runner's continuation API with scripted outputs."""
+    name, model = "llama-executorch", "fake-stepwise"
+
+    def __init__(self, outputs):
+        self.outputs = list(outputs)
+        self.sent = []
+        self.resets = 0
+
+    def reset(self):
+        self.resets += 1
+
+    def cont(self, text, max_new_tokens, stop=None):
+        self.sent.append(text)
+        return GenResult(self.outputs.pop(0), latency_ms=1.0)
+
+
+def test_stepwise_maps_shuffled_numbers_and_covers_all_defects(kb):
+    from pcbinspect.advisor import option_orders
+    be = FakeStepwise(['2, "action": 1}', '1, "action": 3},',
+                       'Short circuit at top-left; the board fails."}'])
+    adv = Advisor(be, kb).advise(RECORD, {"short": 4})
+    assert adv.backend == "llama-executorch", adv.rejected_reasons
+    orders = option_orders(RECORD, kb)
+    assert adv.steps[0]["cause_id"] == orders["D1"][0][1] and adv.steps[0]["action_id"] == orders["D1"][1][0]
+    assert adv.steps[1]["cause_id"] == orders["D2"][0][0] and adv.steps[1]["action_id"] == orders["D2"][1][2]
+    assert be.resets == 1 and len(be.sent) == 3          # context prefilled once, then continuations
+    assert be.sent[0].endswith('{"steps": [{"defect": "D1", "cause": ')
+    assert be.sent[1] == ', {"defect": "D2", "cause": '
+    assert be.sent[2] == '], "summary": "'
+    assert adv.choices[0]["cause_pos"] == 2
+
+
+def test_join_drops_what_the_stop_token_already_wrote():
+    from pcbinspect.advisor import _join
+    assert _join(",", ', {"defect": "D2"') == ' {"defect": "D2"'
+    assert _join("],", '], "summary": "') == ' "summary": "'
+    assert _join("", ', {"defect"') == ', {"defect"'
+
+
+def test_stepwise_tolerates_missing_brace(kb):
+    from pcbinspect.advisor import _choice_done
+    assert not _choice_done('2, "action": 1')               # might still be "1" of "13"
+    assert _choice_done('2, "action": 1, {"defect": "D')     # second number finished
+    be = FakeStepwise(['1, "action": 1, {"defect": "D', '2, "action": 2}',
+                       'Two defects found."}'])
+    adv = Advisor(be, kb).advise(RECORD, None)
+    assert adv.backend == "llama-executorch", adv.rejected_reasons
+    assert be.sent[1] == '2", "cause": '                     # model already wrote ', {"defect": "D'
+
+
+def test_stepwise_bad_choice_falls_back_to_template(kb):
+    be = FakeStepwise(['under-etching", "action": 1}'])
+    adv = Advisor(be, kb).advise(RECORD, None)
+    assert adv.backend == "template" and "expected form" in adv.rejected_reasons[0]
+
+
+def test_option_order_is_shuffled_but_stable(kb):
+    from pcbinspect.advisor import option_orders
+    a, b = option_orders(RECORD, kb), option_orders(RECORD, kb)
+    assert a == b                                          # deterministic per board
+    assert sorted(a["D1"][0]) == sorted(kb.allowed_ids("short")[0])
+
+
 def test_prompt_contains_only_present_defect_options(kb):
     p_ids = build_prompt(RECORD, {"short": 4}, kb, style="ids")
     assert "SHORT-C1" in p_ids and "MBITE-A1" in p_ids and "OPEN-C1" not in p_ids

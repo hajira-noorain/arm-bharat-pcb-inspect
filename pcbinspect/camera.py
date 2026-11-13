@@ -102,6 +102,11 @@ class ReplayCamera(Camera):
             raise FileNotFoundError(self.current)
         return im
 
+    def golden(self) -> np.ndarray | None:
+        """Known-good image of the current board, if the demo set ships one (<name>.golden.jpg)."""
+        p = self.current.with_name(self.current.stem + ".golden.jpg")
+        return cv2.imread(str(p)) if p.exists() else None
+
 
 def open_camera(kind: str, **kw) -> Camera:
     if kind == "picamera2":

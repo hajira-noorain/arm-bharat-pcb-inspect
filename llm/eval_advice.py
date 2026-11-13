@@ -4,10 +4,11 @@ For each record the full advisor path runs (prompt -> Llama on ExecuTorch -> gro
 Reported:
   accepted_rate         share of Llama answers that pass every grounding rule (shown to operators)
   rejection_reasons     why the rest were replaced by template advice (the hallucination profile)
-  coverage_rate         share of accepted answers that covered every defect without template filling
-  severe_first_rate     accepted answers whose first step is the most severe defect
-  repeat_process_rate   when history shows a repeating defect, share choosing a process cause
-                        (a cause whose step is not 'handling') for it — a reasoning check
+  cause_position1_share how often option 1 is chosen vs chance (options are shuffled per board)
+  repeating_defect_process_cause / one_off_defect_handling_cause
+                        reasoning check against chance: a defect that keeps repeating should get a
+                        process cause, a one-off should lean to handling/local causes
+  (step order and coverage are by construction and are NOT reported as model skill)
   prompt_tokens, prefill/decode tok/s, latency
 All raw outputs are saved for human review.
 
@@ -25,7 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from pcbinspect.advisor import SEV_RANK, Advisor  # noqa: E402
+from pcbinspect.advisor import Advisor  # noqa: E402
 from pcbinspect.kb import default_kb  # noqa: E402
 from pcbinspect.record import BARE_CLASSES, Defect  # noqa: E402
 from pcbinspect.severity import SeverityEngine  # noqa: E402
@@ -77,20 +78,12 @@ def main():
         a = adv.advise(rec, hist)
         accepted = a.backend == "llama-executorch"
         first = a.steps[0]["defect"] if a.steps else None
-        worst = min(rec["defects"], key=lambda d: SEV_RANK.get(d["severity"], 3))
-        rep = None
-        if accepted and hist:
-            cls = next(iter(hist))
-            step = next((s for s in a.steps if s["type"] == cls), None)
-            if step:
-                rep = kb.by_id[step["cause_id"]].get("step") != "handling"
+
         rows.append({"record": rec, "history": hist, "accepted": accepted, "raw": a.raw_output,
                      "reasons": a.rejected_reasons, "filled": a.filled_from_template,
                      "summary": a.summary, "first_step": first,
-                     "severe_first": accepted and SEV_RANK[next(d for d in rec["defects"] if d["id"] == first)["severity"]]
-                     == SEV_RANK[worst["severity"]],
-                     "repeat_process_cause": rep,
-                     "prompt_tokens": llm.last_stats.get("prompt_tokens"),
+                     "choices": a.choices,
+                     "prompt_tokens": a.gen.prompt_tokens if a.gen else None,
                      "latency_ms": a.gen.latency_ms if a.gen else None,
                      "prefill_tps": a.gen.prefill_tps if a.gen else None,
                      "decode_tps": a.gen.decode_tps if a.gen else None})
@@ -98,19 +91,43 @@ def main():
     acc = [r for r in rows if r["accepted"]]
     reasons = Counter(r["reasons"][0].split(":")[0] if ":" in r["reasons"][0] else r["reasons"][0]
                       for r in rows if not r["accepted"] and r["reasons"])
-    rep = [r["repeat_process_cause"] for r in rows if r["repeat_process_cause"] is not None]
     med = lambda xs: statistics.median([x for x in xs if x]) if any(xs) else None  # noqa: E731
+    # ---- choice analysis (all parsed choices, accepted or not) ----
+    choices = [c for r in rows for c in r["choices"]]
+    pos1 = sum(c["cause_pos"] == 1 for c in choices)
+    pos1_chance = sum(1 / c["n_causes"] for c in choices)
+
+    def category_stats(want_process: bool, repeat: bool):
+        hit = chance = n = 0
+        for r in rows:
+            rep_types = set(r["history"])
+            for c in r["choices"]:
+                causes = kb.entry(c["type"])["causes"]
+                proc = [x for x in causes if x.get("step") != "handling"]
+                if len(proc) in (0, len(causes)):
+                    continue          # all causes in one category: uninformative
+                if (c["type"] in rep_types) != repeat:
+                    continue
+                is_proc = kb.by_id[c["cause"]].get("step") != "handling"
+                hit += is_proc if want_process else (not is_proc)
+                chance += (len(proc) if want_process else len(causes) - len(proc)) / len(causes)
+                n += 1
+        return {"n": n, "rate": hit / n if n else None, "chance": chance / n if n else None}
+
     summary = {
         "model": Path(args.pte).name, "n": len(rows), "load_ms": llm.load_ms,
         "accepted_rate": len(acc) / len(rows),
         "rejection_reasons": dict(reasons),
-        "coverage_rate": sum(not r["filled"] for r in acc) / max(len(acc), 1),
-        "severe_first_rate": sum(r["severe_first"] for r in acc) / max(len(acc), 1),
-        "repeat_process_rate": sum(rep) / len(rep) if rep else None, "repeat_cases": len(rep),
+        "choices_parsed": len(choices),
+        "cause_position1_share": pos1 / max(len(choices), 1),
+        "cause_position1_chance": pos1_chance / max(len(choices), 1),
+        "repeating_defect_process_cause": category_stats(True, True),
+        "one_off_defect_handling_cause": category_stats(False, False),
         "prompt_tokens_median": med([r["prompt_tokens"] for r in rows]),
         "latency_ms_median": med([r["latency_ms"] for r in rows]),
         "prefill_tps_median": med([r["prefill_tps"] for r in rows]),
         "decode_tps_median": med([r["decode_tps"] for r in rows]),
+        "note": "step order (most severe first) and coverage (every defect gets a step) are by construction",
     }
     print(json.dumps(summary, indent=1))
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)

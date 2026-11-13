@@ -19,6 +19,7 @@ from .anomaly import AnomalyModel, FeatureFn
 from .calib import detect_scale, read_board_id
 from .detect_bare import BareDetector
 from .gate import ConformalGate, GateThresholds
+from .golden import GoldenMeasurer
 from .learning import RescoreHead, combine, crop_embedding
 from .record import ANOMALY_CLASS, Defect, Inspection, zone_of
 from .severity import DesignRules, SeverityEngine
@@ -40,6 +41,7 @@ class Design:
     alpha: float = 0.05
     beta: float = 0.01
     description: str = ""
+    golden: str | None = None              # known-good image of this design (for mm measurement)
 
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
@@ -48,7 +50,8 @@ class Design:
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
                    d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0),
                    DesignRules(r.get("min_trace_width_mm", 0.2), r.get("min_spacing_mm", 0.2)),
-                   d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""))
+                   d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
+                   d.get("golden"))
 
 
 @dataclass
@@ -165,8 +168,15 @@ class Inspector:
         return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat)
 
     # ------------------------------------------------------------ full inspection
+    def golden_for(self, design: str) -> np.ndarray | None:
+        d = self.designs[design]
+        if d.golden and (self.root / d.golden).exists():
+            return cv2.imread(str(self.root / d.golden))
+        return None
+
     def inspect(self, bgr: np.ndarray, design: str, board_id: str | None = None,
-                alpha: float | None = None, log: bool = True) -> tuple[Inspection, Analysis, int | None]:
+                alpha: float | None = None, log: bool = True,
+                golden: np.ndarray | None = None) -> tuple[Inspection, Analysis, int | None]:
         t_all = time.perf_counter()
         d = self.designs[design]
         a = self.analyse(bgr, design)
@@ -182,6 +192,11 @@ class Inspector:
 
         t = time.perf_counter()
         h, w = bgr.shape[:2]
+        golden = golden if golden is not None else self.golden_for(design)
+        gm = None
+        if golden is not None and a.mm_per_px and any(c.source == "detector" for c in shown):
+            gm = GoldenMeasurer(bgr, golden, a.mm_per_px, d.rules.min_spacing_mm)
+            a.latency_ms["golden_align"] = (time.perf_counter() - t) * 1e3
         defects = []
         for i, c in enumerate(sorted(shown, key=lambda c: -c.conf)):
             x1, y1, x2, y2 = c.bbox
@@ -193,7 +208,8 @@ class Inspector:
                 width_mm=None if mmpp is None else round(min(x2 - x1, y2 - y1) * mmpp, 3),
                 area_mm2=None if mmpp is None else round((x2 - x1) * (y2 - y1) * mmpp * mmpp, 3),
                 location=zone_of(c.bbox, w, h))
-            defects.append(self.severity.grade(defect, d.rules))
+            meas = gm.measure(c.cls, c.bbox) if gm is not None and c.source == "detector" else None
+            defects.append(self.severity.grade(defect, d.rules, measurement=meas))
         a.latency_ms["severity"] = (time.perf_counter() - t) * 1e3
 
         bid = board_id or a.board_id or f"{design}-{int(time.time())}-{next(self._auto_id)}"
@@ -243,6 +259,7 @@ def save_design(config_dir: Path, d: Design) -> None:
            "mm_per_px": d.mm_per_px, "marker_mm": d.marker_mm,
            "rules": {"min_trace_width_mm": d.rules.min_trace_width_mm,
                      "min_spacing_mm": d.rules.min_spacing_mm},
-           "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description}
+           "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
+           "golden": d.golden}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     json  # noqa: B018 (keep import for callers that serialise designs)

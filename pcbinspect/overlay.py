@@ -24,9 +24,7 @@ def render(bgr: np.ndarray, insp, analysis=None, max_side: int = 1600) -> np.nda
         col = SEV_BGR.get(d.severity, SEV_BGR[None])
         pad = lw * 3
         cv2.rectangle(img, (x1 - pad, y1 - pad), (x2 + pad, y2 + pad), col, lw)
-        label = f"{d.id} {d.cls.replace('_', ' ')}"
-        if d.size_mm is not None:
-            label += f" {d.size_mm:.2f}mm"
+        label = d.id     # just the reference: type, size and IPC result are in the list beside it
         (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fs, lw)
         ty = max(th + 4, y1 - pad - 4)
         cv2.rectangle(img, (x1 - pad, ty - th - 4), (x1 - pad + tw + 6, ty + 4), col, -1)

@@ -100,13 +100,15 @@ class Station:
     def _open_camera(self):
         kind = self.cfg.get("camera", "auto")
         if kind == "replay":
-            paths = sorted(glob.glob(str(self.root / self.cfg["replay_glob"])))
+            paths = [p for p in sorted(glob.glob(str(self.root / self.cfg["replay_glob"])))
+                     if not p.endswith(".golden.jpg")]
             return ReplayCamera(paths) if paths else None
         try:
             return open_camera(kind)
         except Exception as exc:
             log.warning("camera %s unavailable (%s); trying replay", kind, exc)
-            paths = sorted(glob.glob(str(self.root / self.cfg["replay_glob"])))
+            paths = [p for p in sorted(glob.glob(str(self.root / self.cfg["replay_glob"])))
+                     if not p.endswith(".golden.jpg")]
             return ReplayCamera(paths) if paths else None
 
     def buffer(self, design: str) -> FeedbackBuffer:
@@ -164,7 +166,11 @@ class Station:
             t0 = time.perf_counter()
             bgr = self.camera.capture()
             cap_ms = (time.perf_counter() - t0) * 1e3
-            insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha)
+            golden = self.camera.golden() if isinstance(self.camera, ReplayCamera) else None
+            if board_id is None:
+                n = self.store.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM inspections").fetchone()[0]
+                board_id = f"B{n:05d}"
+            insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden)
         insp.latency_ms = {"capture": round(cap_ms, 2), **insp.latency_ms}
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
                                 (__import__("json").dumps(insp.latency_ms), iid))

@@ -79,7 +79,15 @@ def main():
         for i, b in enumerate(pick):
             dst = demo / f"{design}_{i:03d}.jpg"
             shutil.copy2(b["path"], dst)
-            manifest.append({"file": dst.name, "design": design, "good": b["good"], "boxes": b["boxes"]})
+            # known-good image of the same board, when the dataset has one (used for mm measurement)
+            golden = b.get("template")
+            if golden is None and design == "hripcb":
+                board = Path(b["path"]).stem.split("_")[0]
+                golden = next(iter((work / "data" / "HRIPCB" / "PCB_USED").glob(f"{board}.*")), None)
+            if golden and not b["good"]:
+                shutil.copy2(golden, demo / f"{design}_{i:03d}.golden.jpg")
+            manifest.append({"file": dst.name, "design": design, "good": b["good"], "boxes": b["boxes"],
+                             "golden": bool(golden and not b["good"])})
     visa = work / "data" / "VisA"
     if visa.exists():
         with open(visa / "split_csv" / "1cls.csv", newline="") as f:
