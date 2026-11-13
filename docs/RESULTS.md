@@ -272,6 +272,70 @@ One good-board memory per camera view, built from that view's good images; image
 | ResNet18, 320 px | 93.0% | 90.1% | 90.7% | 89.9% | 89.2% | 90.6% |
 | WideResNet50, 256 px | 94.4% | 91.4% | 92.4% | 88.8% | 87.8% | 91.0% |
 
+### Assembled boards: finding the parts (FPIC boards never trained on)
+
+One-class part detector (YOLO26n) trained on 53 FPIC boards, selected on 8, scored on 15 boards it never saw (591 tiles, 11948 labelled parts). Photos resampled to 16.0 px/mm.
+
+| Precision | Recall | F1 | mAP@0.5 | mAP@0.5:0.95 |
+|---|---|---|---|---|
+| 97.3% | 94.2% | 95.7% | 97.8% | 71.1% |
+
+Part-kind classifier on named parts of the same held-out boards: 86.1% named correctly (10 kinds). It runs only when a board is taught.
+
+### Assembled boards: parts check end to end, removal simulated
+
+31 held-out FPIC photos, each taught as the good board; a copy has parts painted out and is re-photographed in software (shifted, turned, exposure and noise changed). This is a simulation: the real-photo test is the next table.
+
+| Removed parts (longer side) | Count | Reported missing |
+|---|---|---|
+| under 1 mm | 23 | 95.7% |
+| 1 to 2 mm | 85 | 90.6% |
+| 2 to 5 mm | 18 | 77.8% |
+| over 5 mm | 50 | 70.0% |
+| All removed parts | 176 | 84.1% |
+| Removed parts that were on the taught map | 161 | 91.9% |
+
+Labelled parts the taught map contained: 95.9%. False 'missing' calls per board: 0.48 with parts removed, 0.00 with none removed. Unexpected-part calls per board: 0.00 and 0.00. Boards with nothing removed that raised no call at all: 100.0%.
+
+Part names on the taught map, against FPIC's own labels (4181 parts): right 86.3%, wrong 6.8%, shown only as 'part' because the classifier was not sure 6.9%.
+
+### Assembled boards: parts check on real missing and extra parts (VisA pcb1-4)
+
+Real photographs. The part detector never saw these boards or this camera. Each design is taught from four good photos; no mm scale is available, so teaching picks the resampling factor. A finding counts only if it lies on the area VisA marks as the anomaly.
+
+| Photos | Count | Lined up with the taught board | Parts check raised something | Missing part reported on the labelled area | Unexpected part reported on the labelled area |
+|---|---|---|---|---|---|
+| Good boards | 320 | 100.0% | 21.6% | n/a | n/a |
+| Labelled 'missing' | 92 | 98.9% | 73.9% | 57.6% | 3.3% |
+| Labelled 'extra' | 30 | 100.0% | 56.7% | 3.3% | 46.7% |
+| Labelled 'wrong place' | 13 | 100.0% | 84.6% | 23.1% | 15.4% |
+| Labelled 'bent' | 50 | 98.0% | 40.0% | 12.0% | 2.0% |
+| Labelled 'burnt' | 8 | 100.0% | 12.5% | 12.5% | 0.0% |
+| Labelled 'damage' | 21 | 100.0% | 42.9% | 23.8% | 9.5% |
+| Labelled 'dirt' | 42 | 100.0% | 57.1% | 23.8% | 14.3% |
+| Labelled 'melt' | 152 | 100.0% | 46.1% | 7.9% | 2.0% |
+| Labelled 'scratch' | 83 | 100.0% | 42.2% | 10.8% | 2.4% |
+
+What teaching kept for each design:
+
+| Design | Parts on the map | Left off as unreliable | Ignore zones | Resampling factor |
+|---|---|---|---|---|
+| pcb1 | 8 | 1 | 10 | 1.5 |
+| pcb2 | 26 | 4 | 3 | 1.5 |
+| pcb3 | 19 | 0 | 10 | 2.0 |
+| pcb4 | 11 | 1 | 1 | 1.0 |
+
+The same photos decided two ways: by the part detector alone, and by the detector together with the picture comparison (a part is missing only when both agree; the station uses this one):
+
+| Photos | Count | Detector alone | Detector and picture comparison |
+|---|---|---|---|
+| Good boards: something raised (false call) | 320 | 36.9% | 21.6% |
+| Labelled 'missing': reported on the labelled area | 92 | 60.9% | 63.0% |
+| Labelled 'extra': reported on the labelled area | 30 | 46.7% | 46.7% |
+| Labelled 'wrong place': reported on the labelled area | 13 | 38.5% | 84.6% |
+
+Both models exported to ExecuTorch: detector 9.3 MB, classifier 5.9 MB. The exported classifier gives the same answer as PyTorch on 100.0% of 400 test crops. Parts found on 12 test tiles, PyTorch vs exported: None.
+
 ### Earlier advice method, superseded (60 seeded defect records, x86 host)
 
 Kept for the record. These runs asked Llama to write its choice as text; the method the station uses now, and its results, are in the next table.

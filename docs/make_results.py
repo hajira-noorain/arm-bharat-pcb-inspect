@@ -493,8 +493,9 @@ def parts_section(r: Path) -> list[str]:
                                                            else "finding_on_the_labelled_area")
             cmp_rows.append([{"good": "Good boards: something raised (false call)"}.get(
                 k, f"Labelled '{k}': reported on the labelled area"), n, pct(o.get(key, 0) / n), pct(v.get(key, 0) / n)])
+        cmp_out = []
         if cmp_rows:
-            out += ["\nThe same photos decided two ways: by the part detector alone, and by the detector together with "
+            cmp_out = ["\nThe same photos decided two ways: by the part detector alone, and by the detector together with "
                     "the picture comparison (a part is missing only when both agree; the station uses this one):\n",
                     table(["Photos", "Count", "Detector alone", "Detector and picture comparison"], cmp_rows)]
         per = [[d, v["taught"]["parts"], v["taught"].get("left_off_as_unreliable", 0), v.get("ignore_zones", 0),
@@ -507,6 +508,7 @@ def parts_section(r: Path) -> list[str]:
                        "Missing part reported on the labelled area", "Unexpected part reported on the labelled area"], rows),
                 "\nWhat teaching kept for each design:\n",
                 table(["Design", "Parts on the map", "Left off as unreliable", "Ignore zones", "Resampling factor"], per)]
+        out += cmp_out
     ex = load(r / "parts_export.json")
     if ex:
         c = ex.get("classifier", {})
