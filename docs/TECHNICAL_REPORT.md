@@ -99,7 +99,7 @@ The sources look very different: binarised, green solder mask, bare copper, prod
 
 The first version scored 97% on the datasets it was trained on, and 18% on photos of boards from another lab. That gap is the reason the station measures its own limit (section 5.2) instead of quoting a dataset score. The DefectDet test boards are physical boards the model never saw, but they come from the same lab as the training half, so this is not a cross-lab result.
 
-Enlarging small-defect photos before inspection was also tested on the DefectDet test boards. It only hurt: every detector did best at native scale. [[PENDING v3 scale sweep row]]
+Enlarging small-defect photos before inspection was also tested on the DefectDet test boards. It only hurt: every detector did best at native scale. The deployed detector fell from 84% mAP at native scale to 77% at 1.5x and 49% at 2x.
 
 ### 3.2 Assembled boards: anomaly memory
 
@@ -109,11 +109,11 @@ The PS lists anomalies alongside named defects. On assembled boards the variety 
 2. **Memory.** Descriptors from good boards are kept in a memory, reduced by greedy coreset selection.
 3. **Scoring.** Each patch's distance to its nearest good patch makes the heatmap. The board's score is the mean of its worst 1% of patches, which is steadier than the single worst patch.
 4. **Calibration.** Leave-one-out, or a held-out share of good boards, sets the per-design normalisation. These numbers are honest even when a design is taught from five boards.
-5. **Export.** The backbone is the only neural network on this path. Its ExecuTorch FP32 export matches PyTorch to about 1e-6 relative error, so a memory built in the cloud is valid on the Pi. [[PENDING 320 export parity]]
+5. **Export.** The backbone is the only neural network on this path. Its ExecuTorch FP32 export matches PyTorch to about 1e-6 relative error, so a memory built in the cloud is valid on the Pi (measured at 320 px: 1.2e-6).
 
 **How the setting was chosen.** Nine settings were compared on VisA pcb1-4: two backbones, three input sizes, and three scoring refinements. The deployed setting (ResNet-18, 320 px, top-1% score) had a mean image AUROC of 95.6%, versus 90.5% for the first version (256 px, worst patch). It also had the best heatmap (pixel AUROC 97.9%) and the best result when teaching a design from 10 good boards (90.8%, versus 84.5%). A Wide-ResNet-50 was no better and costs several times the compute on the Pi. Per-position normalisation and a board mask raised the full-memory score but hurt the 10-board result and the heatmap, so they are off.
 
-**Second dataset.** On Real-IAD's `pcb` object (five camera views per board, evaluation only, never trained on), the same method reached a mean image AUROC of [[PENDING real-iad]] per view.
+**Second dataset.** On Real-IAD's `pcb` object (five camera views per board, evaluation only, never trained on), the same method (ResNet-18, 320 px) reached a mean image AUROC of 90.6% across the five views (89.2% to 93.0%), with one memory per view built from that view's good images.
 
 ### 3.3 Golden-board comparison and fusion
 
@@ -161,7 +161,15 @@ Every detector has a threshold, usually picked by eye, which says nothing about 
 
 The guarantee is per defect, which is what matters to a customer. An earlier per-board version showed only 34% of the individual defects on boards it correctly failed, so it was replaced.
 
-On held-out test boards at a 5% allowed miss rate: [[PENDING gate v3 table]].
+On held-out test boards at a 5% allowed miss rate:
+
+| Design | Defective / good test boards | One random defect per board missed (95% CI) | All defects missed | False calls per board | Boards sent to a person |
+|---|---|---|---|---|---|
+| DeepPCB | 250 / 250 | 6.5% (5.0% to 8.1%) | 6.8% of 1,579 | 0.12 | 20% |
+| HRIPCB | 121 / 2 | 4.5% (2.8% to 6.3%) | 4.4% of 610 | 1.07 | 100% |
+| Mendeley | 27 / 0 | 3.6% (1.1% to 6.4%) | 3.4% of 207 | 7.07 | 100% |
+
+The guarantee covers one randomly chosen defect on a new board, averaged over calibration draws. On DeepPCB the measured value, 6.5%, is above the 5% target and its interval only just reaches it. With 250 calibration boards, a single calibration draw is expected to land within about 1.3 points of the target, so this is at the edge of the guarantee rather than outside it, and it is reported as found. An operator who needs a hard cap picks 1%. Pooling every defect (the "all defects" column) weights boards with many defects more, which is why it is reported separately.
 
 PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
 
@@ -194,7 +202,7 @@ Customers state acceptance rules in plain English. Turning them into machine rul
 3. **Capability check.** A rule that asks for defects smaller than the measured detection limit (section 5.2) is flagged: the station cannot keep that promise on this camera.
 4. **The operator confirms** every rule that is not auto-accepted, seeing it rendered back as a plain sentence.
 
-**Measured** (Llama 3.2 3B SpinQuant on ExecuTorch, CPU): with worked examples in the prompt, 51% of the 80 tuning clauses were compiled exactly right and auto-accepted, 5% were wrong but passed the checks, and the rest went to the operator or produced no rule. On the 40 held-out clauses: [[PENDING spec heldout]]. The checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect in deliberately corrupted correct rules. Llama 3.2 1B cannot do this task (5% exact), so the station uses 1B for advice and 3B for rules.
+**Measured** (Llama 3.2 3B SpinQuant on ExecuTorch, CPU): with worked examples in the prompt, 51% of the 80 tuning clauses were compiled exactly right and auto-accepted, 6% were wrong but passed the checks, and the rest went to the operator (33%) or produced no rule (10%). On the 40 held-out clauses, run once after the prompt was fixed: 47.5% exactly right, 32.5% auto-accepted and right, 5% (2 clauses) wrong but passing the checks, 52.5% sent to the operator, 10% with no rule. The keyword reader alone was silently wrong on 45% of the same clauses. The checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect in deliberately corrupted correct rules. Llama 3.2 1B cannot do this task (5% exact), so the station uses 1B for advice and 3B for rules.
 
 ## 6. Llama on ExecuTorch: advice the operator can check
 
