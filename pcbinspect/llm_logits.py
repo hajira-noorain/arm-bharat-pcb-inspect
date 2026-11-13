@@ -209,15 +209,23 @@ class LogitLlama:
         text = ""
         for _ in range(max_new_tokens):
             pick = None
-            for tok in np.argsort(-self._last)[:top_k]:
-                tok = int(tok)
-                if tok in (SPECIAL["<|eot_id|>"], SPECIAL["<|end_of_text|>"]):
-                    return text
-                if tok >= 128000:
-                    continue
-                piece = self.tok.decode([tok])
-                if allow is None or allow(text, piece):
-                    pick = (tok, piece)
+            order = np.argsort(-self._last)
+            # the best allowed token among the top_k; if none is allowed (e.g. a number was started and only
+            # one continuation makes it a number from the findings), look much further down the list
+            for lo, hi in ((0, top_k), (top_k, 6000)):
+                for tok in order[lo:hi]:
+                    tok = int(tok)
+                    if tok in (SPECIAL["<|eot_id|>"], SPECIAL["<|end_of_text|>"]):
+                        if lo == 0:
+                            return text
+                        continue
+                    if tok >= 128000:
+                        continue
+                    piece = self.tok.decode([tok])
+                    if allow is None or allow(text, piece):
+                        pick = (tok, piece)
+                        break
+                if pick is not None or allow is None:
                     break
             if pick is None:
                 break
