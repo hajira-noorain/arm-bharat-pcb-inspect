@@ -163,6 +163,8 @@ The guarantee is per defect, which is what matters to a customer. An earlier per
 
 On held-out test boards at a 5% allowed miss rate: [[PENDING gate v3 table]].
 
+PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
+
 The guarantee holds only while boards look like the calibration boards: same product, camera and lighting. The station keeps one calibration per design, re-calibrates whenever its model changes, and checks each live capture against the calibration capture's sharpness and brightness envelope. A Monte-Carlo test (2,000 repetitions, skewed distributions) checks that the average miss rate stays at or below α.
 
 ### 5.2 The detection-limit eye test
