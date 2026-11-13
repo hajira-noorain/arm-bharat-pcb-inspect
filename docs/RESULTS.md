@@ -57,6 +57,7 @@ Each version adds training data; the test boards are the same for all of them an
 | v3: + half of DefectDet's boards, solder-mask recolouring (deployed) | 83.3% | 96.3% | 95.8% | 81.1% | 73.8% | 84.2% |
 | v4: + synthetic tiles rendered from 61 open-hardware KiCad boards (not deployed) | 82.8% | 95.6% | 95.4% | 82.8% | 72.9% | 83.9% |
 | v3_et: v3 through the exported ExecuTorch FP32 .pte | 83.3% | 96.3% | 95.8% | 81.2% | 73.8% | 84.2% |
+| v3_et_int8: v3 through the exported ExecuTorch INT8 .pte | 83.2% | 96.4% | 95.8% | 80.9% | 73.7% | 83.8% |
 
 ### DefectDet held-out boards, resized before inspection (128 boards)
 

@@ -97,7 +97,7 @@ The sources look very different: binarised, green solder mask, bare copper, prod
 | + DsPCBSD+ | 70.4% | 96.6% | 91.2% | 83.3% | 75.1% | 30.2% |
 | + DefectDet boards, recolouring (deployed) | 83.3% | 96.3% | 95.8% | 81.1% | 73.8% | 84.2% |
 
-The deployed numbers hold for what ships: running the same test boards through the exported ExecuTorch `.pte` (FP32, XNNPACK) gives the same mAP to within 0.05 points on every test set (all boards 83.31% against 83.32% in PyTorch).
+The deployed numbers hold for what ships: running the same test boards through the exported ExecuTorch `.pte` (FP32, XNNPACK) gives the same mAP to within 0.05 points on every test set (all boards 83.31% against 83.32% in PyTorch). The INT8 export (3.2 MB against 9.8 MB) loses at most 0.4 points on any test set (all boards 83.2%, DefectDet 83.8%), so on the Pi the choice between them is purely a speed question.
 
 The first version scored 97% on the datasets it was trained on, and 18% on photos of boards from another lab. That gap is the reason the station measures its own limit (section 5.2) instead of quoting a dataset score. The DefectDet test boards are physical boards the model never saw, but they come from the same lab as the training half, so this is not a cross-lab result.
 
@@ -261,7 +261,7 @@ If Llama fails to load on the device, the dashboard shows a red banner and the f
 Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 
 - detector: ExecuTorch `.pte` (FP32 and INT8, XNNPACK) or Arm's Optimized-Runtimes YOLO26 build for the Pi 5, selected in `config/app.yaml`
-- anomaly backbone: ExecuTorch `.pte` (FP32 and INT8)
+- anomaly backbone: ExecuTorch `.pte` (FP32 and INT8; INT8 features differ from FP32 by 4.5% on average, so INT8 needs its own memories and is benchmarked for speed only)
 - Llama 1B and 3B: ExecuTorch `.pte`, with KleidiAI micro-kernels inside XNNPACK
 
 **Benchmarks** (`bench/bench_device.py`, run by `deploy/measure_on_pi.sh`) record per-model latency at 1, 2 and 4 threads, ExecuTorch against the Arm runtime for the detector, Llama load time, prefill and decode tokens/s from the runtime's own statistics, resident memory, and a per-stage end-to-end breakdown, each with temperature and throttle flags. A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
