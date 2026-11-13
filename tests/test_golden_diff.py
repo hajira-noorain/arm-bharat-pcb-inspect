@@ -117,3 +117,23 @@ def test_fusion_merges_and_keeps_both_sources():
     merged = [f for f in fz if f["source"] == "detector+golden"]
     assert merged and merged[0]["conf"] >= max(0.4, merged[0]["diff_score"]) and merged[0]["cls"] == "spurious_copper"
     assert any(f["source"] == "detector" and f["conf"] == 0.3 for f in fz)
+
+
+def test_alignment_recovers_a_board_put_down_off_position_and_turned():
+    """A board 8% of the frame off and 4 degrees turned (millimetres on a real fixture) must still align;
+    single-scale ECC from the identity lost it beyond ~2% and ~1 degree."""
+    from pcbinspect.golden import align
+    rng = np.random.default_rng(0)
+    g = np.full((900, 1200, 3), 30, np.uint8)
+    for _ in range(60):                                   # irregular copper-like blobs and traces
+        p1 = (int(rng.integers(40, 1160)), int(rng.integers(40, 860)))
+        p2 = (p1[0] + int(rng.integers(-200, 200)), p1[1] + int(rng.integers(-200, 200)))
+        cv2.line(g, p1, p2, (200, 190, 180), int(rng.integers(4, 14)))
+    h, w = g.shape[:2]
+    M = cv2.getRotationMatrix2D((w / 2, h / 2), 4.0, 1.0)
+    M[:, 2] += (0.08 * w, -0.05 * w)
+    t = cv2.warpAffine(g, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    out, cc = align(t, g)
+    assert cc > 0.95
+    inner = (slice(200, 700), slice(300, 900))
+    assert np.abs(out[inner].astype(int) - t[inner].astype(int)).mean() < 6

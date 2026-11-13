@@ -86,7 +86,65 @@ def copper_mask(bgr: np.ndarray) -> np.ndarray:
     return m
 
 
+def _ecc(a, b, warp, motion, iters, gauss):
+    try:
+        return cv2.findTransformECC(a, b, warp, motion,
+                                    (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, iters, 1e-5), None, gauss)
+    except cv2.error:
+        return None
+
+
 def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray, float]:
+    """Warp `golden` onto `test`. Returns (warped, cc); cc 0.0 = no alignment found.
+
+    Coarse to fine, so a board put down a few millimetres off or a few degrees turned still locks on:
+      1. ~160 px, heavy blur: rigid (shift + rotation) from several starting rotations, best correlation wins
+      2. ~400 px: rigid refinement
+      3. `max_side` px: affine refinement (a few iterations: it starts almost aligned)
+    ECC alone at step 3 from the identity only captured ~2% of the frame width and ~1 degree."""
+    if test.shape[:2] != golden.shape[:2]:
+        golden = cv2.resize(golden, (test.shape[1], test.shape[0]))
+    g1 = cv2.cvtColor(test, cv2.COLOR_BGR2GRAY)
+    g2 = cv2.cvtColor(golden, cv2.COLOR_BGR2GRAY)
+    full = max(g1.shape)
+
+    def level(side):
+        s = min(1.0, side / full)
+        f = (lambda im: cv2.resize(im, None, fx=s, fy=s, interpolation=cv2.INTER_AREA).astype(np.float32))
+        return f(g1), f(g2), s
+
+    a, b, s0 = level(160)
+    best = None
+    for deg in (0.0, -4.0, 4.0, -8.0, 8.0):
+        th = np.deg2rad(deg)
+        c, si = float(np.cos(th)), float(np.sin(th))
+        cx, cy = a.shape[1] / 2, a.shape[0] / 2
+        w0 = np.float32([[c, -si, cx - c * cx + si * cy], [si, c, cy - si * cx - c * cy]])
+        r = _ecc(a, b, w0, cv2.MOTION_EUCLIDEAN, 80, 7)
+        if r is not None and (best is None or r[0] > best[0]):
+            best = r
+        if best is not None and best[0] > 0.9:
+            break
+    if best is None:
+        return golden, 0.0
+    cc, warp = best
+    prev = s0
+    for side, motion, iters, gauss in ((400, cv2.MOTION_EUCLIDEAN, 40, 5), (max_side, cv2.MOTION_AFFINE, 30, 3)):
+        a, b, s = level(side)
+        warp = warp.copy()
+        warp[:, 2] *= s / prev
+        prev = s
+        r = _ecc(a, b, warp, motion, iters, gauss)
+        if r is None:
+            return golden, 0.0
+        cc, warp = r
+    warp[:, 2] /= prev
+    out = cv2.warpAffine(golden, warp, (test.shape[1], test.shape[0]),
+                         flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
+    return out, float(cc)
+
+
+def align_single_scale(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[np.ndarray, float]:
     """Warp `golden` onto `test` (ECC, affine, on a downscaled grey image). Returns (warped, cc)."""
     if test.shape[:2] != golden.shape[:2]:
         golden = cv2.resize(golden, (test.shape[1], test.shape[0]))

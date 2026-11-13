@@ -13,7 +13,7 @@ class NoDetections:
     class tiles:
         name = "none"
 
-    def detect(self, bgr):
+    def detect(self, bgr, only_near=None):
         return [], {"detector_tiles": 0.0, "n_tiles": 1}
 
 
@@ -122,3 +122,50 @@ def test_arm_runtime_paths_are_found_by_name(tmp_path):
     (other / "model.bin").write_bytes(b"")
     assert resolve_arm_runtime(tmp_path, model_cfg="elsewhere") == (lib, other)
 
+
+
+def test_golden_first_runs_the_detector_only_where_the_golden_board_differs(tmp_path):
+    """A 'guided' design: a clean board runs NO detector tile; a board with one defect runs only the tiles
+    that hold it; the golden image is aligned once and reused for the mm measurement."""
+    from pcbinspect.tiling import tile_origins
+
+    class Counting:
+        class tiles:
+            name = "counting"
+
+        def __init__(self):
+            self.calls = []
+
+        def detect(self, bgr, only_near=None):
+            n = len(tile_origins(bgr.shape[1], bgr.shape[0])) if only_near is None else sum(
+                any(b[0] < ox + 640 and b[2] > ox and b[1] < oy + 640 and b[3] > oy for b in only_near)
+                for ox, oy in tile_origins(bgr.shape[1], bgr.shape[0]))
+            self.calls.append(n)
+            return [], {"detector_tiles": 0.0, "detector_merge": 0.0, "n_tiles": float(n)}
+
+    def shot(img, seed):          # like recapture(), for any image size
+        r = np.random.default_rng(seed)
+        hh, ww = img.shape[:2]
+        M = cv2.getRotationMatrix2D((ww / 2, hh / 2), r.uniform(-0.3, 0.3), 1.0)
+        M[:, 2] += r.uniform(-4, 4, 2)
+        o = cv2.warpAffine(img, M, (ww, hh), borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
+        return np.clip(o + r.normal(0, 2, o.shape), 0, 255).astype(np.uint8)
+
+    ins = make(tmp_path)
+    ins.detector = Counting()
+    ins.designs["t"].detector_tiles = "guided"
+    b = board()                                            # 1920 x 1920, not periodic: 16 tiles
+    g = np.vstack([np.hstack([b, cv2.flip(b, 1), cv2.rotate(b, cv2.ROTATE_90_CLOCKWISE)]),
+                   np.hstack([cv2.flip(b, 0), cv2.rotate(b, cv2.ROTATE_180), b]),
+                   np.hstack([cv2.rotate(b, cv2.ROTATE_90_COUNTERCLOCKWISE), b, cv2.flip(b, -1)])])
+    n_all = len(tile_origins(g.shape[1], g.shape[0]))
+    insp, a, _ = ins.inspect(shot(g, 5), "t", log=False, golden=g)
+    assert a.golden_used and insp.verdict == "PASS" and ins.detector.calls[-1] == 0
+    t = g.copy()
+    cv2.line(t, (300, 90), (300, 96), (20, 20, 20), 3)     # one short, top-left corner
+    insp, a, _ = ins.inspect(shot(t, 6), "t", log=False, golden=g)
+    assert insp.verdict == "FAIL" and 1 <= ins.detector.calls[-1] <= 4 < n_all
+    assert a.golden_aligned is not None and "golden_measure" in a.latency_ms
+    ins.designs["t"].detector_tiles = "all"
+    ins.inspect(shot(g, 7), "t", log=False, golden=g)
+    assert ins.detector.calls[-1] == n_all

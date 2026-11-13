@@ -162,11 +162,17 @@ class BareDetector:
         self.tiles = tiles
         self.merge_iou = merge_iou
 
-    def detect(self, bgr: np.ndarray) -> tuple[list[Det], dict[str, float]]:
+    def detect(self, bgr: np.ndarray, only_near: list[tuple] | None = None) -> tuple[list[Det], dict[str, float]]:
+        """only_near: boxes (x1, y1, x2, y2); when given, only tiles touching one of them are run (the
+        golden-first policy: the detector names what the golden comparison found). [] runs no tile."""
         h, w = bgr.shape[:2]
         t0 = time.perf_counter()
         allr = []
         origins = tile_origins(w, h)
+        n_all = len(origins)
+        if only_near is not None:
+            origins = [(ox, oy) for ox, oy in origins if any(
+                b[0] < ox + TILE and b[2] > ox and b[1] < oy + TILE and b[3] > oy for b in only_near)]
         for ox, oy in origins:
             r = self.tiles.infer(bgr[oy:oy + TILE, ox:ox + TILE])
             if len(r):
@@ -189,4 +195,4 @@ class BareDetector:
                                     float(conf)))
         dets.sort(key=lambda d: -d.conf)
         return dets, {"detector_tiles": (t1 - t0) * 1e3, "detector_merge": (time.perf_counter() - t1) * 1e3,
-                      "n_tiles": float(len(origins))}
+                      "n_tiles": float(len(origins)), "n_tiles_frame": float(n_all)}

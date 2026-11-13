@@ -20,7 +20,7 @@ from .calib import detect_scale, read_board_id
 from .detect_bare import BareDetector
 from .gate import ConformalGate, GateThresholds
 from .fusion import fuse
-from .golden import GoldenMeasurer
+from .golden import MIN_ALIGN_CC, GoldenMeasurer, align
 from .golden_diff import diff_candidates
 from .learning import RescoreHead, crop_embedding, rescore
 from .record import ANOMALY_CLASS, Defect, Inspection, zone_of
@@ -46,6 +46,8 @@ class Design:
     description: str = ""
     golden: str | None = None              # known-good image of this design (mm measurement + difference channel)
     gate_golden: str | None = None         # gate calibrated on detector+golden-difference evidence
+    detector_tiles: str = "all"            # 'all' | 'guided' (golden-first: only tiles holding a difference;
+    #                                        the gate must be calibrated under the same policy)
 
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
@@ -57,7 +59,7 @@ class Design:
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
                    d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0), rules,
                    d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
-                   d.get("golden"), d.get("gate_golden"))
+                   d.get("golden"), d.get("gate_golden"), d.get("detector_tiles", "all"))
 
 
 @dataclass
@@ -85,6 +87,7 @@ class Analysis:
     latency_ms: dict[str, float] = field(default_factory=dict)
     golden_used: bool = False        # the golden-difference channel contributed (selects the gate)
     golden_note: str = ""
+    golden_aligned: np.ndarray | None = None   # the golden image warped onto this capture (reused for mm)
 
 
 def _overlaps(a, b) -> bool:
@@ -108,6 +111,7 @@ class Inspector:
         self.customer_rules: dict[str, list[tuple[int, Rule]]] = {}   # confirmed by the operator
         self.heads: dict[str, RescoreHead] = {}
         self._auto_id = itertools.count(1)
+        self._golden_cache: dict[str, tuple] = {}
         for name, d in designs.items():
             self.reload_design(name)
 
@@ -149,9 +153,31 @@ class Inspector:
             mm_per_px, scale_src = d.mm_per_px, ("design-default" if d.mm_per_px else "none")
         lat["scale"] = (time.perf_counter() - t) * 1e3
 
+        # Golden comparison FIRST, aligned once: it sees any copper change, and it tells the detector where
+        # to look (golden-first designs run the detector only on tiles that hold a difference).
+        diffs, golden_ok, golden_note, golden_aligned = [], False, "", None
+        use_golden = golden is not None and d.use_detector and design in self.gates_golden
+        if use_golden:
+            t = time.perf_counter()
+            golden_aligned, cc = align(bgr, golden)
+            lat["golden_align"] = (time.perf_counter() - t) * 1e3
+            t = time.perf_counter()
+            if cc >= MIN_ALIGN_CC:
+                diffs, info = diff_candidates(bgr, golden_aligned, aligned=True)
+                golden_ok = bool(info["ok"])
+                golden_note = "" if golden_ok else info.get("reason", "golden comparison refused")
+            else:
+                golden_note = f"golden alignment too poor (cc {cc:.2f})"
+            lat["golden_diff"] = (time.perf_counter() - t) * 1e3
+            if not golden_ok:
+                golden_aligned = None
+        elif golden is not None and design not in self.gates_golden:
+            golden_note = "golden comparison not calibrated for this design"
+
         cands: list[Candidate] = []
         if d.use_detector and self.detector is not None:
-            dets, dl = self.detector.detect(bgr)
+            guided = golden_ok and d.detector_tiles == "guided"
+            dets, dl = self.detector.detect(bgr, only_near=[c.bbox for c in diffs] if guided else None)
             lat.update(dl)
             cands += [Candidate(x.cls, "detector", x.bbox, x.conf, x.conf) for x in dets]
 
@@ -180,38 +206,34 @@ class Inspector:
                 c.conf = rescore(c.cls, c.raw_conf, h.p_real(c.embedding))
             lat["rescore"] = (time.perf_counter() - t) * 1e3
 
-        golden_used, golden_note = False, ""
-        if golden is not None and d.use_detector and design in self.gates_golden:
-            t = time.perf_counter()
-            diffs, info = diff_candidates(bgr, golden)
-            lat["golden_diff"] = (time.perf_counter() - t) * 1e3
-            if info["ok"]:
-                golden_used = True
-                fz = fuse([{"bbox": c.bbox, "conf": c.conf, "cls": c.cls, "_c": c} for c in cands
-                           if c.source == "detector"], diffs)
-                for f in fz:
-                    if "_c" in f:  # an existing detection, possibly strengthened by the difference
-                        c = f["_c"]
-                        c.conf, c.diff_score, c.topo_cls = f["conf"], f["diff_score"], f["topo_cls"]
-                        c.diff_size_px = f["diff_size_px"]
-                    else:
-                        cands.append(Candidate(f["cls"], "golden", f["bbox"], f["conf"], f["conf"],
-                                               diff_score=f["diff_score"], topo_cls=f["topo_cls"],
-                                               diff_size_px=f["diff_size_px"]))
-            else:
-                golden_note = info.get("reason", "golden comparison refused")
-        elif golden is not None and design not in self.gates_golden:
-            golden_note = "golden comparison not calibrated for this design"
+        golden_used = golden_ok
+        if golden_ok:
+            fz = fuse([{"bbox": c.bbox, "conf": c.conf, "cls": c.cls, "_c": c} for c in cands
+                       if c.source == "detector"], diffs)
+            for f in fz:
+                if "_c" in f:  # an existing detection, possibly strengthened by the difference
+                    c = f["_c"]
+                    c.conf, c.diff_score, c.topo_cls = f["conf"], f["diff_score"], f["topo_cls"]
+                    c.diff_size_px = f["diff_size_px"]
+                else:
+                    cands.append(Candidate(f["cls"], "golden", f["bbox"], f["conf"], f["conf"],
+                                           diff_score=f["diff_score"], topo_cls=f["topo_cls"],
+                                           diff_size_px=f["diff_size_px"]))
 
         score = max((c.conf for c in cands), default=0.0)
-        return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat, golden_used, golden_note)
+        return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat, golden_used, golden_note,
+                        golden_aligned)
 
     # ------------------------------------------------------------ full inspection
     def golden_for(self, design: str) -> np.ndarray | None:
         d = self.designs[design]
-        if d.golden and (self.root / d.golden).exists():
-            return cv2.imread(str(self.root / d.golden))
-        return None
+        if not d.golden or not (self.root / d.golden).exists():
+            return None
+        p = self.root / d.golden
+        key = (str(p), p.stat().st_mtime_ns)
+        if self._golden_cache.get(design, (None, None))[0] != key:   # decode once, not on every board
+            self._golden_cache[design] = (key, cv2.imread(str(p)))
+        return self._golden_cache[design][1]
 
     def inspect(self, bgr: np.ndarray, design: str, board_id: str | None = None,
                 alpha: float | None = None, log: bool = True,
@@ -245,8 +267,11 @@ class Inspector:
         gm = None
         insp_golden_used = a.golden_used
         if golden is not None and a.mm_per_px and any(c.source in ("detector", "golden") for c in shown):
-            gm = GoldenMeasurer(bgr, golden, a.mm_per_px, d.rules.min_spacing_mm)
-            a.latency_ms["golden_align"] = (time.perf_counter() - t) * 1e3
+            if a.golden_aligned is not None:   # aligned once in analyse(): no second ECC, no second warp
+                gm = GoldenMeasurer(bgr, a.golden_aligned, a.mm_per_px, d.rules.min_spacing_mm, aligned=True)
+            else:
+                gm = GoldenMeasurer(bgr, golden, a.mm_per_px, d.rules.min_spacing_mm)
+            a.latency_ms["golden_measure"] = (time.perf_counter() - t) * 1e3
         defects, features = [], []
         for i, c in enumerate(sorted(shown, key=lambda c: -c.conf)):
             x1, y1, x2, y2 = c.bbox
@@ -350,6 +375,7 @@ def save_design(config_dir: Path, d: Design) -> None:
            "rules": ({"min_trace_width_mm": d.rules.min_trace_width_mm,
                       "min_spacing_mm": d.rules.min_spacing_mm} if d.rules.rules_from_design else None),
            "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
-           "golden": d.golden, "gate_golden": d.gate_golden}
+           "golden": d.golden, "gate_golden": d.gate_golden,
+           "detector_tiles": d.detector_tiles}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     json  # noqa: B018 (keep import for callers that serialise designs)
