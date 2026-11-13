@@ -193,19 +193,20 @@ textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding
 <div id="llm-banner" class="llm-banner" hidden role="alert">Llama is not running on this station, so advice and customer rules fall back to fixed text. Check the model files and run <code>deploy/arm_check.py</code>.</div>
 <nav role="tablist">
   <button role="tab" aria-selected="true" data-tab="inspect">Inspect</button>
-  <button role="tab" aria-selected="false" data-tab="trends">Trends</button>
-  <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
-  <button role="tab" aria-selected="false" data-tab="eyetest">Eye test</button>
-  <button role="tab" aria-selected="false" data-tab="rules">Customer rules</button>
-  <button role="tab" aria-selected="false" data-tab="teach">Teach a board</button>
   <button role="tab" aria-selected="false" data-tab="log">Log</button>
+  <button role="tab" aria-selected="false" data-tab="teach" data-setup hidden>Teach a board</button>
+  <button role="tab" aria-selected="false" data-tab="eyetest" data-setup hidden>Eye test</button>
+  <button role="tab" aria-selected="false" data-tab="rules" data-setup hidden>Customer rules</button>
+  <button role="tab" aria-selected="false" data-tab="trends" data-setup hidden>Trends</button>
+  <button role="tab" aria-selected="false" data-tab="ask" data-setup hidden>Ask</button>
+  <button id="setup-toggle" type="button" aria-pressed="false" style="margin-left:auto">Setup</button>
 </nav>
 
 <main>
   <section id="tab-inspect">
     <div id="verdict" class="verdict" aria-live="assertive">
       <div class="word">Ready</div>
-      <div class="what">Place a board under the camera and press Inspect.</div>
+      <div class="what" id="ready-what">Place a board under the camera and press Inspect.</div>
       <div class="board"></div>
     </div>
     <div class="timing" id="timing"></div>
@@ -337,11 +338,26 @@ const api = async (path, opts = {}) => {
 };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const words = (s) => String(s || "").replaceAll("_", " ");
+// The line operator sees Inspect and Log. Teaching, the eye test, customer rules, trends and questions
+// are setup tasks, shown after pressing Setup (remembered on this screen).
+const setSetup = (on) => {
+  document.querySelectorAll("[data-setup]").forEach((b) => b.hidden = !on);
+  const t = document.querySelector("#setup-toggle");
+  t.setAttribute("aria-pressed", on ? "true" : "false"); t.textContent = on ? "Hide setup" : "Setup";
+  try { localStorage.setItem("pcb-setup", on ? "1" : ""); } catch (e) { /* private window: not remembered */ }
+  if (!on && document.querySelector('[role=tab][aria-selected="true"][data-setup]')) document.querySelector('[data-tab="inspect"]').click();
+};
+document.addEventListener("DOMContentLoaded", () => {
+  let on = false;
+  try { on = !!localStorage.getItem("pcb-setup"); } catch (e) { /* ignore */ }
+  document.querySelector("#setup-toggle").addEventListener("click", () => setSetup(document.querySelector("#setup-toggle").getAttribute("aria-pressed") !== "true"));
+  setSetup(on);
+});
 let state = null, current = null, pollTimer = null;
 
 // ---------------- tabs ----------------
-document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
-  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", x === b));
+document.querySelectorAll("nav button[role=tab]").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button[role=tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
   document.querySelectorAll("main > section").forEach((s) => s.hidden = s.id !== `tab-${b.dataset.tab}`);
   document.querySelector(".inspect-dock").hidden = b.dataset.tab !== "inspect";  // never cover other tabs
   if (b.dataset.tab === "trends") loadTrends();
@@ -357,6 +373,9 @@ async function loadState() {
   const sel = $("#design"), keep = sel.value;
   sel.innerHTML = state.designs.map((d) => `<option value="${esc(d.name)}">${esc(d.name)}${d.calibrated ? "" : " (not calibrated)"}</option>`).join("");
   if (keep && state.designs.some((d) => d.name === keep)) sel.value = keep;
+  const rw = $("#ready-what");
+  if (rw && !state.designs.length) rw.textContent = "No board design has been taught yet. Press Setup, then Teach a board.";
+  else if (rw && !current) rw.textContent = "Place a board under the camera and press Inspect.";
   syncAlpha();
   const on = (id, ok, text) => { const el = $(id); el.className = ok ? "on" : ""; el.textContent = text; };
   on("#st-camera", !!state.camera, state.camera ? `Camera: ${state.camera}` : "No camera");
@@ -373,7 +392,8 @@ function syncAlpha() {
   opts.forEach((o) => {
     const a = parseFloat(o.value), need = Math.ceil(1 / a) - 1;
     o.disabled = !d || d.n_defective < need;
-    o.textContent = `${Math.round(a * 100)}%${o.disabled ? ` (needs ${need} calibration boards)` : ""}`;
+    const label = { 1: "Strict", 5: "Normal", 10: "Relaxed" }[Math.round(a * 100)] || "";
+    o.textContent = `${label} ${Math.round(a * 100)}%${o.disabled ? " (not enough calibration boards)" : ""}`.trim();
   });
   if ($("#alpha").selectedOptions[0]?.disabled) { const ok = opts.find((o) => !o.disabled); if (ok) $("#alpha").value = ok.value; }
 }
@@ -395,7 +415,12 @@ function verdictText(r) {
   const n = r.defects.length;
   const disp = r.disposition && r.disposition !== "ACCEPT" ? ` Class ${r.customer_class}: ${r.disposition.toLowerCase()}.` : "";
   if (r.verdict === "PASS") return { word: "PASS", what: "No defect found at the chosen miss rate." };
-  if (r.verdict === "REVIEW") return { word: "CHECK", what: `<strong>A person needs to decide.</strong><br>${n ? `${n} possible defect${n > 1 ? "s" : ""} marked` : "Evidence is borderline"}.` };
+  if (r.verdict === "REVIEW") {
+    const cr = r.check_reason || "";
+    if (/outside the calibrated envelope/.test(cr)) return { word: "CHECK", what: `<strong>Take the picture again.</strong><br>${esc(cr.split(": ").slice(1).join(": ") || cr)}.` };
+    if (/golden comparison refused/.test(cr)) return { word: "CHECK", what: "<strong>Put the board against the corner stops and inspect again.</strong><br>It did not line up with the reference picture of this design, so it was not compared." };
+    return { word: "CHECK", what: `<strong>Look at this board yourself, then press Pass or Fail.</strong><br>${n ? `${n} possible defect${n > 1 ? "s" : ""} marked` : "The station is not sure"}.` };
+  }
   const worst = r.defects[0];
   return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.${disp}</strong><br>Most serious: ${esc(words(worst.cls))}.` };
 }
@@ -429,7 +454,7 @@ function renderAdvice(r) {
   const el = $("#advice");
   if (!r.defects.length) { el.innerHTML = ""; return; }
   const a = r.advice[r.advice.length - 1];
-  if (!a) { el.innerHTML = `<div class="advice"><p class="pending">Llama is writing advice</p></div>`; return; }
+  if (!a) { el.innerHTML = `<div class="advice"><p class="pending">${r.advice_timed_out ? "Advice did not arrive. The verdict above is not affected: follow your standard procedure for this defect." : "Llama is writing advice"}</p></div>`; return; }
   const adv = a.advice;
   const llama = a.backend === "llama-executorch";
   const source = llama ? `Written by ${esc(a.model)} on this device in ${(a.latency_ms / 1000).toFixed(1)} s${a.decode_tps ? `, ${a.decode_tps.toFixed(1)} tokens/s` : ""}. Every cause and action is checked against the defect knowledge base.`
@@ -447,7 +472,7 @@ function poll(id) {
     n++;
     const r = await api(`/api/inspection/${id}`).catch(() => null);
     if (!r || current?.id !== id) return clearInterval(pollTimer);
-    if (!r.advice_pending || n > 120) { clearInterval(pollTimer); current = r; showInspection(r, false); }
+    if (!r.advice_pending || n > 120) { clearInterval(pollTimer); r.advice_timed_out = r.advice_pending; current = r; showInspection(r, false); }
   }, 800);
 }
 

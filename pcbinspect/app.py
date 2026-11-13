@@ -166,8 +166,14 @@ class Station:
                                       "; ".join(adv.rejected_reasons) or None, ms,
                                       g.prefill_tps if g else None, g.decode_tps if g else None)
                 self._check_drift(design)
-            except Exception:
+            except Exception as exc:    # noqa: BLE001
                 log.exception("advice failed for inspection %s", iid)
+                try:    # the operator must still get advice, and must see that Llama did not write it
+                    adv = self.advisor._template(record, [f"Llama could not answer ({type(exc).__name__})"])
+                    self.store.log_advice(iid, adv.backend, adv.model, adv.to_json(), False,
+                                          "; ".join(adv.rejected_reasons) or None, 0.0, None, None)
+                except Exception:   # noqa: BLE001
+                    log.exception("fallback advice failed for inspection %s", iid)
 
     def _check_drift(self, design: str):
         rows = self.store.conn.execute(
@@ -427,6 +433,9 @@ class Station:
             "planted": "planted defects" in (self.designs[r["design"]].description or "")
             if r["design"] in self.designs else False}
         r["advice_pending"] = bool(r["defects"]) and not r["advice"]
+        # why a board that looked clean was still sent to a person (blurred picture, golden board not matched)
+        r["check_reason"] = versions.get("capture_check")
+        r["evidence"] = versions.get("evidence")
         return r
 
     # ---------------- feedback / learning ----------------
