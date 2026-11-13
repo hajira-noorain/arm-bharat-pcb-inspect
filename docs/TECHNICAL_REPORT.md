@@ -206,7 +206,7 @@ A dataset score says how a model did on someone else's photos. A factory needs t
 | Pin holes | from 0.42 mm | not certified up to 1.00 mm |
 | Mouse bites | from 0.50 mm | not certified up to 1.00 mm |
 
-That table is the strongest argument for the golden comparison: a detector that scores 96% mAP on DeepPCB cannot promise 90% detection of any size on a printed card. This validates the reader, not the physical print or camera. The real card is photographed on the Pi on 20-21 November.
+That table is the strongest argument for the golden comparison: a detector that scores 96% mAP on DeepPCB cannot promise 90% detection of any size on simulated photos of a printed card. This validates the reader, not the physical print or camera. The real card is photographed on the Pi on 20-21 November.
 
 The full method, including what the eye test found wrong in our own system and fixed, is in `docs/EYE_TEST_AND_RULES.md`.
 
