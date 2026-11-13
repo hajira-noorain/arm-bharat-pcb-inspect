@@ -123,6 +123,70 @@ def detector_compare_section(r: Path) -> list[str]:
             table(["Detector", "All"] + [SOURCE_NAMES[s] for s in SOURCES], rows)]
 
 
+def _iou(a, b) -> float:
+    ix = max(0, min(a[2], b[2]) - max(a[0], b[0]))
+    iy = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    u = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - ix * iy
+    return ix * iy / u if u > 0 else 0.0
+
+
+def _prf(boards: list[dict], conf: float) -> dict:
+    """Detections at or above `conf` against the labelled defects: a detection is correct when it has the
+    same class as an unclaimed labelled defect and overlaps it with IoU >= 0.5 (most confident first)."""
+    per: dict[str, list[int]] = {}                      # class -> [tp, fp, fn]
+    for b in boards:
+        used = set()
+        for d in sorted((d for d in b["dets"] if d["conf"] >= conf), key=lambda d: -d["conf"]):
+            best, bj = 0.0, None
+            for j, g in enumerate(b["boxes"]):
+                if j in used or g["cls"] != d["cls"]:
+                    continue
+                o = _iou(d["bbox"], g["bbox"])
+                if o > best:
+                    best, bj = o, j
+            c = per.setdefault(d["cls"], [0, 0, 0])
+            if bj is not None and best >= 0.5:
+                used.add(bj)
+                c[0] += 1
+            else:
+                c[1] += 1
+        for j, g in enumerate(b["boxes"]):
+            if j not in used:
+                per.setdefault(g["cls"], [0, 0, 0])[2] += 1
+
+    def f(tp, fp, fn):
+        pr, rc = tp / max(tp + fp, 1), tp / max(tp + fn, 1)
+        return {"precision": pr, "recall": rc, "f1": 2 * pr * rc / max(pr + rc, 1e-9), "n": tp + fn}
+    tot = [sum(v[i] for v in per.values()) for i in range(3)]
+    return {"all": f(*tot), "per_class": {k: f(*v) for k, v in sorted(per.items())}}
+
+
+def prf_section(r: Path) -> list[str]:
+    tag = next((t for t in ("v3_et", "v3") if (r / f"bare_dets_test_{t}.json").exists()), None)
+    boards = load(r / f"bare_dets_test_{tag}.json") if tag else None
+    if not boards:
+        return []
+    rows = []
+    for src in ("all",) + SOURCES:
+        bs = [b for b in boards if src == "all" or b["source"] == src]
+        if not bs:
+            continue
+        a, c = _prf(bs, 0.25)["all"], _prf(bs, 0.5)["all"]
+        rows.append([SOURCE_NAMES.get(src, "All test boards"), len(bs), a["n"], pct(a["precision"]), pct(a["recall"]),
+                     pct(a["f1"]), pct(c["precision"]), pct(c["recall"]), pct(c["f1"])])
+    pc = _prf(boards, 0.25)["per_class"]
+    crow = [[k.replace("_", " "), v["n"], pct(v["precision"]), pct(v["recall"]), pct(v["f1"])] for k, v in pc.items()]
+    runtime = "ExecuTorch (the on-device runtime)" if tag.endswith("_et") else "PyTorch"
+    return ["### Detector precision, recall and F1 on the held-out test boards\n",
+            f"The detector alone, run through {runtime}, before the golden comparison and before the review gate. "
+            "A detection counts as correct when it names the right defect type and overlaps the labelled defect "
+            "(IoU of 0.5 or more); every other detection is a false alarm and every unclaimed label is a miss.\n",
+            table(["Test boards", "Boards", "Defects", "Precision @0.25", "Recall @0.25", "F1 @0.25",
+                   "Precision @0.5", "Recall @0.5", "F1 @0.5"], rows),
+            "\nBy defect type, all test boards, confidence 0.25:\n",
+            table(["Defect type", "Defects", "Precision", "Recall", "F1"], crow)]
+
+
 def external_section(r: Path) -> list[str]:
     ev = load(r / "external_defectdet_heldout.json")
     if not ev:
@@ -276,6 +340,20 @@ def device_section(dev: Path | None) -> list[str]:
                 "severity", "n_tiles"]
         out.append(table(["Design"] + [k.replace("_", " ") for k in keys],
                          [[d] + [v.get(k, "") for k in keys] for d, v in e2e.items()]))
+    sc = {k: v for k, v in (b.get("llm_scores") or {}).items() if isinstance(v, dict) and "advice_ms_median" in v}
+    if sc:
+        out.append("\nWhat the operator waits for from Llama (median seconds):\n")
+        out.append(table(["Model file", "File MB", "Load s", "Memory added MB", "Advice for a two-defect board",
+                          "One customer rule", "Routing one shift question"],
+                         [[k, v["file_mb"], num(v["load_ms"] / 1000), v["rss_added_mb"], num(v["advice_ms_median"] / 1000),
+                           num(v["rule_ms_median"] / 1000), num(v["route_ms_median"] / 1000)] for k, v in sc.items()]))
+    pw = {k: v for k, v in (b.get("power") or {}).items() if isinstance(v, dict)}
+    if pw:
+        names = {"idle": "Idle", "vision": "Vision models", "detector_runtimes": "Detector runtimes",
+                 "end_to_end": "Full inspections", "llm_text": "Llama writing text", "llm_decisions": "Llama decisions"}
+        out.append("\nBoard power while each part runs (" + b["power"].get("method", "") + "):\n")
+        out.append(table(["Running", "Mean W", "Peak W", "Samples"],
+                         [[names.get(k, k), v["mean_w"], v["max_w"], v["samples"]] for k, v in pw.items()]))
     return out
 
 
@@ -391,7 +469,7 @@ def main():
     parts = ["# Measured results\n",
              "Generated by `docs/make_results.py` from the JSON files the experiments write. "
              "Nothing in this file is typed by hand.\n"]
-    for sec in (bare_section(r, gates=Path(a.gates)), detector_compare_section(r), external_section(r), golden_section(r),
+    for sec in (bare_section(r, gates=Path(a.gates)), detector_compare_section(r), prf_section(r), external_section(r), golden_section(r),
                 eyetest_section(r), spec_section(r), anomaly_section(r), anomaly_compare_section(r),
                 realiad_section(r), advice_section(r),
                 learning_section(r),

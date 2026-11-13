@@ -99,6 +99,19 @@ The sources look very different: binarised, green solder mask, bare copper, prod
 
 The deployed numbers hold for what ships: running the same test boards through the exported ExecuTorch `.pte` (FP32, XNNPACK) gives the same mAP to within 0.05 points on every test set (all boards 83.31% against 83.32% in PyTorch). The INT8 export (3.2 MB against 9.8 MB) loses at most 0.4 points on any test set (all boards 83.2%, DefectDet 83.8%), so on the Pi the choice between them is purely a speed question.
 
+**Precision, recall and F1.** For the deployed detector alone, run through ExecuTorch on the same test boards, before the golden comparison and the review gate. A detection is correct when it names the right type and overlaps the labelled defect (IoU 0.5 or more).
+
+| Test boards | Defects | Precision | Recall | F1 |
+|---|---|---|---|---|
+| All test boards | 7,093 | 76.6% | 81.0% | 78.7% |
+| DeepPCB | 1,579 | 83.4% | 97.1% | 89.7% |
+| HRIPCB | 610 | 60.3% | 97.5% | 74.5% |
+| Mendeley | 207 | 62.8% | 90.3% | 74.1% |
+| DsPCBSD+ | 4,092 | 79.3% | 70.9% | 74.9% |
+| DefectDet (unseen boards) | 605 | 73.2% | 86.9% | 79.5% |
+
+These are at a confidence of 0.25, which favours recall: the station would sooner show a doubtful box than hide a defect, and the golden comparison (section 3.3) and the gate (section 5.1) are what deal with the false alarms. At 0.5 the figures for all boards are 85.2% precision and 65.8% recall. `docs/RESULTS.md` has both settings and the breakdown by defect type.
+
 The first version scored 97% on the datasets it was trained on, and 18% on photos of boards from another lab. That gap is the reason the station measures its own limit (section 5.2) instead of quoting a dataset score. The DefectDet test boards are physical boards the model never saw, but they come from the same lab as the training half, so this is not a cross-lab result.
 
 **Synthetic boards did not help.** A fourth version added 1,049 tiles rendered from 61 open-hardware KiCad designs with injected defects (labels checked by eye against each clean render). It was no better on the DefectDet test boards (83.9% against 84.2%) and slightly worse on most other sets, so it is not deployed. The rendering pipeline (`training/kicad/`) stays in the repo.
@@ -167,6 +180,8 @@ The limits in `config/severity.yaml` are the commonly quoted IPC-A-600 width and
 - **Minor:** rejected only at Class 3.
 
 Shorts, opens and missing holes are functional failures, rejected at every class.
+
+**Severity is not confidence.** A named defect's severity comes from its type and its measured size against the limits above: the share of a conductor's width it removes, or the share of a gap it closes. The detector's confidence plays no part in it: confidence only decides whether the station is sure enough to call PASS or FAIL by itself (section 5.1). An unnamed anomaly has no type, so it is graded by the area it covers in mm2, with thresholds that are our own assumption and are marked as such in the file. Only when the station has no millimetre scale for the board does it fall back to grading an anomaly by how far its score is from normal, and it says so in the reason shown to the operator.
 
 ## 5. A station that knows its limits
 
@@ -294,7 +309,7 @@ Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 - anomaly backbone: ExecuTorch `.pte` (FP32 and INT8; INT8 features differ from FP32 by 4.5% on average, so INT8 needs its own memories and is benchmarked for speed only)
 - Llama 1B and 3B: ExecuTorch `.pte`, with KleidiAI micro-kernels inside XNNPACK
 
-**Benchmarks** (`bench/bench_device.py`, run by `deploy/measure_on_pi.sh`) record per-model latency at 1, 2 and 4 threads, ExecuTorch against the Arm runtime for the detector, Llama load time, prefill and decode tokens/s from the runtime's own statistics, resident memory, and a per-stage end-to-end breakdown, each with temperature and throttle flags. A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
+**Benchmarks** (`bench/bench_device.py`, run by `deploy/measure_on_pi.sh`) record per-model latency at 1, 2 and 4 threads, ExecuTorch against the Arm runtime for the detector, Llama load time, prefill and decode tokens/s from the runtime's own statistics, resident memory, and a per-stage end-to-end breakdown, each with temperature and throttle flags. Board power is logged twice a second while each part runs, read from the Pi 5's own power chip (`vcgencmd pmic_read_adc`, voltage times current summed over its rails). That reading leaves out regulator losses and anything fed straight from 5 V, so it is reported as an estimate that reads lower than a wall meter. A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
 
 **Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
 

@@ -5,6 +5,7 @@ Measures, with the conditions recorded alongside every number:
   - vision: detector tile latency and anomaly backbone latency at 1/2/4 threads, FP32 vs INT8
   - Llama: load time, prefill & decode tokens/s from the runtime's own stats, RSS after load
   - end-to-end: per-stage latency of real inspections on the demo boards (capture->verdict, ->advice)
+  - power: the Pi 5 power chip's own rail readings, sampled twice a second while each part runs
 
 Usage:  python -m bench.bench_device --root . --out results/device_bench.json [--quick]
 """
@@ -36,6 +37,52 @@ def temp_c() -> float | None:
         return float(out.split("=")[1].split("'")[0])
     p = Path("/sys/class/thermal/thermal_zone0/temp")
     return int(p.read_text()) / 1000 if p.exists() else None
+
+
+def parse_pmic(text: str) -> float | None:
+    """Watts from `vcgencmd pmic_read_adc` on a Pi 5: the sum over the regulated rails of voltage x current
+    (lines like ' VDD_CORE_A current(7)=0.698A' and ' VDD_CORE_V volt(15)=0.72V'). This is what the board's
+    own power chip reports for the rails it feeds; it leaves out the regulator losses and anything powered
+    straight from 5 V (USB devices, fan), so it is an estimate that reads lower than a wall meter."""
+    import re
+    amps, volts = {}, {}
+    for name, kind, val in re.findall(r"(\w+)_([AV])\s+\w+\(\d+\)=([0-9.]+)", text or ""):
+        (amps if kind == "A" else volts)[name] = float(val)
+    rails = [amps[k] * volts[k] for k in amps if k in volts]
+    return round(sum(rails), 3) if rails else None
+
+
+class PowerLog:
+    """Samples the board power twice a second in the background while a benchmark section runs."""
+
+    def __init__(self, period: float = 0.5):
+        self.period, self.samples, self._stop = period, [], None
+
+    def __enter__(self):
+        import threading
+        self._stop = threading.Event()
+
+        def run():
+            while not self._stop.is_set():
+                w = parse_pmic(sh("vcgencmd pmic_read_adc"))
+                if w is None:
+                    return                      # not a Pi 5: nothing to record
+                self.samples.append(w)
+                self._stop.wait(self.period)
+        self._t = threading.Thread(target=run, daemon=True)
+        self._t.start()
+        return self
+
+    def __exit__(self, *exc):
+        self._stop.set()
+        self._t.join(timeout=5)
+        return False
+
+    def summary(self) -> dict | None:
+        if not self.samples:
+            return None
+        return {"mean_w": round(statistics.mean(self.samples), 2), "max_w": round(max(self.samples), 2),
+                "samples": len(self.samples)}
 
 
 def throttled() -> str:
@@ -280,18 +327,28 @@ def main():
     res = {"system": system_info(), "when": time.strftime("%Y-%m-%d %H:%M:%S")}
     print(res["system"], flush=True)
     skip = set(args.skip.split(","))
+    power = res["power"] = {"method": "sum of rail voltage x current from vcgencmd pmic_read_adc, sampled every "
+                                      "0.5 s; an estimate that reads lower than a wall meter"}
+
+    def measured(name, fn):
+        with PowerLog() as pw:
+            out = fn()
+        power[name] = pw.summary()
+        return out
+    measured("idle", lambda: time.sleep(5))
     if "vision" not in skip:
-        res["vision"] = bench_vision(root, [1, 2, 4], args.quick)
+        res["vision"] = measured("vision", lambda: bench_vision(root, [1, 2, 4], args.quick))
     if "runtimes" not in skip:
         set_threads(4)
-        res["detector_runtimes"] = bench_detector_runtimes(root, cfg, args.quick)
+        res["detector_runtimes"] = measured("detector_runtimes",
+                                            lambda: bench_detector_runtimes(root, cfg, args.quick))
     if "e2e" not in skip:
         set_threads(4)
-        res["end_to_end"] = bench_e2e(root, cfg, 5 if args.quick else 20)
+        res["end_to_end"] = measured("end_to_end", lambda: bench_e2e(root, cfg, 5 if args.quick else 20))
     if "llm" not in skip:
-        res["llm"] = bench_llm(root, cfg, args.quick)
+        res["llm"] = measured("llm_text", lambda: bench_llm(root, cfg, args.quick))
         try:
-            res["llm_scores"] = bench_llm_scores(root, cfg, args.quick)
+            res["llm_scores"] = measured("llm_decisions", lambda: bench_llm_scores(root, cfg, args.quick))
         except Exception as exc:    # noqa: BLE001  (record it: a missing number must be visible, not silent)
             res["llm_scores"] = {"error": repr(exc)}
             print("llm scores FAILED:", repr(exc), flush=True)
