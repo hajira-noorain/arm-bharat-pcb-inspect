@@ -25,6 +25,8 @@ $PY -m pip freeze 2>/dev/null | grep -iE "^(executorch|torch|numpy|opencv)" || t
 
 echo "== 1/3 functional check (Llama on ExecuTorch is mandatory: a failure stops here)"
 $PY deploy/arm_check.py --root .
+echo "== held-out demo boards through the shipped models (verdicts against ground truth)"
+if [ "$MODE" = "quick" ]; then $PY deploy/check_bundle.py --root . --per-design 3; else $PY deploy/check_bundle.py --root . --out results/bundle_check_pi.json; fi
 
 if [ "$MODE" = "quick" ]; then
   echo "== 2/3 benchmarks (quick)"
