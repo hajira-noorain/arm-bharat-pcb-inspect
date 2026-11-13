@@ -130,7 +130,7 @@ def _iou(a, b) -> float:
     return ix * iy / u if u > 0 else 0.0
 
 
-def _prf(boards: list[dict], conf: float) -> dict:
+def _prf(boards: list[dict], conf: float, min_iou: float = 0.5) -> dict:
     """Detections at or above `conf` against the labelled defects: a detection is correct when it has the
     same class as an unclaimed labelled defect and overlaps it with IoU >= 0.5 (most confident first)."""
     per: dict[str, list[int]] = {}                      # class -> [tp, fp, fn]
@@ -145,7 +145,7 @@ def _prf(boards: list[dict], conf: float) -> dict:
                 if o > best:
                     best, bj = o, j
             c = per.setdefault(d["cls"], [0, 0, 0])
-            if bj is not None and best >= 0.5:
+            if bj is not None and best >= min_iou:
                 used.add(bj)
                 c[0] += 1
             else:
@@ -159,6 +159,16 @@ def _prf(boards: list[dict], conf: float) -> dict:
         return {"precision": pr, "recall": rc, "f1": 2 * pr * rc / max(pr + rc, 1e-9), "n": tp + fn}
     tot = [sum(v[i] for v in per.values()) for i in range(3)]
     return {"all": f(*tot), "per_class": {k: f(*v) for k, v in sorted(per.items())}}
+
+
+def _type_thresholds(cal: list[dict]) -> dict[str, float]:
+    """One confidence threshold per defect type: the one with the best F1 on the CALIBRATION boards."""
+    thr = {}
+    for c in sorted({d["cls"] for b in cal for d in b["dets"]}):
+        sub = [{"dets": [d for d in b["dets"] if d["cls"] == c], "boxes": [g for g in b["boxes"] if g["cls"] == c]}
+               for b in cal]
+        thr[c] = max((t / 100 for t in range(10, 90, 5)), key=lambda t: _prf(sub, t)["all"]["f1"])
+    return thr
 
 
 def prf_section(r: Path) -> list[str]:
@@ -177,6 +187,30 @@ def prf_section(r: Path) -> list[str]:
     pc = _prf(boards, 0.25)["per_class"]
     crow = [[k.replace("_", " "), v["n"], pct(v["precision"]), pct(v["recall"]), pct(v["f1"])] for k, v in pc.items()]
     runtime = "ExecuTorch (the on-device runtime)" if tag.endswith("_et") else "PyTorch"
+    extra = []
+    cal = load(r / f"bare_dets_cal_{tag}.json")
+    if cal:
+        thr = _type_thresholds(cal)
+        cut = [{**b, "dets": [d for d in b["dets"] if d["conf"] >= thr.get(d["cls"], 0.25)]} for b in boards]
+        trow, lrow = [], []
+        for src in ("all",) + SOURCES:
+            bs = [b for b in cut if src == "all" or b["source"] == src]
+            if bs:
+                a = _prf(bs, 0.0)["all"]
+                trow.append([SOURCE_NAMES.get(src, "All test boards"), pct(a["precision"]), pct(a["recall"]), pct(a["f1"])])
+        extra += ["\nOne confidence threshold per defect type, each chosen for best F1 on the calibration boards and "
+                  "then applied unchanged to the test boards (" +
+                  ", ".join(f"{k.replace('_', ' ')} {v:.2f}" for k, v in thr.items()) + "):\n",
+                  table(["Test boards", "Precision", "Recall", "F1"], trow)]
+    lrow = []
+    for src in ("all",) + SOURCES:
+        bs = [b for b in boards if src == "all" or b["source"] == src]
+        if bs:
+            a = _prf(bs, 0.25, min_iou=0.3)["all"]
+            lrow.append([SOURCE_NAMES.get(src, "All test boards"), pct(a["precision"]), pct(a["recall"]), pct(a["f1"])])
+    extra += ["\nThe same detections at confidence 0.25, counted the way the station counts a defect as found "
+              "(right type, IoU of 0.3 or more: the box is on the defect but drawn loosely):\n",
+              table(["Test boards", "Precision", "Recall", "F1"], lrow)]
     return ["### Detector precision, recall and F1 on the held-out test boards\n",
             f"The detector alone, run through {runtime}, before the golden comparison and before the review gate. "
             "A detection counts as correct when it names the right defect type and overlaps the labelled defect "
@@ -184,7 +218,7 @@ def prf_section(r: Path) -> list[str]:
             table(["Test boards", "Boards", "Defects", "Precision @0.25", "Recall @0.25", "F1 @0.25",
                    "Precision @0.5", "Recall @0.5", "F1 @0.5"], rows),
             "\nBy defect type, all test boards, confidence 0.25:\n",
-            table(["Defect type", "Defects", "Precision", "Recall", "F1"], crow)]
+            table(["Defect type", "Defects", "Precision", "Recall", "F1"], crow)] + extra
 
 
 def external_section(r: Path) -> list[str]:
