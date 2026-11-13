@@ -129,14 +129,20 @@ def consistent_masks(test: np.ndarray, golden: np.ndarray):
     return mt, mg, seg
 
 
+RESID_PAD = 24
+
+
+def _window(box, w, h, pad=RESID_PAD):
+    x0, y0, x1, y1 = box
+    return max(0, x0 - pad), max(0, y0 - pad), min(w, x1 + pad), min(h, y1 + pad)
+
+
 def _local_residual(comp, kind, t, seg: Seg, box, ker, min_area):
     """Re-register a window around one difference (phase correlation of the golden onto the test)
     and recompute it. Differences caused by local misregistration (warp, lens distortion) vanish;
     real defects stay. Returns the residual area (0 = it was registration)."""
     h, w = t.shape
-    x0, y0, x1, y1 = box
-    pad = 24
-    X0, Y0, X1, Y1 = max(0, x0 - pad), max(0, y0 - pad), min(w, x1 + pad), min(h, y1 + pad)
+    X0, Y0, X1, Y1 = _window(box, w, h)      # `comp` is the component mask cropped to this same window
     a, b = seg.ct[Y0:Y1, X0:X1], seg.cg[Y0:Y1, X0:X1]
     if min(a.shape) < 16:
         return int(comp.sum())
@@ -150,7 +156,19 @@ def _local_residual(comp, kind, t, seg: Seg, box, ker, min_area):
     t_frac = seg.ft[Y0:Y1, X0:X1]
     r = ((t_frac - g_frac) > T_FRAC) if kind == "extra" else ((g_frac - t_frac) > T_FRAC)
     r = cv2.morphologyEx(r.astype(np.uint8), cv2.MORPH_OPEN, ker) > 0
-    return int((r & comp[Y0:Y1, X0:X1]).sum()) if (r & comp[Y0:Y1, X0:X1]).sum() >= min_area else 0
+    left = int((r & comp).sum())
+    return left if left >= min_area else 0
+
+
+class _Shifted:
+    """A window crop of a full-frame mask that is indexed with full-frame slices."""
+
+    def __init__(self, win, x0, y0):
+        self.win, self.x0, self.y0 = win, x0, y0
+
+    def __getitem__(self, key):
+        ys, xs = key
+        return self.win[ys.start - self.y0:ys.stop - self.y0, xs.start - self.x0:xs.stop - self.x0]
 
 
 def _min_side(mask_u8):
@@ -194,10 +212,13 @@ def _connectivity(t, g, glab, n_g, existing, A0) -> list[DiffCandidate]:
     out: list[DiffCandidate] = []
     n_t, tlab = cv2.connectedComponents(t.astype(np.uint8), connectivity=8)
     both = t & g
-    pairs = np.bincount(tlab[both].astype(np.int64) * n_g + glab[both], minlength=n_t * n_g).reshape(n_t, n_g)
-    pairs[0, :] = 0
-    pairs[:, 0] = 0
-    sig = pairs >= MIN_PIECE_PX
+    # sparse (test piece, golden conductor) overlap table: a dense n_t x n_g matrix does not fit in memory
+    # on a noisy real photo with thousands of copper fragments
+    keys, cnt = np.unique(tlab[both].astype(np.int64) * n_g + glab[both], return_counts=True)
+    keys = keys[cnt >= MIN_PIECE_PX]
+    pt, pg = keys // n_g, keys % n_g
+    ok = (pt > 0) & (pg > 0)
+    pt, pg = pt[ok], pg[ok]
     h, w = t.shape
 
     def locate(raw, labels_img, a_id, b_id, kind, cls):
@@ -223,14 +244,16 @@ def _connectivity(t, g, glab, n_g, existing, A0) -> list[DiffCandidate]:
                 return
 
     # shorts: one test piece overlapping >= 2 golden conductors
-    for tid in np.nonzero(sig.sum(1) >= 2)[0]:
-        gids = np.nonzero(sig[tid])[0]
+    tu, tc = np.unique(pt, return_counts=True)
+    for tid in tu[tc >= 2]:
+        gids = np.sort(pg[pt == tid])
         raw = (tlab == tid) & ~g
         for j in range(len(gids) - 1):
             locate(raw, glab, int(gids[j]), int(gids[j + 1]), "extra", "short")
     # opens: one golden conductor overlapping >= 2 test pieces
-    for gid in np.nonzero(sig.sum(0) >= 2)[0]:
-        tids = np.nonzero(sig[:, gid])[0]
+    gu, gc = np.unique(pg, return_counts=True)
+    for gid in gu[gc >= 2]:
+        tids = np.sort(pt[pg == gid])
         raw = (glab == gid) & ~t
         for j in range(len(tids) - 1):
             locate(raw, tlab, int(tids[j]), int(tids[j + 1]), "missing", "open")
@@ -273,11 +296,15 @@ def diff_candidates(test_bgr: np.ndarray, golden_bgr: np.ndarray, tol_px: int = 
             x, y, bw, bh, area = st[i]
             if area < min_area:
                 continue
-            comp = lab == i
-            area = _local_residual(comp, kind, t, seg, (x, y, x + bw, y + bh), ker, min_area)
+            # work in a window around the component: a full-frame mask per component made the cost grow
+            # with (number of differences x megapixels), 33 ms each on a 12 MP frame
+            WX0, WY0, WX1, WY1 = _window((x, y, x + bw, y + bh), w, h)
+            comp_w = lab[WY0:WY1, WX0:WX1] == i
+            area = _local_residual(comp_w, kind, t, seg, (x, y, x + bw, y + bh), ker, min_area)
             if area < min_area:
                 continue
             x0, y0, x1, y1 = max(0, x - 3), max(0, y - 3), min(w, x + bw + 3), min(h, y + bh + 3)
+            comp = _Shifted(comp_w, WX0, WY0)
             if _is_sliver(comp[y0:y1, x0:x1], d_edge[y0:y1, x0:x1], tol_px):
                 continue
             ring = cv2.dilate(comp[y0:y1, x0:x1].astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
