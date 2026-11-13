@@ -43,12 +43,12 @@ Everything in this segment is the station as built: the Teach a board screen (Se
 | 1:27 | Hands: a knife cut across one trace. Board back under the camera; pedal. Red FAIL band, the cut boxed; picture-in-picture of the red light | "I cut one trace. It fails in [verdict time] seconds: an open circuit, at the cut." |
 | 1:35 | Screen: defect list zoomed: "Open circuit", size in mm, Class 1/2/3 chips; then the "What to do" panel with a knowledge-base ID and the footer naming the Llama model | "It measures the cut in millimetres against the reference picture and grades it. Llama 3.2, on the Arm CPU through ExecuTorch, reads the findings, never the pixels, and writes the summary; every cause and action shown is knowledge-base text, and an answer that states anything else is rejected." |
 
-## 1:40 to 2:00: It says when it is unsure
+## 1:45 to 2:00: It says when it is unsure
 
 | Time | Shot | Narration |
 |---|---|---|
-| 1:40 | Screen: an amber CHECK band on a borderline board, with Pass/Fail buttons | "When the evidence is borderline, the board goes to a person: amber light." |
-| 1:47 | Screen: switch the allowed miss rate from 5% to 1%; cut to the gate table in RESULTS.md with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.0 percent." |
+| 1:45 | Screen: an amber CHECK band on a borderline board, with Pass/Fail buttons | "When the evidence is borderline, the board goes to a person: amber light." |
+| 1:52 | Screen: switch the allowed miss rate from 5% to 1%; cut to the gate table in RESULTS.md with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.0 percent." |
 
 ## 2:00 to 2:30: It refuses rules it cannot keep
 
