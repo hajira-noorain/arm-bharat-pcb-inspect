@@ -17,6 +17,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 import cv2
+import numpy as np
 import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, Response
@@ -61,6 +62,8 @@ class Station:
         self.camera = self._open_camera()
         self.cache: OrderedDict[int, tuple] = OrderedDict()   # iid -> (insp, analysis, bgr)
         self.buffers: dict[str, FeedbackBuffer] = {}
+        self.teach_sessions: dict[str, list] = {}     # design name -> good captures (first = golden)
+        self.teach_status: dict[str, dict] = {}
         self.jobs: queue.Queue = queue.Queue()
         self.lock = threading.Lock()                           # one inspection at a time
         self.llm_lock = threading.Lock()                       # one Llama generation at a time
@@ -514,6 +517,114 @@ class Station:
                 "note": "No calibrated gate yet: boards with evidence go to REVIEW until it is calibrated."}
 
 
+    # ---------------- teach a bare board: golden image + gate calibrated on planted defects ----------------
+    def teach_capture(self, name: str) -> dict:
+        """One good board per call (lift it and put it down again, or use another good board). The first
+        capture becomes the golden image; later ones must show the same board in the same place."""
+        from .golden import MIN_ALIGN_CC, align, copper_mask
+        from .imaging import capture_quality
+        if not re.fullmatch(r"[A-Za-z0-9_-]{2,40}", name):
+            raise HTTPException(400, "design name: 2-40 letters, digits, - and _")
+        if name in self.designs:
+            raise HTTPException(409, f"a design named {name} already exists; pick another name")
+        if self.camera is None:
+            raise HTTPException(503, "no camera")
+        with self.lock:
+            live = not isinstance(self.camera, ReplayCamera)
+            bgr = self.camera.capture(n_average=self.cfg.get("average_frames", 1)) if live else self.camera.capture()
+            if not live:
+                self.camera.next()
+        caps = self.teach_sessions.setdefault(name, [])
+        if live:
+            q = capture_quality(bgr)
+            if q["reasons"]:
+                return {"ok": False, "captures": len(caps), "reason": "retake: " + "; ".join(q["reasons"])}
+        frac = float((copper_mask(bgr) > 0).mean())
+        if not 0.03 <= frac <= 0.85:
+            return {"ok": False, "captures": len(caps),
+                    "reason": "no copper pattern visible: is a bare board under the camera, in focus?"}
+        if caps:
+            _, cc = align(bgr, caps[0])
+            if cc < MIN_ALIGN_CC:
+                return {"ok": False, "captures": len(caps),
+                        "reason": "this does not match the first board: same design, against the corner stops?"}
+        if len(caps) >= 8:
+            return {"ok": False, "captures": len(caps), "reason": "8 good boards are enough: finish teaching"}
+        caps.append(bgr)
+        return {"ok": True, "captures": len(caps), "golden": len(caps) == 1, "ready": len(caps) >= 2}
+
+    def teach_cancel(self, name: str) -> dict:
+        self.teach_sessions.pop(name, None)
+        self.teach_status.pop(name, None)
+        return {"cancelled": name}
+
+    def teach_finish(self, name: str, mm_per_px: float | None = None) -> dict:
+        caps = self.teach_sessions.get(name) or []
+        if len(caps) < 2:
+            raise HTTPException(409, "capture the good board at least twice (3 or more is better)")
+        if self.teach_status.get(name, {}).get("running"):
+            return self.teach_status[name]
+        from .calib import detect_scale
+        sc = detect_scale(caps[0], 20.0)
+        if sc is not None and sc.source == "aruco":
+            mmpp, scale_src = float(sc.mm_per_px), "printed marker"
+        elif mm_per_px:
+            mmpp, scale_src = float(mm_per_px), "entered by hand"
+        else:
+            raise HTTPException(409, "no scale: put the printed 20 mm marker beside the board for the first "
+                                     "capture, or enter millimetres per pixel")
+        self.teach_status[name] = {"running": True, "progress": 0.0, "started": time.time()}
+
+        def job():
+            from .teach import calibrate_bare
+            try:
+                def score(t, g, aligned):
+                    with self.lock:     # inspections of other designs can interleave between trials
+                        return self.inspector.golden_evidence(t, g, aligned=aligned, guided=True)
+
+                def progress(f):
+                    self.teach_status[name]["progress"] = round(float(f), 3)
+                t0 = time.perf_counter()
+                res = calibrate_bare(score, caps[0], caps[1:], 1.0 / mmpp, np.random.default_rng(), progress=progress,
+                                     n_windows=int(self.cfg.get("teach_windows", 80)),
+                                     n_good=int(self.cfg.get("teach_good", 24)))
+                gdir, gate_dir = self.root / "models" / "golden", self.root / "models" / "gate"
+                gdir.mkdir(parents=True, exist_ok=True)
+                gate_dir.mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(gdir / f"{name}.png"), caps[0])
+                res.gate.design = f"{name}_golden"
+                res.gate.save(gate_dir / f"{name}_golden.json")
+                d = Design(name, "bare", True, None, mmpp, 20.0,
+                           self.inspector.severity.default_rules, None, 0.05, 0.05,
+                           f"taught on the station from {len(caps)} good captures; gate calibrated on planted defects",
+                           f"models/golden/{name}.png", f"models/gate/{name}_golden.json", "guided")
+                with self.lock:
+                    save_design(self.root / self.cfg["designs_dir"], d)
+                    self.designs[name] = d
+                    self.inspector.designs[name] = d
+                    self.inspector.reload_design(name)
+                    self.store.upsert_design(name, "bare")
+                summary = res.summary()
+                summary.update({"design": name, "sheets_read": [], "sheets_total": 0, "scale_from": scale_src,
+                                "seconds": round(time.perf_counter() - t0, 1)})
+                summary["id"] = self.store.log_eyetest(name, summary, rig="planted on the taught board")
+                self.store.record_model_version(f"golden_gate:{name}", "1", {
+                    "captures": len(caps), "planted_windows": res.n_windows, "good_scores": len(res.good_scores),
+                    "lambda_5pct": res.lam05}, True, "taught")
+                th = res.gate.thresholds(0.05, 0.05)
+                self.teach_status[name] = {
+                    "running": False, "done": True, "design": name, "captures": len(caps),
+                    "seconds": summary["seconds"], "scale_from": scale_src, "mm_per_px": round(mmpp, 5),
+                    "can_fail": bool(np.isfinite(th.tau)), "can_pass": bool(th.lam > 0),
+                    "limits": {k: v["sentence"] for k, v in res.limits.items()}, "notes": res.notes}
+                self.teach_sessions.pop(name, None)
+            except Exception as exc:    # noqa: BLE001
+                log.exception("teaching %s failed", name)
+                self.teach_status[name] = {"running": False, "done": False, "reason": str(exc)}
+        threading.Thread(target=job, daemon=True).start()
+        return self.teach_status[name]
+
+
 def _match_region(analysis, bbox):
     if analysis is None or analysis.anomaly is None:
         return None
@@ -553,6 +664,11 @@ class EnrolReq(BaseModel):
     name: str
     kind: str = "assembled"
     images: int = 8
+
+
+class TeachReq(BaseModel):
+    name: str
+    mm_per_px: float | None = None
 
 
 class EyeCaptureReq(BaseModel):
@@ -670,6 +786,22 @@ def create_app(cfg: dict) -> FastAPI:
     def enrol_design(req: EnrolReq):
         with st.lock:
             return st.enrol(req.name, req.kind, req.images)
+
+    @app.post("/api/teach/capture")
+    def teach_capture(req: TeachReq):
+        return st.teach_capture(req.name)
+
+    @app.post("/api/teach/finish")
+    def teach_finish(req: TeachReq):
+        return st.teach_finish(req.name, req.mm_per_px)
+
+    @app.post("/api/teach/cancel")
+    def teach_cancel(req: TeachReq):
+        return st.teach_cancel(req.name)
+
+    @app.get("/api/teach/{name}")
+    def teach_state(name: str):
+        return {"captures": len(st.teach_sessions.get(name, [])), **st.teach_status.get(name, {})}
 
     learn_status: dict[str, dict] = {}
 

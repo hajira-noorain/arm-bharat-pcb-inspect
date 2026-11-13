@@ -227,7 +227,7 @@ class ReplayCamera(Camera):
             raise ValueError("replay camera needs at least one image")
         self.paths = [Path(p) for p in paths]
         self._it = itertools.cycle(self.paths)
-        self.current = self.paths[0]
+        self.current = next(self._it)       # (not paths[0] without advancing: the first image came twice)
 
     def next(self) -> Path:
         self.current = next(self._it)
