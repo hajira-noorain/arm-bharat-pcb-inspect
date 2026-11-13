@@ -98,3 +98,23 @@ def test_untrusted_capture_never_auto_passes(tmp_path):
                              capture_info={"sharpness": 12.0})
     assert insp.verdict == "REVIEW" and "blurred" in insp.model_versions["capture_check"]
     assert "sharpness" in insp.model_versions["capture"]
+
+
+def test_arm_runtime_paths_are_found_by_name(tmp_path):
+    """The Arm runtime's README fixes the file names but not dist/'s sub-folders: find them by name,
+    prefer our converted model over any other, and honour configured paths that exist."""
+    from pcbinspect.detect_bare import ARM_RUNTIME_DIST, resolve_arm_runtime
+    assert resolve_arm_runtime(tmp_path) is None
+    d = tmp_path / ARM_RUNTIME_DIST
+    (d / "runtime" / "aarch64" / "lib").mkdir(parents=True)
+    lib = d / "runtime" / "aarch64" / "lib" / "libarm-yolo26n.so.0"
+    lib.write_bytes(b"")
+    assert resolve_arm_runtime(tmp_path) is None                       # no converted model yet
+    for name in ("yolo26n", "pcb_y26n_640"):
+        (d / "models" / name).mkdir(parents=True)
+        (d / "models" / name / "model.bin").write_bytes(b"")
+    assert resolve_arm_runtime(tmp_path) == (lib, d / "models" / "pcb_y26n_640")
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    (other / "model.bin").write_bytes(b"")
+    assert resolve_arm_runtime(tmp_path, model_cfg="elsewhere") == (lib, other)

@@ -87,6 +87,30 @@ class ExecuTorchTiles:
         return decode(out.numpy(), self.conf_thr)
 
 
+ARM_RUNTIME_DIST = "third_party/Optimized-Runtimes/yolo26-raspberry-pi-5/dist"
+
+
+def resolve_arm_runtime(root: Path, lib_cfg: str = "", model_cfg: str = "",
+                        dist: str = ARM_RUNTIME_DIST) -> tuple[Path, Path] | None:
+    """Find the Arm runtime library and our converted model. The configured paths win when they exist;
+    otherwise search the runtime's dist/ folder, because its README fixes the names (libarm-yolo26n.so.0, a
+    model directory holding model.bin) but not the sub-folders. Prefers a model directory named after our
+    checkpoint (pcb_y26n), else the most recently converted one. None if either is missing."""
+    root = Path(root)
+    lib = root / lib_cfg if lib_cfg else None
+    mdl = root / model_cfg if model_cfg else None
+    d = root / dist
+    if not (lib and lib.is_file()):
+        libs = sorted(d.rglob("libarm-yolo26n.so*")) if d.is_dir() else []
+        lib = next((q for q in libs if q.name == "libarm-yolo26n.so.0"), libs[0] if libs else None)
+    if not (mdl and mdl.is_dir() and (mdl / "model.bin").is_file()):
+        cands = [q.parent for q in d.rglob("model.bin")] if d.is_dir() else []
+        ours = [q for q in cands if "pcb" in str(q.relative_to(d)).lower()]
+        pool = ours or cands
+        mdl = max(pool, key=lambda q: (q / "model.bin").stat().st_mtime) if pool else None
+    return (lib, mdl) if lib is not None and mdl is not None else None
+
+
 class ArmRuntimeTiles:
     """Arm Runtime for YOLO26 on Raspberry Pi 5 (github.com/arm/Optimized-Runtimes, Apache-2.0): a
     fixed-graph YOLO26n implementation with model-specific memory planning, custom operators and fused,

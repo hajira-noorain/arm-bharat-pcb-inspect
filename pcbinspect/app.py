@@ -91,11 +91,14 @@ class Station:
                 det = BareDetector(ExecuTorchTiles(root / cfg["detector_pte"]))
             if cfg.get("vision_backend") == "arm-runtime":
                 # Arm's optimised YOLO26n runtime for the Pi 5 (falls back to ExecuTorch if absent)
-                from .detect_bare import ArmRuntimeTiles
-                lib, mdl = root / cfg.get("arm_runtime_lib", ""), root / cfg.get("arm_runtime_model", "")
-                if lib.is_file() and mdl.is_dir():
+                from .detect_bare import ArmRuntimeTiles, resolve_arm_runtime
+                found = resolve_arm_runtime(root, cfg.get("arm_runtime_lib", ""), cfg.get("arm_runtime_model", ""))
+                if found is None:
+                    log.warning("Arm runtime not found under %s; using ExecuTorch for vision", root)
+                else:
                     try:
-                        det = BareDetector(ArmRuntimeTiles(lib, mdl))
+                        det = BareDetector(ArmRuntimeTiles(*found))
+                        log.info("vision on the Arm runtime: %s, %s", *found)
                     except Exception as exc:
                         log.warning("Arm runtime unavailable (%s); using ExecuTorch for vision", exc)
         log.info("vision: detector=%s backbone=%s", det is not None, feature_fn is not None)

@@ -115,7 +115,7 @@ def bench_detector_runtimes(root: Path, cfg: dict, quick: bool) -> dict:
     YOLO26 (Arm Optimized-Runtimes). Reports per-tile latency and whether both give the same detections."""
     import glob
     import cv2
-    from pcbinspect.detect_bare import ArmRuntimeTiles, ExecuTorchTiles
+    from pcbinspect.detect_bare import ArmRuntimeTiles, ExecuTorchTiles, resolve_arm_runtime
     tiles = []
     for p in sorted(glob.glob(str(root / "demo" / "boards" / "deeppcb_*.jpg")))[:8]:
         im = cv2.imread(p)
@@ -125,9 +125,12 @@ def bench_detector_runtimes(root: Path, cfg: dict, quick: bool) -> dict:
     backends = {}
     if (root / cfg.get("detector_pte", "")).is_file():
         backends["executorch"] = lambda: ExecuTorchTiles(root / cfg["detector_pte"])
-    lib, mdl = root / cfg.get("arm_runtime_lib", "missing"), root / cfg.get("arm_runtime_model", "missing")
-    if lib.is_file() and mdl.is_dir():
-        backends["arm_runtime"] = lambda: ArmRuntimeTiles(lib, mdl)
+    found = resolve_arm_runtime(root, cfg.get("arm_runtime_lib", ""), cfg.get("arm_runtime_model", ""))
+    if found is not None:
+        print("Arm runtime:", *found, flush=True)
+        backends["arm_runtime"] = lambda: ArmRuntimeTiles(*found)
+    else:
+        out["arm_runtime_missing"] = "libarm-yolo26n.so or a converted model (model.bin) not found"
     dets = {}
     for name, make in backends.items():
         try:

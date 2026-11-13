@@ -28,7 +28,13 @@ if [ -f models/vision/pcb_y26n.pt ]; then
   ( set +e
     [ -d third_party/Optimized-Runtimes ] || git clone --depth 1 https://github.com/arm/Optimized-Runtimes.git third_party/Optimized-Runtimes
     cd third_party/Optimized-Runtimes/yolo26-raspberry-pi-5
-    make model CHECKPOINT="$(cd ../../.. && pwd)/models/vision/pcb_y26n.pt" RESOLUTION=640       && pip install -e src/runtime/api/python       && echo "Arm runtime ready: $(ls dist/runtime/*/libarm-yolo26n.so* 2>/dev/null | head -1)"       || echo "Arm runtime not set up (station will use ExecuTorch for vision)" )
+    make model CHECKPOINT="$(cd ../../.. && pwd)/models/vision/pcb_y26n.pt" RESOLUTION=640
+    # the runtime library: the example targets fetch a release; build from source if none is there yet
+    find dist -name 'libarm-yolo26n.so*' | grep -q . || make runtime
+    pip install -e src/runtime/api/python
+    LIB=$(find dist -name 'libarm-yolo26n.so*' | head -1); MDL=$(find dist -name model.bin | head -1)
+    if [ -n "$LIB" ] && [ -n "$MDL" ]; then echo "Arm runtime ready: $LIB, model $(dirname "$MDL")"
+    else echo "Arm runtime not set up (the station will use ExecuTorch for vision)"; fi )
 fi
 vcgencmd measure_temp || true
 vcgencmd get_throttled || true
