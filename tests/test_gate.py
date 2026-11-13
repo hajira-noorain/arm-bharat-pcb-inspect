@@ -82,3 +82,11 @@ def test_clopper_pearson_known_values():
     assert lo == 0.0 and hi == pytest.approx(0.0362, abs=1e-3)
     lo, hi = clopper_pearson(5, 100)
     assert lo == pytest.approx(0.0164, abs=1e-3) and hi == pytest.approx(0.1128, abs=1e-3)
+
+
+def test_random_defect_miss_weights_boards_not_defects():
+    """Board A: 1 of 1 found; board B: 1 of 4 found. Pooled miss = 3/5; the guaranteed quantity
+    (one random defect per board) = (0 + 3/4) / 2. Boards with no defects are ignored."""
+    from pcbinspect.gate import random_defect_miss
+    assert random_defect_miss([[True], [True, False, False, False], []]) == pytest.approx(0.375)
+    assert random_defect_miss([]) is None

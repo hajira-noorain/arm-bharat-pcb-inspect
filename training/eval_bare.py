@@ -23,7 +23,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.detect_bare import BareDetector  # noqa: E402
-from pcbinspect.gate import ConformalGate, clopper_pearson, defect_level_scores, evaluate  # noqa: E402
+from pcbinspect.gate import (ConformalGate, clopper_pearson, defect_level_scores, evaluate,  # noqa: E402
+                             random_defect_miss)
 from pcbinspect.record import BARE_CLASSES  # noqa: E402
 
 
@@ -169,13 +170,18 @@ def main():
             # PER-DEFECT recall at the operating threshold: a defect counts as found only if a
             # shown detection (conf >= lam) overlaps it (IoU >= 0.3); 'typed' also needs the class
             found = typed = total = 0
+            per_board = []
             for b in test_boards:
                 shown = [dd for dd in b["dets"] if dd["conf"] >= th.lam]
+                flags = []
                 for gt in b["boxes"]:
                     total += 1
                     hits = [dd for dd in shown if iou(dd["bbox"], gt["bbox"]) >= 0.3]
                     found += bool(hits)
+                    flags.append(bool(hits))
                     typed += any(dd["cls"] == gt["cls"] for dd in hits)
+                per_board.append(flags)
+            r["random_defect_miss"] = random_defect_miss(per_board)
             r["defect_recall"] = found / max(total, 1)
             r["defect_recall_ci95"] = clopper_pearson(found, total)
             r["defect_recall_typed"] = typed / max(total, 1)

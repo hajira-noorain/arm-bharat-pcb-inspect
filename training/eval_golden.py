@@ -22,7 +22,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pcbinspect.fusion import fuse  # noqa: E402
-from pcbinspect.gate import ConformalGate, clopper_pearson, defect_level_scores  # noqa: E402
+from pcbinspect.gate import ConformalGate, clopper_pearson, defect_level_scores, random_defect_miss  # noqa: E402
 from pcbinspect.golden_diff import diff_candidates  # noqa: E402
 from training.eval_bare import iou  # noqa: E402
 
@@ -93,17 +93,22 @@ def main():
             test = splits["test"]
             found = total = typed = 0
             fa = 0
+            per_board = []
             for b in test:
+                flags = []
                 for g in b["boxes"]:
                     total += 1
                     hit = [(s, c) for bb, s, c in b["ch"][name] if s >= th.lam and covers(bb, g["bbox"])]
                     found += bool(hit)
+                    flags.append(bool(hit))
                     typed += any(c == g["cls"] for _, c in hit)
+                per_board.append(flags)
                 fa += sum(1 for bb, s, _ in b["ch"][name]
                           if s >= th.lam and not any(covers(bb, g["bbox"]) for g in b["boxes"]))
             goods = [b for b in test if b["good"]]
             rows[f"alpha_{alpha}"] = {
                 "lam": th.lam, "defect_miss": 1 - found / max(total, 1),
+                "random_defect_miss": random_defect_miss(per_board),
                 "defect_miss_ci95": [1 - x for x in clopper_pearson(found, total)[::-1]],
                 "typed_correct_share_of_found": typed / max(found, 1),
                 "false_calls_per_board": fa / max(len(test), 1),
@@ -113,7 +118,7 @@ def main():
         r = rows["alpha_0.05"]
         print(f"{name:12s} @5%: lam={r['lam']:.3f} defect miss={r['defect_miss']:.3f} "
               f"CI({r['defect_miss_ci95'][0]:.3f},{r['defect_miss_ci95'][1]:.3f}) false/board={r['false_calls_per_board']:.2f} "
-              f"typed={r['typed_correct_share_of_found']:.2f}", flush=True)
+              f"typed={r['typed_correct_share_of_found']:.2f} random-defect miss={r['random_defect_miss']:.3f}", flush=True)
     report["align_cc_min"] = float(min(b["align_cc"] for s in splits.values() for b in s))
     (res / f"golden_eval_{a.design}_{a.tag}.json").write_text(json.dumps(report, indent=1))
 

@@ -124,6 +124,14 @@ def clopper_pearson(k: int, n: int, conf: float = 0.95) -> tuple[float, float]:
     return lo, hi
 
 
+def random_defect_miss(found_per_board: list[list[bool]]) -> float | None:
+    """The quantity the per-defect gate guarantees: the chance that ONE randomly chosen defect on a new
+    defective board is missed, i.e. the mean over boards of the share of that board's defects missed.
+    (Pooling all defects instead weights boards by how many defects they carry.)"""
+    rows = [f for f in found_per_board if f]
+    return float(np.mean([1 - sum(f) / len(f) for f in rows])) if rows else None
+
+
 def evaluate(th: GateThresholds, defective_scores, good_scores) -> dict:
     """Empirical behaviour of a gate on a TEST set (never the calibration set)."""
     d = np.asarray(defective_scores, dtype=float)
