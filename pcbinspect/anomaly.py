@@ -20,7 +20,11 @@ from typing import Callable
 import cv2
 import numpy as np
 
-INPUT = 256
+# Chosen by the VisA sweep (training/build_visa_banks.py, Colab 2026-11-13): ResNet-18 at 320 px with the
+# image score = mean of the top 1% patch scores beat 256 px / max-score on full and 10-shot image AUROC
+# (0.956 vs 0.905, 0.908 vs 0.845, mean pcb1-4) at the same pixel AUROC; 384 px and WRN-50 were no better.
+INPUT = 320
+TOPK_FRAC = 0.01
 MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
@@ -382,12 +386,12 @@ class AnomalyModel:
 def enrol(feature_fn: FeatureFn, good_images: list[np.ndarray], design: str,
           coreset_ratio: float = 0.1, max_bank: int = 16384, pixel_q: float = 99.9,
           seed: int = 0, input_size: int = INPUT, arch: str = "resnet18", *,
-          fg_mask: bool = False, posnorm: bool = False, topk_frac: float = 0.0) -> AnomalyModel:
+          fg_mask: bool = False, posnorm: bool = False, topk_frac: float = TOPK_FRAC) -> AnomalyModel:
     """Build a model for a new design from good boards only (works with 5-10 images).
 
     Calibration uses leave-one-out: each good image is scored against a bank built WITHOUT it, so
     the normal-score statistics are honest even with very few images.
-    Optional (keyword-only, default off): fg_mask, posnorm, topk_frac - see enrol_from_desc.
+    Optional (keyword-only): fg_mask, posnorm (default off), topk_frac (default TOPK_FRAC) - see enrol_from_desc.
     """
     maps = [feature_fn(preprocess(im, input_size)) for im in good_images]
     feats = [descriptors(f) for f in maps]
@@ -401,7 +405,7 @@ def enrol(feature_fn: FeatureFn, good_images: list[np.ndarray], design: str,
 def enrol_from_desc(feature_fn: FeatureFn, feats: list[np.ndarray], design: str,
                     coreset_ratio: float = 0.1, max_bank: int = 16384, pixel_q: float = 99.9,
                     seed: int = 0, input_size: int = INPUT, arch: str = "resnet18", *,
-                    fg_mask: bool = False, posnorm: bool = False, topk_frac: float = 0.0,
+                    fg_mask: bool = False, posnorm: bool = False, topk_frac: float = TOPK_FRAC,
                     grid: tuple[int, int] | None = None, thumbs: list[np.ndarray] | None = None,
                     pos_folds: int = 5, sd_floor_q: float = 0.1) -> AnomalyModel:
     """enrol() on pre-computed per-image descriptors.

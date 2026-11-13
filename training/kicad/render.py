@@ -287,6 +287,23 @@ def have_cli() -> bool:
     return shutil.which("kicad-cli") is not None
 
 
+LAYER_RE = re.compile(r'\(\s*\d+\s+"?([A-Za-z0-9_.]+)"?\s+[a-z]+(?:\s+"([^"]+)")?\s*\)')
+OPTIONAL_LAYERS = {"F.SilkS"}       # a board without front silkscreen still renders
+
+
+def layer_file_stems(board_text: str) -> dict[str, set[str]]:
+    """Possible SVG file-name endings per layer. kicad-cli names each file after the layer's USER name when the
+    board gives one (KiCad 7+ boards say ``(37 "F.SilkS" user "F.Silkscreen")``), else the canonical name."""
+    stems = {lay: {lay.replace(".", "_")} for lay in LAYERS}
+    i = board_text.find("(layers")
+    if i >= 0:
+        for canon, user in LAYER_RE.findall(board_text[i:i + 20000]):
+            if canon in stems and user:
+                stems[canon].add(user.replace(".", "_").replace(" ", "_"))
+    stems["F.SilkS"] |= {"F_Silkscreen"}
+    return stems
+
+
 def export_svg_layers(board_path: Path, outdir: Path, timeout: int = 300) -> dict[str, Path]:
     """One SVG per layer: ``kicad-cli pcb export svg --mode-multi``, page sized to the board, no drawing sheet,
     black-and-white (each layer's ink is black on transparent), no drill marks (holes are drawn from the board text)."""
@@ -296,14 +313,17 @@ def export_svg_layers(board_path: Path, outdir: Path, timeout: int = 300) -> dic
     if shutil.which("xvfb-run"):
         cmd = ["xvfb-run", "-a"] + cmd
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    stems = layer_file_stems(board_path.read_text(encoding="utf8", errors="replace"))
+    svgs = sorted(outdir.glob("*.svg"))
     files = {}
     for lay in LAYERS:
-        suffix = lay.replace(".", "_") + ".svg"
-        hit = [p for p in outdir.glob("*.svg") if p.name.endswith(suffix)]
+        hit = [q for q in svgs if any(q.stem.endswith("-" + st) or q.stem == st for st in stems[lay])]
         if hit:
             files[lay] = hit[0]
-    if r.returncode != 0 or len(files) < len(LAYERS):
-        raise RuntimeError(f"kicad-cli export failed rc={r.returncode} files={sorted(files)} err={r.stderr[-400:]}")
+    if r.returncode != 0 or any(lay not in files for lay in LAYERS if lay not in OPTIONAL_LAYERS):
+        found = [q.name for q in svgs]
+        raise RuntimeError(f"kicad-cli export failed rc={r.returncode} files={sorted(files)} svgs={found[:6]} "
+                           f"err={r.stderr[-400:]}")
     return files
 
 
@@ -499,7 +519,7 @@ def render_2d(board_text: str, work: Path, name: str, ppm: float, max_mpx: float
     if board.mean() < 0.02 or board.mean() > 0.999:
         board = np.ones_like(board)
     layers = {
-        "cu": cu, "open": svg_to_cov(files["F.Mask"], W, H), "silk": svg_to_cov(files["F.SilkS"], W, H),
+        "cu": cu, "open": svg_to_cov(files["F.Mask"], W, H), "silk": svg_to_cov(files["F.SilkS"], W, H) if "F.SilkS" in files else np.zeros((H, W), np.float32),
         "board": board.astype(np.float32), "holes": raster_holes(b, m),
     }
     return RenderedBoard(m, {k: (np.clip(v, 0, 1) * 255 + 0.5).astype(np.uint8) for k, v in layers.items()}, score)
@@ -709,6 +729,8 @@ def main(argv=None) -> int:
     ap.add_argument("--min-sep-mm", type=float, default=2.5)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--only", default="", help="substring filter on repo/path")
+    ap.add_argument("--retry-failed", action="store_true",
+                    help="keep boards already 'ok' in <out>/manifest.json, redo every other board")
     args = ap.parse_args(argv)
     if not have_cli():
         print("kicad-cli not found; run render_colab.sh first", file=sys.stderr)
@@ -723,8 +745,16 @@ def main(argv=None) -> int:
         srcs = srcs[:args.boards]
     manifest = {"classes": list(classes), "ppm": args.ppm, "tile": args.tile, "args": vars(args), "boards": [],
                 "note": "licences are per source board; CC-BY needs attribution (repo + licence listed per board)."}
+    done = {}
+    if args.retry_failed and (out / "manifest.json").exists():
+        old = json.loads((out / "manifest.json").read_text(encoding="utf8"))
+        done = {(b["repo"], b["path"]): b for b in old["boards"] if b["status"] == "ok"}
     t0 = time.time()
     for i, src in enumerate(srcs):
+        if (src["repo"], src["path"]) in done:
+            manifest["boards"].append(done[(src["repo"], src["path"])])
+            print(f"[{i + 1}/{len(srcs)}] {src['repo']} kept from the previous run", flush=True)
+            continue
         try:
             text = download(src, work / "boards" / f"{slug(src['repo'] + '-' + Path(src['path']).stem)}.kicad_pcb")
             e = process_board(src, text, out, work, args, classes)

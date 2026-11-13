@@ -463,3 +463,34 @@ def test_exact_calibration_from_outline_recovers_page_offset():
     # an outline that does not match (different size) must not be trusted
     bad = svg.replace("M", "M").replace(f"{60 + dx:.4f}", f"{61 + dx:.4f}")
     assert calibrate_from_edges(bad, board) is None
+
+
+def test_svg_layer_files_follow_the_boards_own_layer_names(tmp_path, monkeypatch):
+    """KiCad 7+ boards name the silkscreen "F.Silkscreen"; kicad-cli names the SVG after that user name.
+    Older boards use the canonical name. A board with no front silkscreen still renders."""
+    import subprocess
+    from types import SimpleNamespace
+    from training.kicad import render as R
+    new_style = '(kicad_pcb (layers (0 "F.Cu" signal) (37 "F.SilkS" user "F.Silkscreen") (39 "F.Mask" user) ' \
+                '(44 "Edge.Cuts" user)) )'
+    old_style = '(kicad_pcb (layers (0 F.Cu signal) (37 F.SilkS user) (39 F.Mask user) (44 Edge.Cuts user)) )'
+    assert "F_Silkscreen" in R.layer_file_stems(new_style)["F.SilkS"]
+    assert R.layer_file_stems(old_style)["F.SilkS"] >= {"F_SilkS"}
+    monkeypatch.setattr(R.shutil, "which", lambda _: None)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: SimpleNamespace(returncode=0, stderr=""))
+    for text, names, silk in ((new_style, ["F_Cu", "F_Silkscreen", "F_Mask", "Edge_Cuts"], "b-F_Silkscreen.svg"),
+                              (old_style, ["F_Cu", "F_SilkS", "F_Mask", "Edge_Cuts"], "b-F_SilkS.svg"),
+                              (old_style, ["F_Cu", "F_Mask", "Edge_Cuts"], None)):
+        d = tmp_path / str(len(list(tmp_path.iterdir())))
+        d.mkdir()
+        (d / "b.kicad_pcb").write_text(text)
+        out = d / "svg"
+        out.mkdir()
+        for n in names:
+            (out / f"b-{n}.svg").write_text("<svg/>")
+        files = R.export_svg_layers(d / "b.kicad_pcb", out)
+        assert files["F.Cu"].name == "b-F_Cu.svg" and files["Edge.Cuts"].name == "b-Edge_Cuts.svg"
+        assert (files["F.SilkS"].name if "F.SilkS" in files else None) == silk
+    (out / "b-F_Cu.svg").unlink()
+    with pytest.raises(RuntimeError, match="F_Mask"):
+        R.export_svg_layers(d / "b.kicad_pcb", out)

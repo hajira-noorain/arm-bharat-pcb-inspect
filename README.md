@@ -75,7 +75,7 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 - `training/prepare_bare.py` builds the dataset, and `train_bare.py` trains on a GPU.
 - `eval_bare.py` evaluates and calibrates the detector.
 - `build_visa_banks.py` builds the anomaly memories.
-- `export_vision.py` and `llm/` produce the ExecuTorch exports. These run in `deploy/Dockerfile.export`.
+- `export_vision.py` and `llm/export_llama.sh` produce the ExecuTorch exports (executorch 1.6.0, the version the Pi runs). They run in `deploy/Dockerfile.export` or on Colab.
 - `deploy/Dockerfile.pi` is an arm64 Debian image that installs exactly what the Pi installs. It is used to check the Arm build without hardware.
 
 **Results:** `docs/RESULTS.md` is generated from the result JSON files by `docs/make_results.py`. Research and design decisions are in `docs/RESEARCH_AND_DECISIONS.md`. The full write-up is in `docs/TECHNICAL_REPORT.md`.

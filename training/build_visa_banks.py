@@ -8,7 +8,7 @@ Outputs (per pcbX, with --tag):
   models/gate/visa_<pcbX>.json                 conformal calibration (only for --save)
   results/anomaly_<pcbX>[_tag].json            image/pixel AUROC, few-shot curve, gate on held-out half
 
-python training/build_visa_banks.py --arch resnet18 --input 256 --save
+python training/build_visa_banks.py --arch resnet18 --save        # deployed: 320 px, top-1% score
 python training/build_visa_banks.py --arch wide_resnet50_2 --input 256 --tag wrn50
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from pcbinspect.anomaly import (descriptors, enrol_from_desc, grey_thumb, preprocess,  # noqa: E402
+from pcbinspect.anomaly import (INPUT, TOPK_FRAC, descriptors, enrol_from_desc, grey_thumb, preprocess,  # noqa: E402
                                 torch_feature_fn)
 from pcbinspect.gate import ConformalGate  # noqa: E402
 from pcbinspect.gate import evaluate as gate_evaluate  # noqa: E402
@@ -93,7 +93,7 @@ def main():
     ap.add_argument("--out", default=r"C:\Users\sulai\pcb_work")
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--arch", default="resnet18")
-    ap.add_argument("--input", type=int, default=256)
+    ap.add_argument("--input", type=int, default=INPUT)
     ap.add_argument("--objects", default="pcb1,pcb2,pcb3,pcb4")
     ap.add_argument("--fewshot", default="5,10,20")
     ap.add_argument("--fewshot-reps", type=int, default=3)
@@ -102,7 +102,7 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--fg-mask", action="store_true", help="ignore patches outside the board foreground")
     ap.add_argument("--posnorm", action="store_true", help="per-grid-position normalisation of patch distances")
-    ap.add_argument("--topk-frac", type=float, default=0.0, help="image score = mean of top this fraction of patches (0 = max)")
+    ap.add_argument("--topk-frac", type=float, default=TOPK_FRAC, help="image score = mean of top this fraction of patches (0 = max)")
     ap.add_argument("--save", action="store_true", help="write the deployable memory and gate")
     args = ap.parse_args()
     visa, out = Path(args.visa), Path(args.out)

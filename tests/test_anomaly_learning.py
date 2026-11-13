@@ -96,10 +96,22 @@ def test_head_learns_from_operator_labels(tmp_path):
 
 
 def test_new_options_default_off_and_old_meta_loads(fn, model, tmp_path):
-    assert model.fg_mask is None and model.pos_mu is None and model.topk_frac == 0.0
+    from pcbinspect.anomaly import TOPK_FRAC
+    assert model.fg_mask is None and model.pos_mu is None and model.topk_frac == TOPK_FRAC
     res = model.score(board(400, defect=True))
     d = model.nn.dist(res.grid_desc).reshape(res.heatmap.shape)
-    assert res.raw_score == float(d.max()) and np.array_equal(res.heatmap, d)
+    k = max(1, round(TOPK_FRAC * d.size))
+    assert res.raw_score == pytest.approx(float(np.sort(d.ravel())[-k:].mean()), rel=1e-6)
+    assert np.array_equal(res.heatmap, d)
+    # a model saved before top-k existed (no "topk_frac" in its meta) keeps the max score
+    model.save(tmp_path / "old")
+    import json
+    meta_path = tmp_path / "old" / "meta.json"
+    meta = json.loads(meta_path.read_text())
+    meta.pop("topk_frac")
+    meta_path.write_text(json.dumps(meta))
+    old = AnomalyModel.load(tmp_path / "old", fn)
+    assert old.topk_frac == 0.0 and old.score(board(400, defect=True)).raw_score == pytest.approx(float(d.max()), rel=1e-5)
     model.save(tmp_path / "m")
     assert not (tmp_path / "m" / "scoring_extras.npz").exists()
     again = AnomalyModel.load(tmp_path / "m", fn)
