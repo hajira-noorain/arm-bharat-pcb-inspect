@@ -58,15 +58,21 @@ def bare_section(r: Path, tag_pref=("v3_et", "v3", "executorch", "final", "ultra
             for a, g in by_a.items():
                 lo, hi = g["miss_rate_ci95"]
                 dlo, dhi = g.get("defect_recall_ci95", (None, None))
+                rc = g.get("random_defect_miss_ci95")
                 rows.append([design, f"{100 * g['alpha']:.0f}%", g["n_defective"], g["n_good"],
+                             f"{pct(g.get('random_defect_miss'))} ({pct(rc[0])} to {pct(rc[1])})" if rc else "n/a",
                              f"{pct(1 - g['defect_recall'])} ({pct(1 - dhi)} to {pct(1 - dlo)})" if dlo is not None else "n/a",
                              f"{pct(g['miss_rate'])} ({pct(lo)} to {pct(hi)})",
                              num(g.get("false_alarms_per_board"), 2),
                              pct(g["false_reject_rate"]), pct(g["review_rate"])])
         out.append("The gate is calibrated PER DEFECT (one random defect per calibration board); a defect is "
-                   "shown when its evidence reaches the threshold. Miss rates are measured on test boards.\n")
+                   "shown when its evidence reaches the threshold. Miss rates are measured on test boards. "
+                   "\"One random defect per board\" is the quantity the guarantee covers (interval: bootstrap over "
+                   "boards); \"all defects\" pools every defect, so boards with many defects weigh more. A design "
+                   "with no good calibration boards never says PASS, so every board goes to a person.\n")
         out.append(table(["Design", "Allowed miss rate", "Defective", "Good",
-                          "Defects not shown (95% CI)", "Defective boards passed (95% CI)", "False calls per board",
+                          "Missed, one random defect per board (95% CI)", "Missed, all defects (95% CI)",
+                          "Defective boards passed (95% CI)", "False calls per board",
                           "Good boards failed", "Sent to a person"], rows))
         break
     return out
@@ -260,12 +266,16 @@ def golden_section(r: Path) -> list[str]:
     for ch, by_a in ev["channels"].items():
         g = by_a["alpha_0.05"]
         lo, hi = g["defect_miss_ci95"]
-        rows.append([names.get(ch, ch), f"{pct(g['defect_miss'])} ({pct(lo)} to {pct(hi)})",
+        rc = g.get("random_defect_miss_ci95")
+        rows.append([names.get(ch, ch),
+                     f"{pct(g.get('random_defect_miss'))} ({pct(rc[0])} to {pct(rc[1])})" if rc else "n/a",
+                     f"{pct(g['defect_miss'])} ({pct(lo)} to {pct(hi)})",
                      num(g["false_calls_per_board"], 2), pct(g["typed_correct_share_of_found"])])
     return [f"### Golden-board comparison ({ev['design']}, test boards, golden re-captured with a random warp)\n",
             "Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated on the calibration "
             "boards.\n",
-            table(["Evidence", "Defects not shown (95% CI)", "False calls per board", "Named correctly"], rows)]
+            table(["Evidence", "Missed, one random defect per board (95% CI)", "Missed, all defects (95% CI)",
+                   "False calls per board", "Named correctly"], rows)]
 
 
 def eyetest_section(r: Path) -> list[str]:
