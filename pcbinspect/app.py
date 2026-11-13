@@ -561,7 +561,7 @@ class Station:
             from .calib import detect_scale
             from .parts import teach_parts
             sc = detect_scale(imgs[0], d.marker_mm)
-            pm = teach_parts(self.parts_detector, self.parts_classifier, imgs[0], sc.mm_per_px if sc else None)
+            pm = teach_parts(self.parts_detector, self.parts_classifier, imgs, sc.mm_per_px if sc else None)
             if pm.parts:
                 pm.save(self.root / rel / "parts.json")
                 cv2.imwrite(str(self.root / rel / "parts_ref.jpg"), imgs[0], [cv2.IMWRITE_JPEG_QUALITY, 95])

@@ -101,3 +101,52 @@ def test_the_design_file_remembers_its_parts_map(tmp_path):
     insp = make(tmp_path)
     save_design(tmp_path / "designs", insp.designs["asm"])
     assert load_designs(tmp_path / "designs")["asm"].parts_map == "models/anomaly/asm/parts.json"
+
+
+class Flaky(BrightBoxes):
+    """Sees every bright rectangle, except that on some pictures it misses the part near (560, 120) and on
+    some it 'sees' a part at a board mark near (650, 500) that is not one."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def detect(self, bgr, only_near=None):
+        self.calls += 1
+        dets, lat = super().detect(bgr)
+        if self.calls % 2 == 0:
+            dets = [d for d in dets if not (540 <= d.bbox[0] <= 580 and 100 <= d.bbox[1] <= 140)]
+            dets.append(SimpleNamespace(cls="part", bbox=(650, 500, 690, 530), conf=0.8))
+        return dets, lat
+
+
+def test_teaching_from_several_good_boards_leaves_off_what_is_not_seen_every_time(tmp_path):
+    goods = [board(), board(shift=(5, 3)), board(shift=(-4, 6))]
+    one = teach_parts(Flaky(), None, goods[0], mm_per_px=1 / 16)
+    assert len(one.parts) == len(PARTS) and one.taught_from == 1 and one.ignore == []
+    pm = teach_parts(Flaky(), None, goods, mm_per_px=1 / 16)
+    assert pm.taught_from == 3 and pm.dropped == 1 and len(pm.parts) == len(PARTS) - 1
+    assert not any(540 <= p.box[0] <= 580 and 100 <= p.box[1] <= 140 for p in pm.parts)   # the unreliable one
+    assert len(pm.ignore) >= 1 and all(630 <= z[0] <= 670 for z in pm.ignore)            # the board mark
+    s = pm.summary()
+    assert s["good_pictures"] == 3 and s["left_off_as_unreliable"] == 1
+    # the payoff: a good board on which the detector has one of its bad moments is still clean
+    from pcbinspect.golden import align_warp
+    from pcbinspect.parts import check_board, find_parts
+    shot = board(shift=(6, -5))
+    det = Flaky()
+    det.calls = 1                                             # so this picture gets the bad moment
+    dets, _ = find_parts(det, shot, scale=pm.scale)
+    warp, cc = align_warp(shot, goods[0])
+    assert cc > 0.6 and check_board(pm, dets, warp, (800, 600)) == []
+    assert len(check_board(one, dets, warp, (800, 600))) == 2   # the single-picture map calls one missing, one extra
+
+
+def test_the_scale_chosen_when_teaching_is_the_one_used_when_inspecting(tmp_path):
+    insp = make(tmp_path)
+    pm, ref = insp.parts["asm"]
+    seen = []
+    real = insp.parts_detector.detect
+    insp.parts_detector.detect = lambda img, only_near=None: (seen.append(img.shape[:2]), real(img))[1]
+    pm.scale = 0.5
+    insp.inspect(board(), "asm", log=False)
+    assert seen[-1] == (300, 400)

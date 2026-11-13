@@ -256,7 +256,7 @@ class Inspector:
         lat["parts_align"] = (time.perf_counter() - t) * 1e3
         if warp is None or cc < MIN_ALIGN_CC:
             return [], f"parts check skipped: the board could not be lined up with the taught one (cc {cc:.2f})"
-        dets, ms = find_parts(self.parts_detector, bgr, mm_per_px)
+        dets, ms = find_parts(self.parts_detector, bgr, scale=pmap.scale)   # the scale it was taught at
         lat["parts_detector"] = ms
         h, w = bgr.shape[:2]
         alone: list[Candidate] = []

@@ -21,7 +21,8 @@ def test_the_map_keeps_confident_parts_once_and_names_only_what_the_classifier_i
     m = build_map(GOOD + [doubtful, twice], (800, 600), 10.0, KINDS + [("ic", 0.9), ("ic", 0.9)])
     assert len(m.parts) == 4                                   # the doubtful one and the duplicate are left out
     assert sorted(p.label for p in m.parts) == ["capacitor", "ic", "part", "resistor"]   # diode at 0.4 -> "part"
-    assert m.summary() == {"parts": 4, "by_kind": {"capacitor": 1, "resistor": 1, "ic": 1, "part": 1}}
+    assert m.summary() == {"parts": 4, "by_kind": {"capacitor": 1, "resistor": 1, "ic": 1, "part": 1},
+                           "good_pictures": 1, "left_off_as_unreliable": 0}
 
 
 def test_a_good_board_slightly_shifted_has_nothing_missing_and_nothing_extra():
@@ -127,3 +128,4 @@ def test_parts_are_found_at_the_detectors_training_scale_and_reported_in_the_pic
     assert det.shapes[-1] == (600, 800)
     m = teach_parts(det, lambda crops: [("capacitor", 0.9)] * len(crops), img)
     assert len(m.parts) == 4 and m.summary()["by_kind"] == {"capacitor": 4}
+    assert m.scale == 1.0 or m.scale in (0.5, 0.75, 1.5, 2.0)   # no mm scale given: a factor was chosen and stored

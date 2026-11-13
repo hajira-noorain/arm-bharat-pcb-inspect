@@ -46,6 +46,12 @@ class PartsMap:
     size: list[int]                  # width, height of the good board's picture
     px_per_mm: float | None
     parts: list[Part] = field(default_factory=list)
+    scale: float = 1.0               # the picture is resampled by this before the detector looks at it; the
+    #                                  SAME factor is used when the board is taught and when it is inspected
+    ignore: list[list[float]] = field(default_factory=list)   # places where good boards themselves sometimes
+    #                                  show a "part" (a mark, a pad, a label): never reported as unexpected
+    taught_from: int = 1             # good pictures the map was checked against
+    dropped: int = 0                 # parts left off because the good boards did not show them every time
 
     def save(self, path: Path) -> None:
         Path(path).write_text(json.dumps(asdict(self), indent=1))
@@ -53,13 +59,15 @@ class PartsMap:
     @staticmethod
     def load(path: Path) -> "PartsMap":
         d = json.loads(Path(path).read_text())
-        return PartsMap(d["size"], d.get("px_per_mm"), [Part(**p) for p in d["parts"]])
+        return PartsMap(d["size"], d.get("px_per_mm"), [Part(**p) for p in d["parts"]], d.get("scale", 1.0),
+                        d.get("ignore", []), d.get("taught_from", 1), d.get("dropped", 0))
 
     def summary(self) -> dict:
         kinds: dict[str, int] = {}
         for p in self.parts:
             kinds[p.label] = kinds.get(p.label, 0) + 1
-        return {"parts": len(self.parts), "by_kind": dict(sorted(kinds.items(), key=lambda kv: -kv[1]))}
+        return {"parts": len(self.parts), "by_kind": dict(sorted(kinds.items(), key=lambda kv: -kv[1])),
+                "good_pictures": self.taught_from, "left_off_as_unreliable": self.dropped}
 
 
 @dataclass
@@ -138,6 +146,8 @@ def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_
         if judged(p.box) and not any(_same_place(p.box, d["bbox"]) for d in seen):
             out.append(PartFinding("missing_part", list(p.box), p.label, p.conf, mm(p.box)))
     for d in dedupe([d for d in dets if d["conf"] >= extra_conf]):
+        if any(_same_place(d["bbox"], z) for z in pmap.ignore):
+            continue
         if judged(d["bbox"]) and not any(_same_place(d["bbox"], p.box) for p in pmap.parts):
             out.append(PartFinding("extra_part", [float(v) for v in d["bbox"]], "part", float(d["conf"]), mm(d["bbox"])))
     return out
@@ -164,18 +174,23 @@ def warp_boxes(dets: list[dict], matrix) -> list[dict]:
 TRAIN_PX_PER_MM = 16.0   # the scale the part detector was trained at (training/prepare_components.py)
 
 
-def find_parts(detector, bgr, mm_per_px: float | None = None) -> tuple[list[dict], float]:
+def scale_for(mm_per_px: float | None) -> float:
+    """The resampling factor that brings a picture to the detector's training scale (1.0 if unknown or close)."""
+    if not mm_per_px:
+        return 1.0
+    s = TRAIN_PX_PER_MM * mm_per_px                           # (px/mm wanted) / (px/mm here)
+    return 1.0 if 0.8 <= s <= 1.25 else min(max(s, 0.25), 3.0)
+
+
+def find_parts(detector, bgr, mm_per_px: float | None = None, scale: float | None = None) -> tuple[list[dict], float]:
     """Parts on a picture, as [{"bbox", "conf"}] in that picture's own pixels, and the time taken (ms).
-    When the picture's scale is known it is resampled to the detector's training scale first, so a part
-    looks the size the detector learned it at, whatever the camera height."""
+    The picture is resampled first so a part looks the size the detector learned it at: by `scale` when the
+    taught map fixes it, else from the picture's known mm scale."""
     import time
 
     import cv2
     t = time.perf_counter()
-    s = 1.0
-    if mm_per_px:
-        s = TRAIN_PX_PER_MM * mm_per_px                       # (px/mm wanted) / (px/mm here)
-        s = 1.0 if 0.8 <= s <= 1.25 else min(max(s, 0.25), 3.0)
+    s = float(scale) if scale else scale_for(mm_per_px)
     img = bgr if s == 1.0 else cv2.resize(bgr, None, fx=s, fy=s,
                                           interpolation=cv2.INTER_AREA if s < 1 else cv2.INTER_CUBIC)
     dets, _ = detector.detect(img)
@@ -223,12 +238,53 @@ class PartKindClassifier:
         return out
 
 
-def teach_parts(detector, classifier, good_bgr, mm_per_px: float | None = None) -> PartsMap:
-    """The parts map of a good board: find its parts, name the ones the classifier is sure of."""
-    dets, _ = find_parts(detector, good_bgr, mm_per_px)
-    kinds = classifier(part_crops(good_bgr, dets)) if classifier is not None and dets else None
-    h, w = good_bgr.shape[:2]
-    return build_map(dets, (w, h), (1.0 / mm_per_px) if mm_per_px else None, kinds)
+SEARCH_SCALES = (0.5, 0.75, 1.0, 1.5, 2.0)     # tried when the picture's mm scale is not known
+
+
+def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max_goods: int = 4) -> PartsMap:
+    """The parts map of a good board, from one good picture or several.
+
+    goods[0] is the reference picture. With more good pictures the map is CHECKED against them: each is lined
+    up with the reference and searched for parts, and
+      - a part the reference shows but another good picture does not is left off the map (the detector does
+        not see it reliably, so it would later be reported missing on good boards);
+      - a place where another good picture shows a confident part and the reference has none becomes an
+        ignore zone (it would later be reported as unexpected on good boards).
+    When the mm scale is unknown, a few resampling factors are tried and the one that leaves the most
+    reliable parts is kept; that factor is stored and reused at inspection."""
+    import numpy as np
+    goods = [goods] if isinstance(goods, np.ndarray) else list(goods)
+    ref, others = goods[0], goods[1:max_goods]
+    h, w = ref.shape[:2]
+    warps = []
+    if others:
+        from .golden import MIN_ALIGN_CC, align_warp
+        for g in others:
+            warp, cc = align_warp(g, ref)
+            if warp is not None and cc >= MIN_ALIGN_CC:
+                warps.append((g, warp))
+    best = None
+    for s in ([scale_for(mm_per_px)] if mm_per_px else SEARCH_SCALES):
+        dets, _ = find_parts(detector, ref, scale=s)
+        m = build_map(dets, (w, h), (1.0 / mm_per_px) if mm_per_px else None)
+        m.scale, m.taught_from = s, 1 + len(warps)
+        keep, zones = set(range(len(m.parts))), []
+        for g, warp in warps:
+            seen, _ = find_parts(detector, g, scale=s)
+            for f in check_board(m, seen, warp, (g.shape[1], g.shape[0]), raw=True):
+                if f[0] == "missing_part":
+                    keep.discard(f[1])
+                else:
+                    zones.append(f[1])
+        m.dropped = len(m.parts) - len(keep)
+        m.parts, m.ignore = [p for i, p in enumerate(m.parts) if i in keep], zones
+        if best is None or len(m.parts) > len(best.parts):
+            best = m
+    if classifier is not None and best.parts:
+        named = classifier(part_crops(ref, [{"bbox": p.box} for p in best.parts]))
+        for p, (k, kc) in zip(best.parts, named):
+            p.kind, p.kind_conf = k, float(kc)
+    return best
 
 
 def moved(pmap: PartsMap, matrix, size: tuple[int, int]) -> PartsMap:
@@ -236,14 +292,28 @@ def moved(pmap: PartsMap, matrix, size: tuple[int, int]) -> PartsMap:
     the good picture's points to that picture's points."""
     boxes = warp_boxes([{"bbox": p.box, "conf": p.conf} for p in pmap.parts], matrix)
     parts = [Part(b["bbox"], p.kind, p.kind_conf, p.conf) for p, b in zip(pmap.parts, boxes)]
-    return PartsMap([int(size[0]), int(size[1])], pmap.px_per_mm, parts)
+    zones = [b["bbox"] for b in warp_boxes([{"bbox": z} for z in pmap.ignore], matrix)]
+    return PartsMap([int(size[0]), int(size[1])], pmap.px_per_mm, parts, pmap.scale, zones)
 
 
-def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, int]) -> list[PartFinding]:
+def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, int], raw: bool = False):
     """Missing and extra parts on the inspected picture, in ITS pixels. warp: golden.align_warp's 2x3 matrix
-    (inspected -> good, with the good picture resized to the inspected one's size)."""
+    (inspected -> good, with the good picture resized to the inspected one's size).
+    raw (used while teaching): [("missing_part", index of the map part) | ("extra_part", box in the GOOD
+    picture)] instead of findings."""
     import numpy as np
     w, h = test_size
     to_test = np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
     resize = np.diag([w / pmap.size[0], h / pmap.size[1], 1.0])        # good picture -> its resized self
-    return compare(moved(pmap, to_test @ resize, (w, h)), dets)
+    there = moved(pmap, to_test @ resize, (w, h))
+    found = compare(there, dets)
+    if not raw:
+        return found
+    back = np.linalg.inv(to_test @ resize)
+    out = []
+    for f in found:
+        if f.what == "missing_part":
+            out.append(("missing_part", next(i for i, p in enumerate(there.parts) if p.box == f.box)))
+        else:
+            out.append(("extra_part", warp_boxes([{"bbox": f.box}], back)[0]["bbox"]))
+    return out
