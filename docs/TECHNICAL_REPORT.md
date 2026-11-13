@@ -54,8 +54,8 @@ PS5 asks for the vision and Llama pipelines to be documented separately, so they
 
 1. **Capture.** Pi Camera through Picamera2 (focus locked by a sweep, exposure and white balance locked, frames averaged, optional RAW and flat-field correction), a USB webcam, or replay of held-out boards.
 2. **Board identity and scale.** A QR code gives the board ID. A printed ArUco marker beside the board gives millimetres per pixel.
-3. **Named defects.** A YOLO26n detector on 640-pixel tiles of the full frame finds 11 bare-board defect types.
-4. **Golden-board comparison.** When a known-good image of the design exists, the board is aligned to it and the copper is compared. This finds defects the detector misses, measures every defect in millimetres, and checks connectivity: two conductors joined is a short, one conductor split is an open.
+3. **Golden-board comparison, first.** When a reference picture of the design exists (every board taught on the station has one), the board is aligned to it and the copper is compared. This sees any copper change, measures every defect in millimetres, and checks connectivity: two conductors joined is a short, one conductor split is an open. A board that does not line up with its reference is never passed; it goes to a person.
+4. **Named defects.** A YOLO26n detector on 640-pixel tiles names 11 bare-board defect types. On taught boards it runs only on the tiles where the golden comparison found a difference, so a clean board costs no detector time.
 5. **Unknown defects.** A ResNet-18 patch-feature memory of good boards flags anything that differs from them. This path covers assembled boards.
 6. **Severity.** Measured width or spacing loss against IPC-style limits for Class 1, 2 and 3.
 7. **Decision.** The conformal gate gives PASS, FAIL or CHECK at the chosen miss rate. Customer rules, if any, are applied after it.
@@ -140,6 +140,14 @@ On DeepPCB test boards (250 boards, 1,579 defects), with the golden image re-cap
 
 Fusing keeps the detector's naming and the golden comparison's reach: fewer misses than either alone, inside the 5% target.
 
+Three properties of this channel were found wanting in review and fixed, each with a test:
+
+- **Placement tolerance.** Alignment used to lose a board shifted by more than about 2% of the frame width or turned by more than about 1 degree, a couple of millimetres on a fixture. It is now coarse to fine (rigid at 160 px from several starting rotations, rigid at 400 px, affine at 1,000 px) and holds at a 12% shift and 5 degrees on a real board photo, in about a second on a laptop.
+- **A refused comparison is never a PASS.** If the board cannot be aligned or shows no copper contrast, the detector's opinion alone does not clear it: the verdict is CHECK and the screen says to re-seat the board.
+- **Connectivity evidence must be robust.** On camera-like pictures, one pixel of blur or resampling could join two shapes that almost touch, or split a neck three pixels wide, and a good board was reported as a short or an open (3 of 8 re-captures in one test). A short now counts only between conductors that stay separate when the reference copper grows by one pixel, and an open only where the conductor survives shrinking by two.
+
+**Speed.** The reference picture is decoded once and aligned once per board (the millimetre measurement reuses the alignment). Per-difference work happens in a small window instead of on the full frame, which made a 12 MP frame with 300 differences three times faster with identical results on 60 board pairs.
+
 ### 3.4 Measuring defects in millimetres
 
 A detection box is drawn loosely around a defect, so its size is not the defect's size. An early version that measured boxes produced impossible values such as "291% spacing reduction". The station therefore measures from the golden comparison:
@@ -183,7 +191,7 @@ On held-out test boards at a 5% allowed miss rate:
 
 The guarantee covers one randomly chosen defect on a new board, averaged over calibration draws. HRIPCB and Mendeley are inside their targets. DeepPCB is on target at 1% (1.0% missed) but slightly above it at 5% (6.5%) and 10% (11.6%). A single calibration draw of 250 boards is expected to land within about 1.3 points of the target, so noise explains part of it; the rest most likely comes from DeepPCB's official split, whose calibration and test boards are not perfectly exchangeable. We report it as measured rather than adjust the test. In practice the operator setting is a target, not a hard cap, and the fused golden channel (section 3.3) does meet 5% on the same boards. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, which is why it is reported separately. A rate needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
 
-PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
+DeepPCB's "good boards" are its defect-free templates, which are cleaner than a production good board would be, so its 20% sent to a person and 0.8% of good boards failed are best cases. PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
 
 The guarantee holds only while boards look like the calibration boards: same product, camera and lighting. The station keeps one calibration per design, re-calibrates whenever its model changes, and checks each live capture against the calibration capture's sharpness and brightness envelope. A Monte-Carlo test (2,000 repetitions, skewed distributions) checks that the average miss rate stays at or below α.
 
@@ -209,7 +217,7 @@ A dataset score says how a model did on someone else's photos. A factory needs t
 | Mouse bites | 0.45 mm | 0.48 mm | 0.43 mm |
 | False calls per clean board | 0.09 | 0.17 | 0.21 |
 
-These are with the golden board. The detector alone certified no open-ended size for any type under any condition. For several types it found only a band of small sizes (shorts across gaps from 0.15 to 0.45 mm, for example) and missed larger ones significantly more often: a learned detector knows the defects it was trained on, not "anything bigger". This is why the station leads with the golden comparison.
+Read the smallest figures with care: 0.06 mm is under 3 pixels at this scale, on binarised patterns with no optics, and the simulated conditions are a model. They show the software's floor, not what a camera will resolve; that is what the printed card and the taught board measure. These are with the golden board. The detector alone certified no open-ended size for any type under any condition. For several types it found only a band of small sizes (shorts across gaps from 0.15 to 0.45 mm, for example) and missed larger ones significantly more often: a learned detector knows the defects it was trained on, not "anything bigger". This is why the station leads with the golden comparison.
 
 **Simulated photos of the card.** A print and camera model (inkjet dot gain, perspective, blur, noise, JPEG) checks the reader end to end. With the golden board, every defect type gets a stated limit; the detector alone certifies none:
 
@@ -248,7 +256,7 @@ Customers state acceptance rules in plain English. Turning them into machine rul
 1. The board context is prefilled once.
 2. For each defect, most severe first, Llama fills in two option numbers. Generation stops from the token callback as soon as both are written.
 3. Llama writes a one-to-two sentence summary.
-4. Option order is shuffled per board, so a habit of picking the first option cannot look like a good choice.
+4. On the station, options are listed in the order a process rule ranks them (a defect that keeps repeating on the line puts process causes first). In evaluation they are shuffled per board instead, so that a habit of picking the first option cannot look like a good choice.
 
 **Grounding checker.** It rejects choices that are out of range or do not parse, a summary containing a number not in the record or its history, and a summary naming a defect type not on the board. A rejected answer is replaced by standard knowledge-base advice; the reason is logged and shown. The operator always reads knowledge-base text verbatim for every cause and action, so instructions are never invented.
 
@@ -276,7 +284,14 @@ SQLite in WAL mode holds inspections, defects with their measurements and IPC re
 
 The brief asked for a model trained beforehand that also learns during use. Nothing is retrained by backpropagation on the device. Learning is done by editing memories and fitting a small head:
 
-- **Teach a new design.** Photograph 5 to 10 good boards. Their features become that design's memory in seconds.
+- **Teach a new bare board, with its own gate.** A new design has no defective boards to calibrate on, so the station makes its own, the way the eye-test card does:
+  1. The operator captures a good board two or more times, lifting it and putting it down again between captures. The first capture becomes the reference picture; later ones must align with it.
+  2. The station draws defects of known type and size (0.2 to 1.0 mm) onto windows of the other captures, in photo space: new copper takes the local copper colour, removed copper the local laminate colour, and the new edges are softened to the capture's own edge blur.
+  3. Each window is judged exactly as boards will be (golden comparison, detector on the tiles that differ, fusion). One random planted defect per window gives a calibration score; the untouched captures and slightly shifted re-captures of them give the good scores.
+  4. The result is a gate for this board and a detection-limit statement per defect type, stored like an eye-test result and labelled "measured on test defects drawn onto pictures of this board".
+
+  What this claims: the miss rate holds for planted defects of that size range on this board, camera and lighting. Real defects can look different, and the screen says so. In the automated test (camera-like synthetic pictures, no detector), a board taught from three captures passes a fresh good capture and fails one with a cut trace, reporting an open at the cut. Its first use on real boards is the Pi session.
+- **Teach a new assembled board.** Photograph 5 to 10 good boards. Their features become that design's memory in seconds.
 - **False alarm on an anomaly.** The region's features are added to the good memory. A region far beyond normal variation needs a second confirmation, because one wrong "it's fine" could blind the model to a whole defect class. Every change can be undone.
 - **Confirm or reject a named defect.** A crop embedding is stored with the label.
 - **Update the model.** A logistic re-scoring head is fitted on frozen embeddings and combined with the detector confidence. It is switched on only if 5-fold cross-validation shows it separates real defects from false alarms better than the detector alone, it keeps at least 95% of confirmed defects, and the conformal gate re-calibrates with it. Every attempt, promoted or refused, is logged as a model version.
@@ -292,5 +307,7 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
 - The 1B model's choice among causes is not distinguishable from chance; its value is a grounded, readable summary. The 3B rule reader sends many clauses to the operator rather than guessing.
+- A taught board's gate is calibrated on drawn defects, not real ones, and from a handful of captures of one or a few boards; board-to-board etch variation is not in it until more good boards are captured.
+- The detector alone certifies no defect size on the card. Without a reference picture the station is a triage tool that marks suspects for a person; with one it can pass and fail.
 - HRIPCB's physical scale is not published, so its severities use defect-type defaults rather than millimetres.
 - Real-IAD (CC BY-NC-SA) is used for evaluation only and is never used to train or ship anything.
