@@ -305,9 +305,21 @@ class Station:
         advice model. Loaded once, on first use: compiling rules is a setup-time task."""
         if self.spec_compiler is not None:
             return self.spec_compiler
-        from .spec_llm import LlamaSpecCompiler
+        from .spec_llm import ConstrainedSpecCompiler, LlamaSpecCompiler
         be = None
         p = self.root / self.cfg.get("spec_llm_pte", "")
+        if self.cfg.get("spec_llm_pte") and p.is_file() and self.cfg.get("spec_reader", "grounded") == "grounded":
+            # Constrained decoding on the same .pte through executorch.runtime: Llama can only answer from
+            # option lists the clause's own words allow (62.5% of held-out clauses exactly right against
+            # 47.5% for free generation, never "no rule"; llm/eval_spec.py --constrained --grounded).
+            try:
+                from .llm_logits import LogitLlama
+                self.spec_compiler = ConstrainedSpecCompiler(
+                    LogitLlama(p, self.root / self.cfg["llm_tokenizer"]), grounded=True)
+                self.spec_reader_name = "grounded choice (constrained decoding)"
+                return self.spec_compiler
+            except Exception as exc:    # noqa: BLE001
+                log.exception("constrained rule reader unavailable (%s); using free generation", exc)
         if self.cfg.get("spec_llm_pte") and p.is_file():
             from .llm import ExecuTorchLlama
             try:
@@ -331,6 +343,8 @@ class Station:
                 r = comp.compile(clause)
             rules["llama"] = r.rule
             out["llama_ms"] = round(r.latency_ms)
+            out["llama_reader"] = getattr(self, "spec_reader_name", "free generation")
+            out["llama_margins"] = (r.answers or {}).get("_margins")
             out["llama_error"] = r.error
         rules["keyword"] = keyword_compile(clause)
         for name, rule in rules.items():

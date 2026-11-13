@@ -63,6 +63,24 @@ def main():
                 sys.exit(f"ARM CHECK FAILED: Llama {label} produced no text")
             print(f"llama {label} ({llm.load_ms:.0f} ms load): {g.text!r}  decode {g.decode_tps} tok/s", flush=True)
             del llm
+    # Constrained decoding for the rule reader: the same .pte through executorch.runtime must return scores
+    # for every token, and a closed choice must come out right.
+    if a.llm_tokens > 0:
+        from pcbinspect.llm_logits import LogitLlama
+        big = root / "models" / "llm" / "llama3_2_3b_spinquant.pte"
+        pte = big if big.exists() else root / "models" / "llm" / "llama3_2_1b_spinquant.pte"
+        try:
+            ll = LogitLlama(pte, root / "models" / "llm" / "tokenizer.model")
+            t = time.perf_counter()
+            ll.feed("<|begin_of_text|>The capital of France is")
+            pick, margin = ll.choose([" Berlin", " Paris", " Madrid"])
+            ms = (time.perf_counter() - t) * 1e3
+        except Exception as exc:   # noqa: BLE001
+            sys.exit(f"ARM CHECK FAILED: constrained decoding did not run on {pte.name}: {exc}")
+        if pick != " Paris":
+            sys.exit(f"ARM CHECK FAILED: constrained decoding chose {pick!r}")
+        print(f"llama constrained choice on {pte.name}: {pick.strip()} (margin {margin:.1f}) in {ms:.0f} ms", flush=True)
+        del ll
     print("ARM CHECK OK")
 
 

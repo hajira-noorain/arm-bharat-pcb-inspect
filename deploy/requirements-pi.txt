@@ -10,3 +10,4 @@ uvicorn
 scikit-learn
 faiss-cpu
 psutil
+tiktoken            # Llama 3 tokenizer for the constrained rule reader (pcbinspect/llm_logits.py)
