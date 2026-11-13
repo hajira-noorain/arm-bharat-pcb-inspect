@@ -171,6 +171,27 @@ def _type_thresholds(cal: list[dict]) -> dict[str, float]:
     return thr
 
 
+def _repeated_spots(boards: list[dict], conf: float = 0.25, cell: int = 60, min_repeats: int = 20):
+    """HRIPCB photographs each physical board about 60 times in the same framing, with a different drawn-in
+    defect each time. A detection at the same place, of the same type, on 20 or more photos of one board, where
+    nothing is labelled, is one physical spot on that board counted again and again. Returns (spots, boards
+    with those detections removed)."""
+    def key(b, d):
+        cx, cy = (d["bbox"][0] + d["bbox"][2]) / 2, (d["bbox"][1] + d["bbox"][3]) / 2
+        return (Path(b["path"]).name[:2], d["cls"], round(cx / cell), round(cy / cell))
+
+    def unlabelled(b, d):
+        return d["conf"] >= conf and all(_iou(d["bbox"], g["bbox"]) < 0.1 for g in b["boxes"])
+    count: dict = {}
+    for b in boards:
+        for d in b["dets"]:
+            if unlabelled(b, d):
+                count[key(b, d)] = count.get(key(b, d), 0) + 1
+    spots = {k: v for k, v in count.items() if v >= min_repeats}
+    kept = [{**b, "dets": [d for d in b["dets"] if not (unlabelled(b, d) and key(b, d) in spots)]} for b in boards]
+    return spots, kept
+
+
 def prf_section(r: Path) -> list[str]:
     tag = next((t for t in ("v3_et", "v3") if (r / f"bare_dets_test_{t}.json").exists()), None)
     boards = load(r / f"bare_dets_test_{tag}.json") if tag else None
@@ -202,6 +223,22 @@ def prf_section(r: Path) -> list[str]:
                   "then applied unchanged to the test boards (" +
                   ", ".join(f"{k.replace('_', ' ')} {v:.2f}" for k, v in thr.items()) + "):\n",
                   table(["Test boards", "Precision", "Recall", "F1"], trow)]
+    hr = [b for b in boards if b["source"] == "hripcb"]
+    if hr:
+        spots, kept = _repeated_spots(hr)
+        if spots:
+            a, c = _prf(hr, 0.25)["all"], _prf(kept, 0.25)["all"]
+            n_fa = sum(1 for b in hr for d in b["dets"] if d["conf"] >= 0.25
+                       and all(_iou(d["bbox"], g["bbox"]) < 0.1 for g in b["boxes"]))
+            extra += [f"\nWhy precision looks low on HRIPCB: its {len(hr)} test photos are of {len({Path(b['path']).name[:2] for b in hr})} "
+                      f"physical boards, each photographed about 60 times with a different drawn-in defect. "
+                      f"{sum(spots.values())} of the {n_fa} detections that sit where nothing is labelled are the same "
+                      f"{len(spots)} physical spots found on photo after photo ("
+                      + ", ".join(f"board {k[0]} {k[1].replace('_', ' ')} x{v}" for k, v in sorted(spots.items())) +
+                      f"). Counting each of those spots once instead of on every photo, precision on HRIPCB is "
+                      f"{pct(c['precision'])} (as labelled: {pct(a['precision'])}), recall {pct(c['recall'])}, "
+                      f"F1 {pct(c['f1'])} (as labelled: {pct(a['f1'])}). Whether each spot is a real flaw on the "
+                      "board or a feature the detector misreads was judged by eye, not measured: see the report."]
     lrow = []
     for src in ("all",) + SOURCES:
         bs = [b for b in boards if src == "all" or b["source"] == src]

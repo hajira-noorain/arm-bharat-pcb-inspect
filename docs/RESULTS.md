@@ -101,6 +101,8 @@ One confidence threshold per defect type, each chosen for best F1 on the calibra
 | DsPCBSD+ | 82.8% | 66.8% | 73.9% |
 | DefectDet (held-out boards) | 82.8% | 81.3% | 82.1% |
 
+Why precision looks low on HRIPCB: its 123 test photos are of 2 physical boards, each photographed about 60 times with a different drawn-in defect. 300 of the 318 detections that sit where nothing is labelled are the same 5 physical spots found on photo after photo (board 06 missing hole x61, board 06 mouse bite x61, board 06 pin hole x60, board 06 spur x58, board 12 short x60). Counting each of those spots once instead of on every photo, precision on HRIPCB is 86.6% (as labelled: 60.3%), recall 97.5%, F1 91.8% (as labelled: 74.5%). Whether each spot is a real flaw on the board or a feature the detector misreads was judged by eye, not measured: see the report.
+
 The same detections at confidence 0.25, counted the way the station counts a defect as found (right type, IoU of 0.3 or more: the box is on the defect but drawn loosely):
 
 | Test boards | Precision | Recall | F1 |
