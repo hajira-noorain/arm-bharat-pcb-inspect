@@ -308,6 +308,7 @@ On deliberately corrupted correct rules, the checks caught every corrupted value
 | 1B writes JSON text | development | 89.3% | 68% (39%) | at chance | at chance |
 | 1B, listed causes scored by their text | development | 97.3% | 75% (39%) | at chance | at chance |
 | 3B, each cause judged alone | development | 100% | 37.5% (39.1%) | 89.2% (51.8%) | 90.4% (47.7%) |
+| 1B writes JSON text | held out | 87.3% | 71% (37%) | at chance | at chance |
 | **3B, each cause judged alone (deployed)** | **held out** | **100%** | **35.2% (36.9%)** | **95.3% (51.0%)** | **88.4% (46.6%)** |
 
 What this shows, plainly:

@@ -61,6 +61,57 @@ Each version adds training data; the test boards are the same for all of them an
 | v3_et: v3 through the exported ExecuTorch FP32 .pte | 83.3% | 96.3% | 95.8% | 81.2% | 73.8% | 84.2% |
 | v3_et_int8: v3 through the exported ExecuTorch INT8 .pte | 83.2% | 96.4% | 95.8% | 80.9% | 73.7% | 83.8% |
 
+### Detector precision, recall and F1 on the held-out test boards
+
+The detector alone, run through ExecuTorch (the on-device runtime), before the golden comparison and before the review gate. A detection counts as correct when it names the right defect type and overlaps the labelled defect (IoU of 0.5 or more); every other detection is a false alarm and every unclaimed label is a miss.
+
+| Test boards | Boards | Defects | Precision @0.25 | Recall @0.25 | F1 @0.25 | Precision @0.5 | Recall @0.5 | F1 @0.5 |
+|---|---|---|---|---|---|---|---|---|
+| All test boards | 1006 | 7093 | 76.6% | 81.0% | 78.7% | 85.2% | 65.8% | 74.3% |
+| DeepPCB | 500 | 1579 | 83.4% | 97.1% | 89.7% | 91.2% | 95.7% | 93.4% |
+| PKU-Market-PCB (HRIPCB) | 123 | 610 | 60.3% | 97.5% | 74.5% | 65.8% | 97.2% | 78.5% |
+| Mendeley PCB-Defect | 27 | 207 | 62.8% | 90.3% | 74.1% | 71.1% | 79.7% | 75.2% |
+| DsPCBSD+ | 228 | 4092 | 79.3% | 70.9% | 74.9% | 90.5% | 46.7% | 61.6% |
+| DefectDet (held-out boards) | 128 | 605 | 73.2% | 86.9% | 79.5% | 84.1% | 81.3% | 82.7% |
+
+By defect type, all test boards, confidence 0.25:
+
+| Defect type | Defects | Precision | Recall | F1 |
+|---|---|---|---|---|
+| foreign object | 769 | 81.1% | 67.5% | 73.7% |
+| hole breakout | 608 | 88.3% | 95.4% | 91.7% |
+| missing hole | 103 | 62.0% | 100.0% | 76.6% |
+| missing pad | 138 | 69.3% | 83.3% | 75.7% |
+| mouse bite | 979 | 77.3% | 75.6% | 76.4% |
+| open | 926 | 84.2% | 89.3% | 86.7% |
+| pin hole | 235 | 63.4% | 99.6% | 77.5% |
+| scratch | 448 | 67.2% | 59.8% | 63.3% |
+| short | 690 | 67.4% | 89.1% | 76.8% |
+| spur | 1432 | 79.0% | 75.4% | 77.2% |
+| spurious copper | 765 | 74.8% | 86.5% | 80.2% |
+
+One confidence threshold per defect type, each chosen for best F1 on the calibration boards and then applied unchanged to the test boards (foreign object 0.25, hole breakout 0.55, missing hole 0.75, missing pad 0.60, mouse bite 0.30, open 0.35, pin hole 0.80, scratch 0.25, short 0.65, spur 0.25, spurious copper 0.45):
+
+| Test boards | Precision | Recall | F1 |
+|---|---|---|---|
+| All test boards | 82.9% | 77.5% | 80.1% |
+| DeepPCB | 92.0% | 94.9% | 93.4% |
+| PKU-Market-PCB (HRIPCB) | 69.8% | 97.2% | 81.3% |
+| Mendeley PCB-Defect | 69.7% | 87.9% | 77.8% |
+| DsPCBSD+ | 82.8% | 66.8% | 73.9% |
+| DefectDet (held-out boards) | 82.8% | 81.3% | 82.1% |
+
+The same detections at confidence 0.25, counted the way the station counts a defect as found (right type, IoU of 0.3 or more: the box is on the defect but drawn loosely):
+
+| Test boards | Precision | Recall | F1 |
+|---|---|---|---|
+| All test boards | 79.1% | 83.7% | 81.3% |
+| DeepPCB | 83.6% | 97.3% | 90.0% |
+| PKU-Market-PCB (HRIPCB) | 61.0% | 98.7% | 75.4% |
+| Mendeley PCB-Defect | 66.4% | 95.7% | 78.4% |
+| DsPCBSD+ | 83.4% | 74.6% | 78.8% |
+| DefectDet (held-out boards) | 75.9% | 90.2% | 82.5% |
+
 ### DefectDet held-out boards, resized before inspection (128 boards)
 
 Tests whether enlarging small-defect photos helps the detector (it does not: native scale is best).
@@ -229,6 +280,34 @@ One good-board memory per camera view, built from that view's good images; image
 | 3B, step-wise, shuffled | 60 | 98.3% | 68.8% vs 42.1% | 57.1% vs 65.5% (n=14) | 300 | 9.8 |
 
 Step order (most severe first) and coverage (every defect gets a step) are enforced by the advisor, not claimed as model skill.
+
+### Does Llama's advice follow the evidence?
+
+Seeded defect records with a recent-history line for each defect. A repeating defect should get a process cause and a one-off should get a handling cause. The causes are offered in shuffled order, and "vs" gives what picking without reading the evidence would score. The development records were used to choose the method; the held-out records were run once, afterwards. Latency is on an x86 host, not the Pi.
+
+| How Llama decides | Records | Count | Advice shown (passed every check) | First-listed cause chosen vs chance | Repeating -> process cause vs chance | One-off -> handling cause vs chance | Median s |
+|---|---|---|---|---|---|---|---|
+| 1B writes the answer as JSON text | development | 150 | 89.3% | 68.3% vs 39.0% | 50.0% vs 50.5% | 45.4% vs 48.1% | 1.6 |
+| 1B, listed causes scored by their text | development | 150 | 97.3% | 75.4% vs 39.1% | 45.9% vs 51.8% | 53.5% vs 47.7% | 3.0 |
+| 1B, same, score averaged per token | development | 150 | 96.7% | 65.7% vs 39.1% | 62.2% vs 51.8% | 45.6% vs 47.7% | 3.1 |
+| 3B, each cause judged alone with a yes/no question | development, before the summary fixes | 150 | 78.7% | 37.5% vs 39.1% | 89.2% vs 51.8% | 90.4% vs 47.7% | 7.3 |
+| 3B, each cause judged alone with a yes/no question | development | 150 | 100.0% | 37.5% vs 39.1% | 89.2% vs 51.8% | 90.4% vs 47.7% | 7.5 |
+| 1B writes the answer as JSON text | held out | 150 | 87.3% | 71.3% vs 36.7% | 53.5% vs 51.0% | 46.2% vs 47.2% | 1.6 |
+| 3B, each cause judged alone with a yes/no question (the station's setting) | held out | 150 | 100.0% | 35.2% vs 36.9% | 95.3% vs 51.0% | 88.4% vs 46.6% | 7.3 |
+
+Advice that fails a check is never shown: the operator gets the knowledge-base text for that defect instead, labelled as such.
+
+### Shift questions: does Llama pick the right database query?
+
+An operator types a question; Llama may only choose one of the station's fixed read-only queries and its settings, and then words the rows it returns. If Llama's choice cannot be used, a keyword rule chooses instead, so the keyword column is the floor.
+
+| How Llama decides | Questions | Count | Right query | Chosen by Llama | Keyword rule alone | Answer worded by Llama (numbers checked) | Median s |
+|---|---|---|---|---|---|---|---|
+| 1B writes the query as JSON text | development | 30 | 83.3% | 6.7% | 83.3% | 90.0% | 1.4 |
+| 1B, query scored as a choice | development | 30 | 53.3% | 100.0% | 83.3% | 95.8% | 1.1 |
+| 3B, query scored as a choice (before the summary fix) | development | 30 | 90.0% | 100.0% | 83.3% | 93.3% | 2.3 |
+| 3B, query scored as a choice | development | 30 | 90.0% | 100.0% | 83.3% | 100.0% | 2.3 |
+| 3B, query scored as a choice (the station's setting) | held out | 20 | 80.0% | 100.0% | 75.0% | 100.0% | 2.4 |
 
 ### Learning from the operator (feedback boards, separate calibration boards, unseen test boards)
 
