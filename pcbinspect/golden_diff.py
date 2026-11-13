@@ -244,11 +244,31 @@ def _connectivity(t, g, glab, n_g, existing, A0) -> list[DiffCandidate]:
                 return
 
     # shorts: one test piece overlapping >= 2 golden conductors
+    # Only ROBUST connectivity is electrical evidence. Two golden conductors that already merge when the
+    # golden mask grows by one pixel are separated by a marginal gap, and a conductor that falls apart when
+    # it shrinks by one pixel hangs on a marginal neck: there, one pixel of blur, noise or resampling flips
+    # the netlist on a perfectly good board (measured: 3 of 8 good re-captures of a camera-like photo).
+    k3 = np.ones((3, 3), np.uint8)
+    _, gdl = cv2.connectedComponents(cv2.dilate(g.astype(np.uint8), k3), connectivity=8)
+    grown_id = np.zeros(n_g, np.int64)
+    grown_id[glab[g]] = gdl[g]
+    # a neck must survive shrinking by 2 px (>= 5 px thick): a 3 px neck between two shapes that barely
+    # touch was still flipped by resampling on a good board
+    ge = cv2.erode(g.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+    n_e, gel = cv2.connectedComponents(ge.astype(np.uint8), connectivity=8)
+    core = ge & t
+    ck = np.unique(tlab[core].astype(np.int64) * n_e + gel[core])
+    cores_of: dict[int, set] = {}
+    for key in ck:
+        cores_of.setdefault(int(key // n_e), set()).add(int(key % n_e))
+
     tu, tc = np.unique(pt, return_counts=True)
     for tid in tu[tc >= 2]:
         gids = np.sort(pg[pt == tid])
         raw = (tlab == tid) & ~g
         for j in range(len(gids) - 1):
+            if grown_id[gids[j]] == grown_id[gids[j + 1]]:
+                continue        # marginal gap in the golden image itself
             locate(raw, glab, int(gids[j]), int(gids[j + 1]), "extra", "short")
     # opens: one golden conductor overlapping >= 2 test pieces
     gu, gc = np.unique(pg, return_counts=True)
@@ -256,6 +276,8 @@ def _connectivity(t, g, glab, n_g, existing, A0) -> list[DiffCandidate]:
         tids = np.sort(pt[pg == gid])
         raw = (glab == gid) & ~t
         for j in range(len(tids) - 1):
+            if not (cores_of.get(int(tids[j]), set()) & cores_of.get(int(tids[j + 1]), set())):
+                continue        # the two pieces were only joined by a marginal neck in the golden image
             locate(raw, tlab, int(tids[j]), int(tids[j + 1]), "missing", "open")
     return out
 

@@ -224,6 +224,26 @@ class Inspector:
         return Analysis(cands, score, mm_per_px, scale_src, board_id, anomaly_res, lat, golden_used, golden_note,
                         golden_aligned)
 
+    def golden_evidence(self, bgr: np.ndarray, golden: np.ndarray, aligned: bool = False,
+                        guided: bool = True) -> list[tuple[tuple, float]]:
+        """(bbox, confidence) of everything the golden-first channel reports for a capture: the golden
+        comparison, the detector (on the tiles that differ when `guided`), fused. This is the evidence a
+        taught bare board is judged with, so its gate is calibrated with exactly this function."""
+        if aligned:
+            g_al, cc = golden, 1.0
+        else:
+            g_al, cc = align(bgr, golden)
+        if cc < MIN_ALIGN_CC:
+            return []
+        diffs, info = diff_candidates(bgr, g_al, aligned=True)
+        if not info["ok"]:
+            return []
+        dets = []
+        if self.detector is not None:
+            dd, _ = self.detector.detect(bgr, only_near=[c.bbox for c in diffs] if guided else None)
+            dets = [{"bbox": x.bbox, "conf": x.conf, "cls": x.cls} for x in dd]
+        return [(tuple(f["bbox"]), float(f["conf"])) for f in fuse(dets, diffs)]
+
     # ------------------------------------------------------------ full inspection
     def golden_for(self, design: str) -> np.ndarray | None:
         d = self.designs[design]
