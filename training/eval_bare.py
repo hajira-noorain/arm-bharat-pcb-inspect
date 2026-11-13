@@ -98,6 +98,7 @@ def main():
     ap.add_argument("--tag", default=None)
     ap.add_argument("--data", default=None, help="bare_yolo folder (default <work>/data/bare_yolo)")
     ap.add_argument("--no-gate", action="store_true", help="detection metrics only (do not write gates)")
+    ap.add_argument("--splits", default="cal,test", help="test alone is enough with --no-gate (e.g. an INT8 accuracy check)")
     args = ap.parse_args()
     work = Path(args.work)
     tag = args.tag or args.backend
@@ -111,8 +112,11 @@ def main():
     data = Path(args.data) if args.data else work / "data" / "bare_yolo"
     res_dir = work / "results"
     res_dir.mkdir(exist_ok=True)
+    wanted = args.splits.split(",")
+    if "cal" not in wanted and not args.no_gate:
+        raise SystemExit("gate calibration needs the cal split: add --no-gate or include cal")
     splits = {s: run_split(det, json.loads((data / f"boards_{s}.json").read_text()),
-                           res_dir / f"bare_dets_{s}_{tag}.json") for s in ("cal", "test")}
+                           res_dir / f"bare_dets_{s}_{tag}.json") for s in wanted}
 
     report = {"backend": args.backend, "tag": tag}
     # ---------------- detection metrics on TEST boards ----------------
