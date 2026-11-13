@@ -353,7 +353,9 @@ def advice_section(r: Path) -> list[str]:
                      num(s.get("prompt_tokens_median"), 0), num((s.get("latency_ms_median") or 0) / 1000, 1)])
     if not rows:
         return []
-    return ["### Llama advice quality (60 seeded defect records, x86 host)\n",
+    return ["### Earlier advice method, superseded (60 seeded defect records, x86 host)\n",
+            "Kept for the record. These runs asked Llama to write its choice as text; the method the station uses "
+            "now, and its results, are in the next table.\n",
             table(["Variant", "Records", "Passed grounding", "Option 1 chosen vs chance",
                    "Repeating defect -> process cause vs chance", "Prompt tokens", "Latency (s)"], rows),
             "\nStep order (most severe first) and coverage (every defect gets a step) are enforced by "

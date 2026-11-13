@@ -48,7 +48,7 @@ Everything in this segment is the station as built: the Teach a board screen (Se
 | Time | Shot | Narration |
 |---|---|---|
 | 1:45 | Screen: an amber CHECK band on a borderline board, with Pass/Fail buttons | "When the evidence is borderline, the board goes to a person: amber light." |
-| 1:52 | Screen: switch the allowed miss rate from 5% to 1%; cut to the gate table in RESULTS.md with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.2 percent." |
+| 1:52 | Screen: switch the allowed miss rate from 5% to 1%; cut to the golden-board table in RESULTS.md (detector plus golden board, 5% row) with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.2 percent." |
 
 ## 2:00 to 2:30: It refuses rules it cannot keep
 
@@ -62,7 +62,7 @@ Everything in this segment is the station as built: the Teach a board screen (Se
 
 | Time | Shot | Narration |
 |---|---|---|
-| 2:30 | RESULTS table: detector on ExecuTorch vs Arm's optimised runtime, Llama tokens/s and memory, 30-minute soak with temperature | "Everything here was measured on the Pi itself: [detector ms] per tile on Arm's optimised runtime, Llama at [decode tokens per second], and [peak temperature] after 30 minutes with no throttling." |
+| 2:30 | RESULTS table: detector on ExecuTorch vs Arm's optimised runtime, Llama tokens/s and memory, 30-minute soak with temperature | "Everything here was measured on the Pi itself: [detector ms] per tile on Arm's optimised runtime, Llama at [decode tokens per second], and [peak temperature] after 30 minutes, [throttled or not, as measured]." |
 
 ## 2:50 to 3:05: Honest about what is not proven
 

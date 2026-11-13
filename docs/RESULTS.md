@@ -272,7 +272,9 @@ One good-board memory per camera view, built from that view's good images; image
 | ResNet18, 320 px | 93.0% | 90.1% | 90.7% | 89.9% | 89.2% | 90.6% |
 | WideResNet50, 256 px | 94.4% | 91.4% | 92.4% | 88.8% | 87.8% | 91.0% |
 
-### Llama advice quality (60 seeded defect records, x86 host)
+### Earlier advice method, superseded (60 seeded defect records, x86 host)
+
+Kept for the record. These runs asked Llama to write its choice as text; the method the station uses now, and its results, are in the next table.
 
 | Variant | Records | Passed grounding | Option 1 chosen vs chance | Repeating defect -> process cause vs chance | Prompt tokens | Latency (s) |
 |---|---|---|---|---|---|---|

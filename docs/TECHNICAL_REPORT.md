@@ -6,10 +6,10 @@ Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5: real-time industrial d
 
 Every inspection system claims a high accuracy figure. None of them can tell a factory the one thing it needs before trusting it: **the smallest defect it will reliably catch on this camera, on this line, today.**
 
-This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and grades bare-board and assembled-board defects. It logs every inspection and explains every finding with Llama 3.2 running on ExecuTorch. On top of that, it does three things no inspection system we reviewed does:
+This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and grades bare-board defects, and flags anything unusual on an assembled board for a person to look at. It logs every inspection and explains every finding with Llama 3.2 running on ExecuTorch. On top of that, it does three things no inspection system we reviewed does:
 
 1. **It measures its own detection limit, like an eye test.** The operator photographs a printed test card carrying 252 defects of known size. The station reads the card and states, per defect type, the smallest size it finds 90% of the time with 95% confidence (the a90/95 figure from the US military's non-destructive-testing handbook, MIL-HDBK-1823A). It also says plainly which sizes it cannot certify.
-2. **It says when it is unsure, with a guaranteed miss rate.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.2% of defects.
+2. **It says when it is unsure, at a miss rate the operator sets.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.2% of defects.
 3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject mouse bites that remove more than 20% of the trace width"). Llama on ExecuTorch turns each clause into an executable rule, choosing only among answers the clause supports (constrained decoding on the exported model). Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
 
 | What a reviewer can check | Where |
@@ -21,7 +21,7 @@ This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and
 | Llama advice that cannot invent instructions | Section 6 |
 | Everything on the Arm CPU, offline | Section 7 |
 | Learns new boards and from operator feedback | Section 9 |
-| Every number measured, none projected | `docs/RESULTS.md` |
+| Every number measured, none projected (speed, memory and power on the Pi are marked pending until measured there) | `docs/RESULTS.md` |
 
 ## 1. Problem and scope
 
@@ -210,7 +210,7 @@ On held-out test boards at a 5% allowed miss rate:
 
 **What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.2%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
 
-DeepPCB's "good boards" are its defect-free templates, which are cleaner than a production good board would be, so its 20% sent to a person and 0.8% of good boards failed are best cases. PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
+DeepPCB's "good boards" are its defect-free templates, which are cleaner than a production good board would be, so its 20% sent to a person and 0.8% of good boards failed are best cases. PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 defect-free boards in each of their calibration and test sets), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
 
 The guarantee holds only while boards look like the calibration boards: same product, camera and lighting. The station keeps one calibration per design, re-calibrates whenever its model changes, and checks each live capture against the calibration capture's sharpness and brightness envelope. A Monte-Carlo test (2,000 repetitions, skewed distributions) checks that the average miss rate stays at or below α.
 
@@ -286,13 +286,13 @@ What this shows, including what did not work:
 - **The remaining weak field is the comparison** ("more than" against "at least": 61% right on held-out). That is why a rule is only auto-accepted when the independent keyword reading agrees, and why the operator reads every other rule back.
 - Grounding uses the same vocabulary as the keyword checks, so for the defect field the two readers are no longer independent; they remain independent for the comparison and the action.
 
-On deliberately corrupted correct rules, the checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect, but only 89% of flipped comparisons and 69% of wrong actions; those two are what the operator's read-back is for. Llama 3.2 1B cannot do this task (5% exact by free generation), so the station uses 1B for advice and 3B for rules.
+On deliberately corrupted correct rules, the checks caught every corrupted value (x10, x0.1, mil read as mm) and every wrong defect, but only 89% of flipped comparisons and 69% of wrong actions; those two are what the operator's read-back is for. Llama 3.2 1B cannot do this task (5% exact by free generation), which is one reason the station runs on the 3B model.
 
 ## 6. Llama on ExecuTorch: advice the operator can check
 
 **Model.** Llama 3.2 3B Instruct, Meta's SpinQuant INT4 checkpoint, exported with ExecuTorch's `export_llm` (8da4w, XNNPACK, KV cache, custom SDPA; `llm/export_llama.sh`) to a 2.4 GB `.pte`. One loaded copy serves advice, shift questions and the customer-rule reader of section 5.3. The 1B model (1.07 GB) is packaged as the fallback and is what the first version used; the measurements below are the reason it was replaced.
 
-**Design principle.** The mentor guidance was to give Llama structured findings, not raw pixels. We go one step further: **Llama decides, but it cannot write anything the station cannot check.** For each defect the knowledge base (`kb/defects.yaml`) lists 2 to 4 possible causes and 3 to 4 actions, each tied to a process step. Llama's job is to choose between them from the evidence, and to word a short summary.
+**Design principle.** The mentor guidance was to give Llama structured findings, not raw pixels. We go one step further: **Llama decides, but what the operator acts on is always something the station can check.** For each defect the knowledge base (`kb/defects.yaml`) lists 2 to 4 possible causes and 3 to 4 actions, each tied to a process step. Llama's job is to choose between them from the evidence, and to word a short summary.
 
 **How a decision is read.** The station does not ask Llama to write its choice as text and then parse it. It runs the same `.pte` through `executorch.runtime` and reads the next-token scores directly (`pcbinspect/llm_logits.py`):
 
@@ -320,7 +320,7 @@ What this shows, plainly:
 - **Two faults were found on the development records and fixed before the held-out run.** One in five answers was thrown away because the summary came out empty, and others because the summary repeated the chosen cause's own words. Advice shown went from 78.7% to 100% on the development records, and stayed at 100% on the held-out ones.
 - **What is not checked.** The checker verifies numbers and defect types in the summary, not every phrase. One development summary said two shorts were "one on each side", which the record does not say. The causes and actions the operator acts on are immune to this, because they are knowledge-base text.
 
-Median time per board in these runs was about 7 s on an x86 cloud CPU. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
+Median time per board in these runs was about 7 s on an x86 host used for development. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
 
 **Shift questions.** The operator can type a question ("how many boards failed in the last 3 hours?"). Llama may only choose one of the station's fixed read-only database queries and its settings, by the same scored choice, and then words the rows it gets back with the same number limit. If its choice cannot be used, a keyword rule chooses instead.
 
@@ -344,7 +344,19 @@ Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 - anomaly backbone: ExecuTorch `.pte` (FP32 and INT8; INT8 features differ from FP32 by 4.5% on average, so INT8 needs its own memories and is benchmarked for speed only)
 - Llama 1B and 3B: ExecuTorch `.pte`, with KleidiAI micro-kernels inside XNNPACK
 
-**Benchmarks** (`bench/bench_device.py`, run by `deploy/measure_on_pi.sh`) record per-model latency at 1, 2 and 4 threads, ExecuTorch against the Arm runtime for the detector, Llama load time, prefill and decode tokens/s from the runtime's own statistics, resident memory, and a per-stage end-to-end breakdown, each with temperature and throttle flags. Board power is logged twice a second while each part runs, read from the Pi 5's own power chip (`vcgencmd pmic_read_adc`, voltage times current summed over its rails). That reading leaves out regulator losses and anything fed straight from 5 V, so it is reported as an estimate that reads lower than a wall meter. A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
+**Benchmarks** (`bench/bench_device.py`, run by `deploy/measure_on_pi.sh`) record per-model latency at 1, 2 and 4 threads, ExecuTorch against the Arm runtime for the detector, Llama load time, prefill and decode tokens/s from the runtime's own statistics, resident memory, and a per-stage end-to-end breakdown, each with temperature and throttle flags. Board power is logged twice a second while each part runs, read from the Pi 5's own power chip (`vcgencmd pmic_read_adc`, voltage times current summed over its rails). That reading leaves out regulator losses and anything fed straight from 5 V, so it is reported as an estimate that reads lower than a wall meter. The numbers a juror will look for, all filled from the Pi run and none estimated:
+
+| Measured on the Pi 5 | Value |
+|---|---|
+| Inspections per second, and seconds from capture to verdict | pending, 20-21 Nov |
+| Time per stage: capture, alignment, detector, comparison, severity, log | pending, 20-21 Nov |
+| Detector per tile: ExecuTorch FP32, INT8, Arm's optimised runtime | pending, 20-21 Nov |
+| Llama: time to first token, tokens per second, whole advice answer | pending, 20-21 Nov |
+| Memory with every model loaded | pending, 20-21 Nov |
+| Board power: idle, inspecting, Llama running | pending, 20-21 Nov |
+| Temperature and throttling over 30 minutes | pending, 20-21 Nov |
+
+What is known today is from an x86 development host and is labelled as such wherever it appears (for example about 7 s per board for Llama's advice). A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
 
 **Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
 
@@ -378,7 +390,7 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - On assembled boards (VisA) the anomaly gate at 5% sends about 60% of test boards to a person (about half of the VisA test boards are defective). It finds unknown problems; it does not yet replace a human for assembled boards.
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
-- The 1B model's choice among causes is not distinguishable from chance; its value is a grounded, readable summary. The 3B rule reader sends many clauses to the operator rather than guessing.
+- Llama's advice was measured on seeded records with a stated repeat history, not on a real line's history. The 3B model follows that evidence about nine times in ten; the 1B fallback does not follow it at all, so on a device that can only hold 1B the knowledge base, not Llama, orders the causes. The summary's wording is checked for numbers and defect types only. The 3B rule reader sends many clauses to the operator rather than guessing.
 - A taught board's gate is calibrated on drawn defects, not real ones, and from a handful of captures of one or a few boards; board-to-board etch variation is not in it until more good boards are captured.
 - The detector alone certifies no defect size on the card. Without a reference picture the station is a triage tool that marks suspects for a person; with one it can pass and fail.
 - HRIPCB's physical scale is not published, so its severities use defect-type defaults rather than millimetres.

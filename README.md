@@ -30,7 +30,7 @@ And it proves what it can do:
 | Classify type and severity | Defect type from the detector; size in mm from the golden comparison against IPC-style class limits | `pcbinspect/golden.py`, `severity.py`, `config/severity.yaml` |
 | Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `advisor.py`, `grounding.py` |
 | Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
-| Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; timings, memory and a 30-minute soak are measured on the device | `bench/`, `deploy/measure_on_pi.sh` |
+| Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; `deploy/measure_on_pi.sh` measures timings, memory, power and a 30-minute soak on the device (numbers pending the Pi session, 20-21 Nov) | `bench/`, `deploy/measure_on_pi.sh` |
 | Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoints) exported with ExecuTorch `export_llm`, run on the same `.pte` through `executorch.runtime` so decisions are read from next-token scores: one 3B model for advice, shift questions and compiling customer rules, 1B as the fallback | `pcbinspect/llm_logits.py`, `llm_select.py`, `advisor.py`, `spec_llm.py`, `llm/` |
 
 ## Two pipelines
