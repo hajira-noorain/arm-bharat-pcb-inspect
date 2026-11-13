@@ -126,7 +126,10 @@ def main():
                 continue
             row[f"{tag}_aligned"] = True
             dets, _ = find_parts(det, shot, 1.0 / ppmm)
-            fs = check_board(pmap, dets, warp, (shot.shape[1], shot.shape[0]))
+            fs = check_board(pmap, dets, warp, (shot.shape[1], shot.shape[0]), ref=img, test=shot)
+            row[f"{tag}_missing_detector_only"] = sum(
+                f.what == "missing_part" for f in check_board(pmap, dets, warp, (shot.shape[1], shot.shape[0])))
+            row[f"{tag}_changed"] = sum(f.what == "changed_part" for f in fs)
             gone = [move_box(g["box"], M) for g in removed]
             miss = [f for f in fs if f.what == "missing_part"]
             row[f"{tag}_false_missing"] = sum(not any(overlaps(f.box, b) for b in gone) for f in miss)
@@ -153,6 +156,8 @@ def main():
         "false_missing_per_board_with_removals": sum(b["removed_false_missing"] for b in ok) / max(len(ok), 1),
         "unexpected_per_board_with_removals": sum(b["removed_unexpected"] for b in ok) / max(len(ok), 1),
         "false_missing_per_board_clean": sum(b["clean_false_missing"] for b in clean) / max(len(clean), 1),
+        "missing_calls_per_board_clean_detector_only": sum(b["clean_missing_detector_only"] for b in clean) / max(len(clean), 1),
+        "changed_calls_per_board_clean": sum(b["clean_changed"] for b in clean) / max(len(clean), 1),
         "unexpected_per_board_clean": sum(b["clean_unexpected"] for b in clean) / max(len(clean), 1),
         "clean_boards_with_no_call_at_all": sum(b["clean_false_missing"] + b["clean_unexpected"] == 0 for b in clean) / max(len(clean), 1),
         "mapped_parts_per_board_mean": sum(b["mapped_parts"] for b in boards) / max(len(boards), 1),

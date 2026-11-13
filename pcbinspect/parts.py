@@ -4,8 +4,16 @@ When a good assembled board is taught, the station finds its parts once and stor
 sits (in the good board's own picture) and what kind it is. At inspection the new picture is lined up with the
 good one, parts are found again, and the two lists are compared:
 
-  missing   a part on the map with no part found at its place
+  missing   a part on the map with no part found at its place, AND the place no longer looks like the good board
   extra     a part found where the map has none
+  changed   a part is found at its place, but the place looks clearly unlike the good board (a different part,
+            a part turned round or standing up)
+
+Two independent cues are used, as in the component-window comparison of classic optical inspection: the part
+detector (is something part-like here?) and a direct comparison of each part's picture with the good board's
+(does this place look the same?). A part is called missing only when both agree, so one cue having a bad moment
+does not raise a false call. Comparing component by component is the published remedy for "unusual area" models
+missing absent or swapped parts (Kim et al. 2024, arXiv 2312.13783; Bergmann et al. 2022, MVTec LOCO AD).
 
 The detector answers only "is there a part here?" (one class, training/prepare_components.py). Part kinds come
 from a small classifier that runs when the board is taught, never during inspection, so naming costs nothing
@@ -31,6 +39,7 @@ class Part:
     kind: str = "part"
     kind_conf: float = 0.0
     conf: float = 1.0                # how sure the detector was when the board was taught
+    sim_min: float | None = None     # the lowest likeness to the reference this part showed on OTHER good boards
 
     @property
     def label(self) -> str:
@@ -77,6 +86,7 @@ class PartFinding:
     kind: str                        # "capacitor", ... or "part"
     confidence: float                # missing: how sure the map was of this part; extra: the detector's confidence
     size_mm: float | None = None
+    likeness: float | None = None    # how much the place looks like the good board there (1 = identical)
 
 
 def iou(a, b) -> float:
@@ -123,9 +133,48 @@ def build_map(dets: list[dict], size: tuple[int, int], px_per_mm: float | None =
     return PartsMap([int(size[0]), int(size[1])], px_per_mm, parts)
 
 
+LIKE_DEFAULT = 0.5       # likeness below this = "does not look like the good board here" (no good-board range known)
+LIKE_MARGIN = 0.25       # ... or this far below the lowest likeness the part showed across the good boards
+CHANGED_EXTRA = 0.2      # a part that IS detected must look this much worse still before it is called changed
+
+
+def unlike_below(p: Part) -> float:
+    """The likeness under which this part's place counts as not looking like the good board."""
+    if p.sim_min is None:
+        return LIKE_DEFAULT
+    return min(0.6, max(0.2, p.sim_min - LIKE_MARGIN))
+
+
+def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | None:
+    """How much the inspected picture looks like the good one at this part: normalised cross-correlation of the
+    good board's picture of the part against the inspected picture, best over a small shift (alignment is never
+    perfect, and a tall part leans with its distance from the camera axis). Both pictures are grey and in the
+    same frame (grey or colour: both work). None when the part is too small or too plain to compare."""
+    import cv2
+    h, w = test_gray.shape[:2]
+    # the part with a rim of board around it: the rim holds the part's outline, and the pads and print that
+    # show when the part is gone (a plain-topped part alone has nothing to compare)
+    gx, gy = 0.2 * (box[2] - box[0]) + 4, 0.2 * (box[3] - box[1]) + 4
+    x0, y0 = int(max(box[0] - gx, 0)), int(max(box[1] - gy, 0))
+    x1, y1 = int(min(box[2] + gx, w)), int(min(box[3] + gy, h))
+    if x1 - x0 < 6 or y1 - y0 < 6:
+        return None
+    tpl = ref_gray[y0:y1, x0:x1]
+    if float(tpl.std()) < 4.0:
+        return None
+    s = search if search is not None else int(min(max(0.15 * max(x1 - x0, y1 - y0), 4), 20))
+    win = test_gray[max(y0 - s, 0):min(y1 + s, h), max(x0 - s, 0):min(x1 + s, w)]
+    if win.shape[0] < tpl.shape[0] or win.shape[1] < tpl.shape[1]:
+        return None
+    return float(cv2.matchTemplate(win, tpl, cv2.TM_CCOEFF_NORMED).max())
+
+
 def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_conf: float = 0.6,
-            valid: tuple[float, float, float, float] | None = None) -> list[PartFinding]:
+            valid: tuple[float, float, float, float] | None = None,
+            likes: list[float | None] | None = None) -> list[PartFinding]:
     """dets: parts found on the board under inspection, already in the good board's picture coordinates.
+    likes: for each part of the map, how much its place looks like the good board (likeness()), if the
+           pictures were compared; without it the detector alone decides.
 
     present_conf: a weak detection is enough to say a mapped part is still there (missing a real part is the
                   costly mistake, so the part gets the benefit of the doubt only from an actual detection).
@@ -142,9 +191,17 @@ def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_
         return round(max(box[2] - box[0], box[3] - box[1]) / pmap.px_per_mm, 2) if pmap.px_per_mm else None
     seen = [d for d in dets if d["conf"] >= present_conf]
     out: list[PartFinding] = []
-    for p in pmap.parts:
-        if judged(p.box) and not any(_same_place(p.box, d["bbox"]) for d in seen):
-            out.append(PartFinding("missing_part", list(p.box), p.label, p.conf, mm(p.box)))
+    for i, p in enumerate(pmap.parts):
+        if not judged(p.box):
+            continue
+        like = likes[i] if likes is not None else None
+        if not any(_same_place(p.box, d["bbox"]) for d in seen):
+            # nothing part-like found here. If the place still looks like the good board, the detector had a
+            # bad moment and nothing is reported; if the pictures could not be compared, the detector decides.
+            if like is None or like < unlike_below(p):
+                out.append(PartFinding("missing_part", list(p.box), p.label, p.conf, mm(p.box), like))
+        elif like is not None and like < unlike_below(p) - CHANGED_EXTRA:
+            out.append(PartFinding("changed_part", list(p.box), p.label, p.conf, mm(p.box), like))
     for d in dedupe([d for d in dets if d["conf"] >= extra_conf]):
         if any(_same_place(d["bbox"], z) for z in pmap.ignore):
             continue
@@ -278,7 +335,14 @@ def teach_parts(detector, classifier, goods, mm_per_px: float | None = None, max
                     zones.append(f[1])
         m.dropped = len(m.parts) - len(keep)
         m.parts, m.ignore = [p for i, p in enumerate(m.parts) if i in keep], zones
-        if best is None or len(m.parts) > len(best.parts):
+        for g, warp in warps:          # how alike each part looks from one good board to the next
+            there = moved(m, np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
+                          @ np.diag([g.shape[1] / w, g.shape[0] / h, 1.0]), (g.shape[1], g.shape[0]))
+            for p, v in zip(m.parts, likenesses(there, np.asarray(warp, np.float32), ref, g)):
+                if v is not None:
+                    p.sim_min = v if p.sim_min is None else min(p.sim_min, v)
+        # most reliable parts wins; on a tie, the factor closest to leaving the picture as it is
+        if best is None or (len(m.parts), -abs(np.log(s))) > (len(best.parts), -abs(np.log(best.scale))):
             best = m
     if classifier is not None and best.parts:
         named = classifier(part_crops(ref, [{"bbox": p.box} for p in best.parts]))
@@ -291,14 +355,28 @@ def moved(pmap: PartsMap, matrix, size: tuple[int, int]) -> PartsMap:
     """The same map carried into another picture (the board under inspection) through a 3x3 matrix taking
     the good picture's points to that picture's points."""
     boxes = warp_boxes([{"bbox": p.box, "conf": p.conf} for p in pmap.parts], matrix)
-    parts = [Part(b["bbox"], p.kind, p.kind_conf, p.conf) for p, b in zip(pmap.parts, boxes)]
+    parts = [Part(b["bbox"], p.kind, p.kind_conf, p.conf, p.sim_min) for p, b in zip(pmap.parts, boxes)]
     zones = [b["bbox"] for b in warp_boxes([{"bbox": z} for z in pmap.ignore], matrix)]
     return PartsMap([int(size[0]), int(size[1])], pmap.px_per_mm, parts, pmap.scale, zones)
 
 
-def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, int], raw: bool = False):
-    """Missing and extra parts on the inspected picture, in ITS pixels. warp: golden.align_warp's 2x3 matrix
-    (inspected -> good, with the good picture resized to the inspected one's size).
+def likenesses(there: PartsMap, warp, ref_bgr, test_bgr) -> list[float | None]:
+    """likeness() for every part of a map already carried into the inspected picture."""
+    import cv2
+    h, w = test_bgr.shape[:2]
+    ref = ref_bgr if ref_bgr.shape[:2] == (h, w) else cv2.resize(ref_bgr, (w, h))
+    ref = cv2.warpAffine(ref, warp, (w, h), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+                         borderMode=cv2.BORDER_REPLICATE)
+    # compared in colour: a part swapped for one of another colour but similar brightness must not look alike
+    return [likeness(ref, test_bgr, p.box) for p in there.parts]
+
+
+def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, int], raw: bool = False,
+                ref=None, test=None):
+    """Missing, changed and extra parts on the inspected picture, in ITS pixels. warp: golden.align_warp's 2x3
+    matrix (inspected -> good, with the good picture resized to the inspected one's size).
+    ref, test: the good board's picture and the inspected one; when given, each part's place is also compared
+    with the good board (see compare()).
     raw (used while teaching): [("missing_part", index of the map part) | ("extra_part", box in the GOOD
     picture)] instead of findings."""
     import numpy as np
@@ -306,7 +384,8 @@ def check_board(pmap: PartsMap, dets: list[dict], warp, test_size: tuple[int, in
     to_test = np.linalg.inv(np.vstack([np.asarray(warp, float), [0.0, 0.0, 1.0]]))
     resize = np.diag([w / pmap.size[0], h / pmap.size[1], 1.0])        # good picture -> its resized self
     there = moved(pmap, to_test @ resize, (w, h))
-    found = compare(there, dets)
+    likes = likenesses(there, np.asarray(warp, np.float32), ref, test) if ref is not None and test is not None else None
+    found = compare(there, dets, likes=likes)
     if not raw:
         return found
     back = np.linalg.inv(to_test @ resize)

@@ -93,6 +93,7 @@ def test_a_board_that_cannot_be_lined_up_is_not_judged_for_parts(tmp_path):
     r, a, _ = insp.inspect(other, "asm", log=False)
     assert a.parts_only == [] and "could not be lined up" in a.parts_note
     assert "parts check not run" in r.model_versions["evidence"]
+    assert r.verdict == "REVIEW" and "could not be lined up" in r.model_versions["capture_check"]   # never a pass
     assert not any(d.cls in ("missing_part", "extra_part") for d in r.defects)
 
 
@@ -150,3 +151,53 @@ def test_the_scale_chosen_when_teaching_is_the_one_used_when_inspecting(tmp_path
     pm.scale = 0.5
     insp.inspect(board(), "asm", log=False)
     assert seen[-1] == (300, 400)
+
+
+def test_a_part_the_detector_fails_to_see_is_not_called_missing_if_the_place_looks_like_the_good_board(tmp_path):
+    from pcbinspect.golden import align_warp
+    from pcbinspect.parts import check_board, find_parts
+    good = board()
+    pm = teach_parts(BrightBoxes(), None, good, mm_per_px=1 / 16)
+    shot = board(shift=(6, -5))                               # a complete board
+    dets, _ = find_parts(BrightBoxes(), shot, scale=pm.scale)
+    blink = [d for d in dets if not (300 <= d["bbox"][0] <= 340)]          # the detector misses the part at x=320
+    warp, _ = align_warp(shot, good)
+    alone = check_board(pm, blink, warp, (800, 600))                       # detector only: a false "missing"
+    assert [f.what for f in alone] == ["missing_part"]
+    both = check_board(pm, blink, warp, (800, 600), ref=good, test=shot)   # ... but the place looks the same
+    assert both == []
+    gone = board(skip=(1,), shift=(6, -5))                                 # the part really is gone
+    dets, _ = find_parts(BrightBoxes(), gone, scale=pm.scale)
+    f = check_board(pm, dets, align_warp(gone, good)[0], (800, 600), ref=good, test=gone)
+    assert [x.what for x in f] == ["missing_part"] and f[0].likeness is not None and f[0].likeness < 0.5
+
+
+def swapped(shift=(0, 0)):
+    """The good board with the part at (560, 120) replaced by something of the same size that looks different."""
+    img = board()
+    x, y, w, h = PARTS[4]
+    cv2.rectangle(img, (x, y), (x + w, y + h), (25, 25, 30), -1)          # a dark body where the good one is light
+    cv2.rectangle(img, (x + 15, y + 15), (x + w - 15, y + h - 15), (235, 235, 240), -1)   # with a bright label, so
+    #                                                                     the stand-in detector still sees a part
+    if shift != (0, 0):
+        img = cv2.warpAffine(img, np.float32([[1, 0, shift[0]], [0, 1, shift[1]]]), (800, 600),
+                             borderMode=cv2.BORDER_REPLICATE)
+    return cv2.GaussianBlur(img, (3, 3), 0)
+
+
+def test_a_part_that_is_there_but_looks_unlike_the_good_one_is_reported_as_looking_different(tmp_path):
+    insp = make(tmp_path)
+    r, a, _ = insp.inspect(swapped(shift=(5, 4)), "asm", log=False)
+    assert [d.cls for d in r.defects] == ["changed_part"] and r.verdict == "REVIEW"
+    assert "1 part(s) look different" in r.model_versions["capture_check"]
+    assert r.defects[0].severity == "major" and r.defects[0].location == "top-right"
+
+
+def test_teaching_records_how_alike_each_part_looks_across_good_boards(tmp_path):
+    goods = [board(), board(shift=(5, 3)), board(shift=(-4, 6))]
+    pm = teach_parts(BrightBoxes(), None, goods, mm_per_px=1 / 16)
+    assert len(pm.parts) == len(PARTS) and all(p.sim_min is not None and p.sim_min > 0.8 for p in pm.parts)
+    from pcbinspect.parts import PartsMap, unlike_below
+    assert all(0.2 <= unlike_below(p) <= 0.6 for p in pm.parts)
+    pm.save(tmp_path / "p.json")
+    assert PartsMap.load(tmp_path / "p.json").parts[0].sim_min == pm.parts[0].sim_min

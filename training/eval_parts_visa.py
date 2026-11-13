@@ -28,6 +28,9 @@ from pcbinspect.golden import MIN_ALIGN_CC, align_warp  # noqa: E402
 from pcbinspect.parts import check_board, find_parts, teach_parts  # noqa: E402
 
 
+MODES = ("detector only", "detector and likeness")
+
+
 def on_mask(box, mask: np.ndarray, grow: float = 0.15) -> bool:
     """Does the box (grown a little) touch the labelled anomaly area?"""
     h, w = mask.shape[:2]
@@ -61,7 +64,7 @@ def main():
         goods = [cv2.imread(str(visa / r["image"])) for r in mine if r["split"] == "train"][:a.goods]
         pm = teach_parts(det, kinds, goods)
         ref = goods[0]
-        stats = defaultdict(lambda: defaultdict(int))
+        stats = {m: defaultdict(lambda: defaultdict(int)) for m in MODES}
         tests = [r for r in mine if r["split"] == "test" and r["label"] == "normal"][:a.normals] + \
                 [r for r in mine if r["split"] == "test" and r["label"] != "normal"]
         for r in tests:
@@ -70,35 +73,44 @@ def main():
             kinds_here = ["good"] if good else types.get(r["image"], ["anomaly"])
             warp, cc = align_warp(img, ref)
             ok = warp is not None and cc >= MIN_ALIGN_CC
-            fs = []
+            found = {m: [] for m in MODES}
             if ok:
                 dets, _ = find_parts(det, img, scale=pm.scale)
-                fs = check_board(pm, dets, warp, (img.shape[1], img.shape[0]))
+                found["detector only"] = check_board(pm, dets, warp, (img.shape[1], img.shape[0]))
+                found["detector and likeness"] = check_board(pm, dets, warp, (img.shape[1], img.shape[0]),
+                                                             ref=ref, test=img)
             mask = None
             if not good and r["mask"]:
                 mask = cv2.imread(str(visa / r["mask"]), cv2.IMREAD_GRAYSCALE)
                 if mask is not None and mask.shape[:2] != img.shape[:2]:
                     mask = cv2.resize(mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
-            for k in kinds_here:
-                s = stats[k]
-                s["images"] += 1
-                s["lined_up"] += ok
-                s["any_parts_finding"] += bool(fs)
-                s["missing_calls"] += sum(f.what == "missing_part" for f in fs)
-                s["unexpected_calls"] += sum(f.what == "extra_part" for f in fs)
-                if mask is not None:
-                    s["finding_on_the_labelled_area"] += any(on_mask(f.box, mask) for f in fs)
-                    s["missing_on_the_labelled_area"] += any(f.what == "missing_part" and on_mask(f.box, mask) for f in fs)
-                    s["unexpected_on_the_labelled_area"] += any(f.what == "extra_part" and on_mask(f.box, mask) for f in fs)
-        report["designs"][design] = {"taught": pm.summary(), "scale_chosen": pm.scale, "ignore_zones": len(pm.ignore),
-                                     "by_type": {k: dict(v) for k, v in stats.items()}}
+            for mode, fs in found.items():
+                for k in kinds_here:
+                    s = stats[mode][k]
+                    s["images"] += 1
+                    s["lined_up"] += ok
+                    s["any_parts_finding"] += bool(fs)
+                    s["missing_calls"] += sum(f.what == "missing_part" for f in fs)
+                    s["changed_calls"] += sum(f.what == "changed_part" for f in fs)
+                    s["unexpected_calls"] += sum(f.what == "extra_part" for f in fs)
+                    if mask is not None:
+                        s["finding_on_the_labelled_area"] += any(on_mask(f.box, mask) for f in fs)
+                        s["missing_on_the_labelled_area"] += any(f.what == "missing_part" and on_mask(f.box, mask) for f in fs)
+                        s["changed_on_the_labelled_area"] += any(f.what == "changed_part" and on_mask(f.box, mask) for f in fs)
+                        s["unexpected_on_the_labelled_area"] += any(f.what == "extra_part" and on_mask(f.box, mask) for f in fs)
+        report["designs"][design] = {
+            "taught": pm.summary(), "scale_chosen": pm.scale, "ignore_zones": len(pm.ignore),
+            "likeness_across_good_boards_min": min((p.sim_min for p in pm.parts if p.sim_min is not None), default=None),
+            "by_type": {k: dict(v) for k, v in stats["detector and likeness"].items()},
+            "by_type_detector_only": {k: dict(v) for k, v in stats["detector only"].items()}}
         print(design, json.dumps(report["designs"][design]), flush=True)
-    tot = defaultdict(lambda: defaultdict(int))
-    for d in report["designs"].values():
-        for k, v in d["by_type"].items():
-            for kk, vv in v.items():
-                tot[k][kk] += vv
-    report["all_designs"] = {k: dict(v) for k, v in tot.items()}
+    for key in ("by_type", "by_type_detector_only"):
+        tot = defaultdict(lambda: defaultdict(int))
+        for d in report["designs"].values():
+            for k, v in d[key].items():
+                for kk, vv in v.items():
+                    tot[k][kk] += vv
+        report["all_designs" if key == "by_type" else "all_designs_detector_only"] = {k: dict(v) for k, v in tot.items()}
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(report, indent=1))
     print("RESULT parts_visa", json.dumps(report["all_designs"]))

@@ -260,7 +260,7 @@ class Inspector:
         lat["parts_detector"] = ms
         h, w = bgr.shape[:2]
         alone: list[Candidate] = []
-        for f in check_board(pmap, dets, warp, (w, h)):
+        for f in check_board(pmap, dets, warp, (w, h), ref=ref, test=bgr):
             box = tuple(int(round(min(max(v, 0), lim))) for v, lim in zip(f.box, (w, h, w, h)))
             if box[2] - box[0] < 2 or box[3] - box[1] < 2:
                 continue
@@ -324,11 +324,16 @@ class Inspector:
         else:  # uncalibrated design: never auto-pass anything with evidence
             verdict = "REVIEW" if a.board_score >= MIN_SHOW_CONF else "PASS"
             show_thr = MIN_SHOW_CONF
+        if a.parts_note and not force_review:
+            # the parts check could not run (the board would not line up with the taught one: wrong board, badly
+            # placed, or so much of it changed that it no longer matches). That is not a pass: a person looks.
+            force_review = a.parts_note
         if a.parts_only and not force_review:
-            n_miss = sum(c.cls == "missing_part" for c in a.parts_only)
+            n = {k: sum(c.cls == k for c in a.parts_only) for k in ("missing_part", "changed_part", "extra_part")}
             force_review = "parts check: " + ", ".join(x for x in (
-                f"{n_miss} part(s) look missing" if n_miss else "",
-                f"{len(a.parts_only) - n_miss} unexpected part(s)" if len(a.parts_only) - n_miss else "") if x)
+                f"{n['missing_part']} part(s) look missing" if n["missing_part"] else "",
+                f"{n['changed_part']} part(s) look different" if n["changed_part"] else "",
+                f"{n['extra_part']} unexpected part(s)" if n["extra_part"] else "") if x)
         if force_review and verdict == "PASS":
             verdict = "REVIEW"
         shown = [] if verdict == "PASS" else [

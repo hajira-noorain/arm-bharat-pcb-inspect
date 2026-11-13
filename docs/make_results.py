@@ -482,6 +482,21 @@ def parts_section(r: Path) -> list[str]:
                          pct(v.get("any_parts_finding", 0) / n),
                          "n/a" if k == "good" else pct(v.get("missing_on_the_labelled_area", 0) / n),
                          "n/a" if k == "good" else pct(v.get("unexpected_on_the_labelled_area", 0) / n)])
+        only = vs.get("all_designs_detector_only") or {}
+        cmp_rows = []
+        for k in order:
+            v, o = allt.get(k), only.get(k)
+            if not v or not o:
+                continue
+            n = v["images"]
+            key = "any_parts_finding" if k == "good" else ("unexpected_on_the_labelled_area" if k == "extra"
+                                                           else "finding_on_the_labelled_area")
+            cmp_rows.append([{"good": "Good boards: something raised (false call)"}.get(
+                k, f"Labelled '{k}': reported on the labelled area"), n, pct(o.get(key, 0) / n), pct(v.get(key, 0) / n)])
+        if cmp_rows:
+            out += ["\nThe same photos decided two ways: by the part detector alone, and by the detector together with "
+                    "the picture comparison (a part is missing only when both agree; the station uses this one):\n",
+                    table(["Photos", "Count", "Detector alone", "Detector and picture comparison"], cmp_rows)]
         per = [[d, v["taught"]["parts"], v["taught"].get("left_off_as_unreliable", 0), v.get("ignore_zones", 0),
                 v.get("scale_chosen")] for d, v in vs["designs"].items()]
         out += ["\n### Assembled boards: parts check on real missing and extra parts (VisA pcb1-4)\n",

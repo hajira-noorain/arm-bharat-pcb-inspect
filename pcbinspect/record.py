@@ -25,7 +25,7 @@ BARE_CLASSES: tuple[str, ...] = (
 # Anything the anomaly model flags that the detector cannot name.
 ANOMALY_CLASS = "unknown_anomaly"
 # Assembled boards: a part of the taught good board is not there, or something is where the good board has none.
-PART_CLASSES: tuple[str, ...] = ("missing_part", "extra_part")
+PART_CLASSES: tuple[str, ...] = ("missing_part", "extra_part", "changed_part")
 
 Source = Literal["detector", "golden", "anomaly", "parts"]
 Severity = Literal["minor", "major", "critical"]

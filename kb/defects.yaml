@@ -196,3 +196,16 @@ defects:
       - {id: XPART-A1, short: "remove it and check for shorts", text: "Remove the loose part or debris and check the area for solder bridges."}
       - {id: XPART-A2, short: "check the build variant", text: "Check the board's build variant against the parts list for this order."}
       - {id: XPART-A3, short: "hold until a person clears it", text: "Hold the board until a person has confirmed or cleared the finding."}
+
+  changed_part:
+    name: "Part looks different"
+    what: "A part is at its place, but it does not look like the part on the taught good board: it may be a different part, turned round, standing on end, or the same part from another supplier."
+    process_step: assembly
+    causes:
+      - {id: CPART-C1, step: assembly, short: "wrong part loaded", text: "A different part was loaded for this position: wrong reel or tray on the feeder, or a feeder set up in the wrong slot."}
+      - {id: CPART-C2, step: assembly, short: "part turned or standing up", text: "The part is rotated, reversed or standing on one end: placed at the wrong angle, or pulled up during reflow by uneven paste or heating."}
+      - {id: CPART-C3, step: handling, short: "same part from another supplier", text: "The part is correct but looks different: another approved supplier's version, or a different marking or colour between lots."}
+    actions:
+      - {id: CPART-A1, short: "check the part against the parts list", text: "Check the part's marking and orientation against the parts list and the assembly drawing."}
+      - {id: CPART-A2, short: "check the feeder set-up", text: "Check which reel is loaded on this position's feeder before running more boards."}
+      - {id: CPART-A3, short: "if it is an approved part, teach again", text: "If the part is an approved alternative, teach the board again with it so it is no longer flagged."}
