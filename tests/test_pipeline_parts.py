@@ -177,8 +177,9 @@ def swapped(shift=(0, 0)):
     img = board()
     x, y, w, h = PARTS[4]
     cv2.rectangle(img, (x, y), (x + w, y + h), (25, 25, 30), -1)          # a dark body where the good one is light
-    cv2.rectangle(img, (x + 15, y + 15), (x + w - 15, y + h - 15), (235, 235, 240), -1)   # with a bright label, so
-    #                                                                     the stand-in detector still sees a part
+    cv2.rectangle(img, (x + 3, y + 3), (x + w - 3, y + h - 3), (235, 235, 240), 5)        # with a bright frame, so the
+    cv2.line(img, (x + 3, y + h // 2), (x + w - 3, y + h // 2), (235, 235, 240), 5)       # stand-in detector still sees
+    #                                                                     a part of the same size there
     if shift != (0, 0):
         img = cv2.warpAffine(img, np.float32([[1, 0, shift[0]], [0, 1, shift[1]]]), (800, 600),
                              borderMode=cv2.BORDER_REPLICATE)

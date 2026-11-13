@@ -129,3 +129,14 @@ def test_parts_are_found_at_the_detectors_training_scale_and_reported_in_the_pic
     m = teach_parts(det, lambda crops: [("capacitor", 0.9)] * len(crops), img)
     assert len(m.parts) == 4 and m.summary()["by_kind"] == {"capacitor": 4}
     assert m.scale == 1.0 or m.scale in (0.5, 0.75, 1.5, 2.0)   # no mm scale given: a factor was chosen and stored
+
+
+def test_a_small_part_inside_a_big_parts_outline_does_not_stand_in_for_the_big_part():
+    m = make_map()                                             # the chip is at (100, 300), 80 x 80
+    others = [GOOD[0], GOOD[1], GOOD[3]]
+    pad = det(130, 330, 14, 10)                                # something small where the chip was
+    f = compare(m, others + [pad])
+    assert [x.kind for x in f if x.what == "missing_part"] == ["ic"]
+    assert not any(x.what == "extra_part" for x in f)          # ... and it is not called unexpected either
+    fragment = det(100, 300, 80, 45)                           # more than half the chip, as a tile edge might cut it
+    assert compare(m, others + [fragment]) == []
