@@ -30,19 +30,21 @@ def table(header, rows):
     return "\n".join(out)
 
 
-def bare_section(r: Path, tag_pref=("executorch", "final", "ultralytics", "ep70")) -> list[str]:
+def bare_section(r: Path, tag_pref=("v3_et", "v3", "executorch", "final", "ultralytics", "ep70")) -> list[str]:
     out = []
     tags = [t for t in tag_pref if (r / f"bare_eval_{t}.json").exists()]
+    gate_ev = next((load(r / f"bare_eval_{t}.json") for t in tags
+                    if (load(r / f"bare_eval_{t}.json") or {}).get("gate")), None)
     for tag in tags:
         ev = load(r / f"bare_eval_{tag}.json")
         if not ev:
             continue
         out.append(f"### Bare-board detection (held-out test boards, `{tag}` runtime)\n")
         rows = []
-        for scope in ("all", "deeppcb", "hripcb", "mendeley"):
+        for scope in ("all",) + SOURCES:
             d = ev.get(f"det_{scope}")
             if d:
-                rows.append([scope, d["n_boards"], sum(d["n_gt"].values()), pct(d["mAP50"])])
+                rows.append([SOURCE_NAMES.get(scope, scope), d["n_boards"], sum(d["n_gt"].values()), pct(d["mAP50"])])
         out.append(table(["Test set", "Boards", "Defects", "mAP@0.5"], rows))
         d = ev.get("det_all", {})
         if d.get("AP50_per_class"):
@@ -52,7 +54,7 @@ def bare_section(r: Path, tag_pref=("executorch", "final", "ultralytics", "ep70"
                               for c, a in d["AP50_per_class"].items()]))
         out.append("\n### Conformal PASS / FAIL / CHECK gate (test boards never used for calibration)\n")
         rows = []
-        for design, by_a in ev.get("gate", {}).items():
+        for design, by_a in (gate_ev or {}).get("gate", {}).items():
             for a, g in by_a.items():
                 lo, hi = g["miss_rate_ci95"]
                 dlo, dhi = g.get("defect_recall_ci95", (None, None))
@@ -68,6 +70,57 @@ def bare_section(r: Path, tag_pref=("executorch", "final", "ultralytics", "ep70"
                           "Good boards failed", "Sent to a person"], rows))
         break
     return out
+
+
+SOURCES = ("deeppcb", "hripcb", "mendeley", "dspcbsd", "defectdet")
+SOURCE_NAMES = {"all": "All test boards", "deeppcb": "DeepPCB", "hripcb": "PKU-Market-PCB (HRIPCB)",
+                "mendeley": "Mendeley PCB-Defect", "dspcbsd": "DsPCBSD+", "defectdet": "DefectDet (held-out boards)"}
+DETECTORS = (("base", "DeepPCB + HRIPCB + Mendeley"), ("cam", "+ camera-style augmentation"),
+             ("v2", "+ DsPCBSD+"), ("v3", "+ half of DefectDet's boards, solder-mask recolouring (deployed)"))
+
+
+def detector_compare_section(r: Path) -> list[str]:
+    rows = []
+    for tag, label in DETECTORS:
+        ev = load(r / f"bare_eval_{tag}.json")
+        if not ev:
+            continue
+        rows.append([f"{tag}: {label}"] + [pct((ev.get(f"det_{s}") or {}).get("mAP50")) for s in ("all",) + SOURCES])
+    if not rows:
+        return []
+    return ["### Detector versions on the same held-out test boards (mAP@0.5)\n",
+            "Each version adds training data; the test boards are the same for all of them and were never trained on. "
+            "DefectDet is split by physical board: the test boards are boards the model never saw, from the same lab.\n",
+            table(["Detector", "All"] + [SOURCE_NAMES[s] for s in SOURCES], rows)]
+
+
+def external_section(r: Path) -> list[str]:
+    ev = load(r / "external_defectdet_heldout.json")
+    if not ev:
+        return []
+    rows = [[k.split("@")[0], f"x{v['scale']:g}", pct(v["mAP50_shared_classes"]), pct(v["defect_recall_at_lambda"]),
+             num(v["false_calls_per_board"], 2)] for k, v in ev["models"].items()]
+    return [f"### DefectDet held-out boards, resized before inspection ({ev['n_boards']} boards)\n",
+            "Tests whether enlarging small-defect photos helps the detector (it does not: native scale is best).\n",
+            table(["Detector", "Resize", "mAP@0.5", "Defects found at the gate threshold", "False calls per board"],
+                  rows)]
+
+
+def realiad_section(r: Path) -> list[str]:
+    rows = []
+    for tag, label in (("r18_256", "ResNet18, 256 px"), ("r18_320", "ResNet18, 320 px"),
+                       ("wrn50_256", "WideResNet50, 256 px")):
+        ev = load(r / f"realiad_pcb_{tag}.json")
+        if not ev:
+            continue
+        v = ev["views"]
+        rows.append([label] + [pct(v[c]["image_auroc"]) if c in v else "n/a" for c in ("C1", "C2", "C3", "C4", "C5")]
+                    + [pct(ev.get("mean_image_auroc"))])
+    if not rows:
+        return []
+    return ["### Assembled boards, second dataset: Real-IAD `pcb` (evaluation only, never trained on or shipped)\n",
+            "One good-board memory per camera view, built from that view's good images; image AUROC per view.\n",
+            table(["Backbone", "View 1", "View 2", "View 3", "View 4", "View 5", "Mean"], rows)]
 
 
 def anomaly_section(r: Path) -> list[str]:
@@ -91,8 +144,13 @@ def anomaly_section(r: Path) -> list[str]:
 
 def anomaly_compare_section(r: Path) -> list[str]:
     """Backbone / input-size comparison (results/anomaly_<pcb>_<tag>.json)."""
-    tags = [("r18_256", "ResNet18, 256 px"), ("r18_320", "ResNet18, 320 px"),
-            ("wrn50_256", "WideResNet50, 256 px"), ("wrn50_320", "WideResNet50, 320 px")]
+    tags = [("r18_256", "ResNet18, 256 px, max patch"), ("r18_320", "ResNet18, 320 px, max patch"),
+            ("r18_320_top", "ResNet18, 320 px, top-1% patches (deployed)"),
+            ("r18_320_pn", "ResNet18, 320 px, per-position normalised"),
+            ("r18_320_pn_fg_top", "ResNet18, 320 px, normalised + board mask + top-1%"),
+            ("r18_384", "ResNet18, 384 px, max patch"),
+            ("r18_384_pn_fg_top", "ResNet18, 384 px, normalised + board mask + top-1%"),
+            ("wrn50_256", "WideResNet50, 256 px, max patch"), ("wrn50_320", "WideResNet50, 320 px, max patch")]
     rows = []
     for tag, label in tags:
         vals = [load(r / f"anomaly_pcb{k}_{tag}.json") for k in (1, 2, 3, 4)]
@@ -212,7 +270,7 @@ def golden_section(r: Path) -> list[str]:
 
 def eyetest_section(r: Path) -> list[str]:
     out = []
-    pod = load(r / "pod_insilico.json")
+    pod = load(r / "pod_insilico_v3.json") or load(r / "pod_insilico.json")
     if pod:
         out.append("### Detection-limit eye test, in silico (defects drawn on held-out DeepPCB patterns)\n")
         out.append(f"{pod['n_drawn']} drawn defects on held-out clean patterns at {pod['px_per_mm']:.0f} px/mm; "
@@ -227,7 +285,7 @@ def eyetest_section(r: Path) -> list[str]:
                num(o.get("golden", {}).get("false_calls_per_board"), 2)] for c, o in pod["conditions"].items()]
         out.append("\nFalse calls per clean board at the operating threshold:\n")
         out.append(table(["Camera condition", "Detector only", "Detector + golden board"], fc))
-    sim = load(r / "eyetest_sim.json")
+    sim = load(r / "eyetest_sim_v3.json") or load(r / "eyetest_sim.json")
     if sim:
         out.append("\n### Eye-test card read from SIMULATED photos (print + camera model, not real photos)\n")
         out.append(f"Inkjet dot gain {sim['ink_um']:.0f} um, camera {sim['px_per_mm']:.0f} px/mm on paper, "
@@ -240,6 +298,9 @@ def eyetest_section(r: Path) -> list[str]:
                              " ".join(f"{x['size_mm']}:{x['hits']}/{x['n']}" for x in v["table"])])
         out.append(table(["Evidence", "Defect", "Statement", "Found / planted per size (mm)"], rows))
     return out
+
+
+SPEC_TAGS = {"1b": "zero-shot", "3b": "zero-shot", "3b_fewshot": "worked examples (deployed)"}
 
 
 def spec_section(r: Path) -> list[str]:
@@ -259,7 +320,8 @@ def spec_section(r: Path) -> list[str]:
                     continue
                 seen_kw = True
             for sname, sc in by_set.items():
-                rows.append([name, sname, sc["n"], pct(sc["exact"]), pct(sc["auto_correct"]), pct(sc["silent_wrong"]),
+                label = "keyword" if name == "keyword" else f"{name} ({SPEC_TAGS.get(tag, tag)})"
+                rows.append([label, sname, sc["n"], pct(sc["exact"]), pct(sc["auto_correct"]), pct(sc["silent_wrong"]),
                              pct(sc["to_operator"]), pct(sc["failed"]),
                              "0" if name == "keyword" else f"{sc['latency_ms_median'] / 1000:.1f} s"])
     out.append(table(["Reader", "Set", "Clauses", "Exactly right", "Auto-accepted and right", "Silently wrong",
@@ -285,8 +347,9 @@ def main():
     parts = ["# Measured results\n",
              "Generated by `docs/make_results.py` from the JSON files the experiments write. "
              "Nothing in this file is typed by hand.\n"]
-    for sec in (bare_section(r), golden_section(r), eyetest_section(r), spec_section(r),
-                anomaly_compare_section(r), anomaly_section(r), advice_section(r),
+    for sec in (bare_section(r), detector_compare_section(r), external_section(r), golden_section(r),
+                eyetest_section(r), spec_section(r), anomaly_section(r), anomaly_compare_section(r),
+                realiad_section(r), advice_section(r),
                 learning_section(r),
                 device_section(Path(a.device) if a.device else None)):
         if sec:
