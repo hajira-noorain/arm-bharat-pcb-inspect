@@ -1,42 +1,49 @@
-# PCB Inspection Station: offline defect inspection with on-device Llama advice
+# PCB Inspection Station: an offline inspector that knows its own limits
 
 Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5 (real-time industrial defect detection and quality-control assistant).
 
-A Raspberry Pi 5 with a camera inspects printed circuit boards. Everything runs on the Pi's Arm CPU through ExecuTorch, with no cloud. For each board it:
+Every inspection system claims a high accuracy figure. This one **measures the smallest defect it can find on your camera, says what it cannot see, and refuses customer rules it cannot guarantee.** It runs on a Raspberry Pi 5's Arm CPU with no cloud: vision through ExecuTorch (or Arm's optimised YOLO26 runtime), Llama 3.2 through ExecuTorch.
 
-- **finds and names defects** on bare boards (8 types), and flags anything unusual on assembled boards;
-- **estimates each defect's size in millimetres** by comparing with a known-good image of the same design. Every value carries a ±1 pixel uncertainty, and when a limit falls inside that band the station says so instead of guessing;
-- **gives a disposition for the customer's IPC class**: ACCEPT, REWORK, SCRAP, or REVIEW by a person;
-- **returns a verdict**: PASS, FAIL, or CHECK (a person decides). The pass threshold is set by conformal calibration, so that *on boards like the calibration set* the share of defective boards passed is at most the chosen rate, on average;
-- **asks Llama 3.2 (on ExecuTorch) for advice**: Llama picks a likely cause and next action from a defect knowledge base and writes a short summary. A checker rejects any answer that is not supported by the findings;
+For each board it:
+
+- **finds and names defects** on bare boards (11 types) and flags anything unusual on assembled boards;
+- **compares against a known-good board** when one exists, which catches defects the detector misses, checks connectivity (a short joins two conductors, an open splits one) and **measures each defect in millimetres**;
+- **grades severity** against IPC-style limits for the customer's class;
+- **returns PASS, FAIL or CHECK** (a person decides). The operator picks how many defects may slip through (1%, 5%, 10%); conformal calibration guarantees that rate per defect on boards like the calibration boards;
+- **explains each finding with Llama 3.2 1B**, which picks causes and actions from a defect knowledge base; a checker rejects anything not supported by the findings;
 - **logs everything** on the device and lights a green, amber or red stack light;
-- **learns on the floor**:
-  - a new design is taught from good boards;
-  - operator corrections train a small head on top of the detector. It is switched on only if checks on the operators' own labels and on calibration boards show it does not hide defects.
+- **learns on the floor**: a new design is taught from 5-10 good boards, and operator corrections train a small head that is switched on only if it provably does not hide defects.
+
+And it proves what it can do:
+
+- **Eye test.** Photograph a printed card of 252 defects of known size. The station states, per defect type, the smallest size it finds 90% of the time with 95% confidence (MIL-HDBK-1823A a90/95), and which sizes it cannot certify.
+- **Customer rules.** Plain-English acceptance clauses are compiled by **Llama 3.2 3B on ExecuTorch** into executable rules, verified by deterministic checks, and compared with the measured limit. A rule asking for smaller defects than the station can see is flagged, not silently accepted.
 
 ## How it covers PS5
 
 | PS5 requirement | What the station does | Where |
 |---|---|---|
-| Detect surface defects, cracks, anomalies | YOLO26n (8 bare-board defect types), plus a patch-memory anomaly flag for assembled boards | `pcbinspect/detect_bare.py`, `pcbinspect/anomaly.py` |
-| Classify type and severity | Defect type from the detector. Size from golden-board comparison against IPC-style class limits gives a disposition for the customer's class | `pcbinspect/golden.py`, `pcbinspect/severity.py`, `config/severity.yaml` |
-| Alert operators with actionable recommendations | Verdict band, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `pcbinspect/advisor.py`, `pcbinspect/grounding.py` |
-| Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, model versions), plus CSV export | `pcbinspect/store.py` |
-| Real time at the edge, no cloud | All models run as ExecuTorch `.pte` files with the XNNPACK delegate on the Pi 5 CPU. Measured timings are in `docs/RESULTS.md` | `bench/bench_device.py`, `bench/soak.py` |
-| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoint) exported with ExecuTorch `export_llm` and run through `TextLLMRunner` | `pcbinspect/llm.py`, `llm/` |
+| Detect surface defects, cracks, anomalies | YOLO26n (11 bare-board defect types), golden-board comparison with a connectivity check, and a patch-memory anomaly flag for assembled boards | `pcbinspect/detect_bare.py`, `golden_diff.py`, `fusion.py`, `anomaly.py` |
+| Classify type and severity | Defect type from the detector; size in mm from the golden comparison against IPC-style class limits | `pcbinspect/golden.py`, `severity.py`, `config/severity.yaml` |
+| Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `advisor.py`, `grounding.py` |
+| Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
+| Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; timings, memory and a 30-minute soak are measured on the device | `bench/`, `deploy/measure_on_pi.sh` |
+| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoints) exported with ExecuTorch `export_llm`, run through `TextLLMRunner`: 1B for advice, 3B for compiling customer rules | `pcbinspect/llm.py`, `spec_llm.py`, `llm/` |
 
 ## Two pipelines
 
 ```
-VISION (ExecuTorch + XNNPACK, Arm CPU)                 REASONING (ExecuTorch, Llama 3.2, Arm CPU)
-camera -> ArUco scale + QR board ID                    structured defect record (no pixels)
-  -> YOLO26n on tiles (.pte) -> named defects            + knowledge-base options for each defect
-  -> ResNet patch memory (.pte) -> unusual areas         + recent history on this line
-  -> golden-board comparison -> size in mm (+/-1 px)   -> Llama picks a cause/action for each defect,
-  -> IPC-style class limits -> disposition                then writes a 1-2 sentence summary
-  -> conformal gate -> PASS / FAIL / CHECK             -> checker: options valid, numbers and defect
-  -> SQLite log, stack light                              types must come from the record
-                                                       -> operator reads knowledge-base text verbatim
+VISION (ExecuTorch / Arm runtime, Arm CPU)            REASONING (ExecuTorch, Llama 3.2, Arm CPU)
+camera (focus + exposure locked) -> ArUco scale, QR   structured defect record (no pixels)
+  -> YOLO26n on tiles -> named defects                  + knowledge-base options for each defect
+  -> golden-board comparison + connectivity check     -> 1B picks causes / actions, writes a summary
+  -> fused evidence, size in mm                       -> checker: options valid, numbers and defect
+  -> ResNet-18 patch memory -> unusual areas             types must come from the record
+  -> IPC-style class limits -> disposition
+  -> per-defect conformal gate -> PASS / FAIL / CHECK  customer clause in plain English
+  -> customer rules -> SQLite log, stack light        -> 3B fills a fixed rule form, field by field
+                                                       -> schema, numbers, defect and second-reader checks
+eye-test card -> hit/miss per size -> a90/95 limit ---> capability check: can the station keep this rule?
 ```
 
 The verdict never waits for Llama. Advice arrives on a background thread a few seconds later.
@@ -45,13 +52,15 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 
 | Measured | Not yet validated |
 |---|---|
-| Detector accuracy on held-out boards from three public datasets, split by physical board | Accuracy on a live camera with our own boards |
-| Conformal gate behaviour on held-out boards (where the calibration set is large enough) | Copper segmentation and mm measurement on solder-masked boards under shop lighting |
-| Anomaly memory on VisA pcb1-4 (official split), including a few-shot curve | Component presence/polarity and solder-joint judgement on assembled boards (anomaly flag only) |
-| Llama advice: grounding pass rate, option-position bias and latency, for 1B and 3B | Llama choosing a cause better than chance (measured: it does not, see RESULTS) |
-| Raspberry Pi 5 timings, memory and a 30-minute soak (see RESULTS once run) | Long-term drift on a real line |
+| Detector accuracy on held-out boards from five public datasets, split by physical board where the data allows | Accuracy on our own boards under a live camera (the eye-test card and one knife-cut board are the real-camera checks) |
+| Per-defect conformal gate on held-out boards | The eye-test limit for etched copper rather than printed paper |
+| Golden-board comparison and fusion on held-out DeepPCB boards | Copper segmentation on solder-masked boards under shop lighting |
+| Eye-test reader on simulated photos of the card; in-silico detection limits under three camera conditions | Component presence/polarity and solder-joint judgement on assembled boards (anomaly flag only) |
+| Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
+| Llama advice grounding and choice vs chance; Llama rule compiler on 80 tuning and 40 held-out clauses | |
+| Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
 
-The public datasets are scans or close-up photos, and their defects are partly synthetic: PKU-Market-PCB defects were drawn in with an image editor, and DeepPCB's were partly added by hand. Dataset results and real-camera results are therefore reported separately.
+The public datasets are scans or close-up photos, and some defects are synthetic: PKU-Market-PCB defects were drawn in with an image editor, and some of DeepPCB's were added by hand. Dataset results and real-camera results are therefore reported separately.
 
 ## Run it
 
@@ -60,7 +69,7 @@ The public datasets are scans or close-up photos, and their defects are partly s
 ```bash
 tar xf pcb-station.tar && cd pcb-station
 bash deploy/pi_setup.sh          # once: apt packages + Python env with the aarch64 ExecuTorch wheel
-python deploy/arm_check.py       # loads every model and runs it once
+python deploy/arm_check.py       # loads every model and runs it once (fails loudly if Llama does not run)
 bash deploy/run_on_pi.sh         # camera auto-detect (Pi Camera, else USB webcam)
 bash deploy/run_on_pi.sh replay  # or cycle through held-out demo boards
 bash deploy/hotspot.sh           # optional: a phone joins "PCB-Station" and opens http://10.42.0.1:8000
@@ -68,7 +77,9 @@ bash deploy/hotspot.sh           # optional: a phone joins "PCB-Station" and ope
 
 Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale_marker_sheet.pdf` at 100%, check its ruler, and place a marker beside the board.
 
-**Measurements:** `python -m bench.bench_device` and `python -m bench.soak --minutes 30`.
+**Measurements:** `bash deploy/measure_on_pi.sh` runs the functional check, every benchmark and a 30-minute soak, and packs the results.
+
+**Eye test:** print `assets/eyetest/eyetest_card.pdf` on an inkjet at 100%, then follow the Eye test tab on the dashboard.
 
 **Rebuilding the models** (on a PC):
 
@@ -82,11 +93,4 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 
 ## Data and licences
 
-| Dataset | Use | Licence |
-|---|---|---|
-| [DeepPCB](https://github.com/tangsanli5201/DeepPCB) | Bare-board defects (binarised, partly hand-added) plus defect-free templates | Research use (per README) |
-| [PKU-Market-PCB / HRIPCB](https://github.com/Ironbrotherstyle/PCB-DATASET) | Bare-board defects drawn in with an image editor, split by physical board | Research use |
-| [PCB-Defect (Mendeley, 2025)](https://data.mendeley.com/datasets/vdj74sngvn/1) | Real etched boards, flatbed scans | See the dataset page |
-| [VisA pcb1-4](https://github.com/amazon-science/spot-diff) | Assembled boards, anomaly detection | CC BY 4.0 |
-
-Llama 3.2 is used under the [Llama 3.2 Community License](https://www.llama.com/llama3_2/license/). The IPC-style limits in `config/severity.yaml` come from a cited secondary source and are editable. They do not replace the licensed IPC standards or a customer's own specification.
+Datasets, models and software licences, including Llama 3.2 and Ultralytics, are listed in `NOTICE.md`. No dataset is redistributed here. Real-IAD (non-commercial) is used for evaluation only and never for anything shipped. The IPC-style limits in `config/severity.yaml` come from a cited secondary source and are editable; they do not replace the licensed IPC standards or a customer's own specification.
