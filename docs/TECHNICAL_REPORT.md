@@ -9,7 +9,7 @@ Every inspection system claims a high accuracy figure. None of them can tell a f
 This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and grades bare-board and assembled-board defects. It logs every inspection and explains every finding with Llama 3.2 running on ExecuTorch. On top of that, it does three things no inspection system we reviewed does:
 
 1. **It measures its own detection limit, like an eye test.** The operator photographs a printed test card carrying 252 defects of known size. The station reads the card and states, per defect type, the smallest size it finds 90% of the time with 95% confidence (the a90/95 figure from the US military's non-destructive-testing handbook, MIL-HDBK-1823A). It also says plainly which sizes it cannot certify.
-2. **It says when it is unsure, with a guaranteed miss rate.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.0% of defects.
+2. **It says when it is unsure, with a guaranteed miss rate.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.2% of defects.
 3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject mouse bites that remove more than 20% of the trace width"). Llama on ExecuTorch turns each clause into an executable rule, choosing only among answers the clause supports (constrained decoding on the exported model). Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
 
 | What a reviewer can check | Where |
@@ -135,10 +135,10 @@ On DeepPCB test boards (250 boards, 1,579 defects), with the golden image re-cap
 | Evidence | One random defect per board missed (95% CI) | False calls per board | Named correctly |
 |---|---|---|---|
 | Detector only | 6.3% (4.9% to 7.9%) | 0.12 | 99% |
-| Golden difference only | 4.9% (3.6% to 6.3%) | 1.02 | 81% |
-| Fused (deployed) | 4.0% (3.1% to 5.0%) | 0.66 | 99% |
+| Golden difference only | 4.8% (3.6% to 6.2%) | 0.98 | 80% |
+| Fused (deployed) | 4.2% (3.3% to 5.2%) | 0.57 | 99% |
 
-Fusing keeps the detector's naming and the golden comparison's reach: fewer misses than either alone, inside the 5% target.
+Fusing keeps the detector's naming and the golden comparison's reach: fewer misses than either alone, inside the 5% target. In the fused channel a detection with no copper change under it is kept but trusted at 0.7 of its confidence: the golden board saw nothing there. That setting (0.7 and 0.5 gave the same result) cost 0.2 points of misses on these boards and removed false calls here and, more so, on the eye-test card (section 5.2).
 
 Three properties of this channel were found wanting in review and fixed, each with a test:
 
@@ -189,7 +189,7 @@ On held-out test boards at a 5% allowed miss rate:
 | HRIPCB | 121 / 2 | 4.5% (2.8% to 6.3%) | 4.4% of 610 | 1.07 | 100% |
 | Mendeley | 27 / 0 | 3.6% (1.1% to 6.4%) | 3.4% of 207 | 7.07 | 100% |
 
-**What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.0%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
+**What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.2%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
 
 DeepPCB's "good boards" are its defect-free templates, which are cleaner than a production good board would be, so its 20% sent to a person and 0.8% of good boards failed are best cases. PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 among the calibration boards), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
 
@@ -211,11 +211,11 @@ A dataset score says how a model did on someone else's photos. A factory needs t
 |---|---|---|---|
 | Opens | 0.06 mm | 0.06 mm | 0.06 mm |
 | Shorts across gaps | 0.15 mm | 0.15 mm | 0.15 mm |
-| Spurs | 0.17 mm | 0.14 mm | 0.14 mm |
-| Spurious copper | 0.30 mm | 0.18 mm | 0.18 mm |
-| Pin holes | 0.30 mm | 0.19 mm | 0.18 mm |
-| Mouse bites | 0.45 mm | 0.48 mm | 0.43 mm |
-| False calls per clean board | 0.09 | 0.17 | 0.21 |
+| Spurs | 0.16 mm | 0.12 mm | 0.14 mm |
+| Spurious copper | 0.18 mm | 0.18 mm | 0.16 mm |
+| Pin holes | 0.18 mm | 0.18 mm | 0.18 mm |
+| Mouse bites | 0.42 mm | 0.42 mm | 0.41 mm |
+| False calls per clean board | 0.05 | 0.06 | 0.06 |
 
 Read the smallest figures with care: 0.06 mm is under 3 pixels at this scale, on binarised patterns with no optics, and the simulated conditions are a model. They show the software's floor, not what a camera will resolve; that is what the printed card and the taught board measure. These are with the golden board. The detector alone certified no open-ended size for any type under any condition. For several types it found only a band of small sizes (shorts across gaps from 0.15 to 0.45 mm, for example) and missed larger ones significantly more often: a learned detector knows the defects it was trained on, not "anything bigger". This is why the station leads with the golden comparison.
 
@@ -228,7 +228,9 @@ Read the smallest figures with care: 0.06 mm is under 3 pixels at this scale, on
 | Spurious copper | from 0.20 mm (smallest tested) | not certified up to 1.00 mm |
 | Shorts across gaps | from 0.34 mm | not certified up to 0.50 mm |
 | Pin holes | from 0.42 mm | not certified up to 1.00 mm |
-| Mouse bites | from 0.50 mm | not certified up to 1.00 mm |
+| Mouse bites | from 0.48 mm | not certified up to 1.00 mm |
+
+False calls on the simulated card were 0.32 per pattern with the golden board and 0.39 for the detector alone. The deployed detector is noticeably more trigger-happy on printed binarised patterns than the first version was (0.02): the price of the data that made it work on real board photos. Two fixes came out of chasing this: the card reader now shows the detector each pattern as one native tile (padded crops cut at tile seams had doubled the false calls), and the reduced trust for unsupported detections described in section 3.3.
 
 That table is the strongest argument for the golden comparison: a detector that scores 96% mAP on DeepPCB cannot promise 90% detection of any size on simulated photos of a printed card. This validates the reader, not the physical print or camera. The real card is photographed on the Pi on 20-21 November.
 

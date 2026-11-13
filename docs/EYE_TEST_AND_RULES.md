@@ -59,7 +59,7 @@ The eye test was built to certify the station. Its first job was to find what wa
 - The first gate calibrated the board-level score, the strongest defect on the board.
 - On DeepPCB at a 5% miss setting, 95% of defective boards were caught, but only **34% of individual defects** were shown. Boards carry several defects, and the maximum is high.
 - The gate is now calibrated per defect: one randomly chosen ground-truth defect per calibration board, scored by the strongest covering detection. This gives the finite-sample conformal guarantee for "a defect on a new board is shown with probability ≥ 1−α". The board-level guarantee follows automatically.
-- Result on held-out DeepPCB boards with the deployed detector: 93.2% of all defects shown; one random defect per board missed 6.5% of the time (95% CI 5.0% to 8.1%), at the edge of the 5% target. With the golden board fused in, 4.0% (3.1% to 5.0%). The cost is more false calls per board. Sources: `bare_eval_v3.json`, `golden_eval_deeppcb_v3.json` (`pcbinspect/gate.py`).
+- Result on held-out DeepPCB boards with the deployed detector: 93.2% of all defects shown; one random defect per board missed 6.5% of the time (95% CI 5.0% to 8.1%), at the edge of the 5% target. With the golden board fused in, 4.2% (3.3% to 5.2%). The cost is more false calls per board. Sources: `bare_eval_v3.json`, `golden_eval_deeppcb_v3.json` (`pcbinspect/gate.py`).
 
 **2. A learned detector has a detection window, not a limit.**
 

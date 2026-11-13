@@ -33,17 +33,19 @@ Per class (all test boards):
 
 The gate is calibrated PER DEFECT (one random defect per calibration board); a defect is shown when its evidence reaches the threshold. Miss rates are measured on test boards. "One random defect per board" is the quantity the guarantee covers (interval: bootstrap over boards); "all defects" pools every defect, so boards with many defects weigh more. A design with no good calibration boards never says PASS, so every board goes to a person. A rate marked "too few calibration defects" needs at least 1/rate - 1 of them and carries no guarantee.
 
-| Design | Allowed miss rate | Defective | Good | Missed, one random defect per board (95% CI) | Missed, all defects (95% CI) | Defective boards passed (95% CI) | False calls per board | Good boards failed | Sent to a person |
-|---|---|---|---|---|---|---|---|---|---|
-| DeepPCB | 1% | 250 | 250 | 1.0% (0.5% to 1.6%) | 1.1% (0.6% to 1.7%) | 0.0% (0.0% to 1.5%) | 0.99 | 0.8% | 34.2% |
-| DeepPCB | 5% | 250 | 250 | 6.5% (5.0% to 8.1%) | 6.8% (5.6% to 8.1%) | 0.4% (0.0% to 2.2%) | 0.12 | 0.8% | 19.8% |
-| DeepPCB | 10% | 250 | 250 | 11.6% (9.7% to 13.5%) | 12.3% (10.7% to 14.0%) | 0.8% (0.1% to 2.9%) | 0.07 | 0.8% | 18.8% |
-| PKU-Market-PCB (HRIPCB) | 1% | 121 | 2 | 0.5% (0.0% to 1.2%) | 0.5% (0.1% to 1.4%) | 0.0% (0.0% to 3.0%) | 2.80 | 0.0% | 100.0% |
-| PKU-Market-PCB (HRIPCB) | 5% | 121 | 2 | 4.5% (2.8% to 6.3%) | 4.4% (2.9% to 6.4%) | 0.0% (0.0% to 3.0%) | 1.07 | 0.0% | 100.0% |
-| PKU-Market-PCB (HRIPCB) | 10% | 121 | 2 | 8.1% (5.6% to 10.7%) | 8.0% (6.0% to 10.5%) | 0.0% (0.0% to 3.0%) | 0.50 | 0.0% | 99.2% |
-| Mendeley PCB-Defect | 1% (too few calibration defects) | 27 | 0 | 3.1% (1.0% to 5.5%) | 2.9% (1.1% to 6.2%) | 0.0% (0.0% to 12.8%) | 8.00 | 0.0% | 100.0% |
-| Mendeley PCB-Defect | 5% | 27 | 0 | 3.6% (1.1% to 6.4%) | 3.4% (1.4% to 6.8%) | 0.0% (0.0% to 12.8%) | 7.07 | 0.0% | 100.0% |
-| Mendeley PCB-Defect | 10% | 27 | 0 | 12.9% (8.7% to 17.3%) | 13.0% (8.8% to 18.4%) | 0.0% (0.0% to 12.8%) | 1.26 | 0.0% | 100.0% |
+"Promised" is what this one calibration set supports: averaged over calibrations the miss rate is at most the target, and with 95% confidence it is at most the figure shown (n = calibration defects). Read the measured column against it.
+
+| Design | Target miss rate | Promised at 95% confidence | Defective | Good | Missed, one random defect per board (95% CI) | Missed, all defects (95% CI) | Defective boards passed (95% CI) | False calls per board | Good boards failed | Sent to a person |
+|---|---|---|---|---|---|---|---|---|---|---|
+| DeepPCB | 1% | 1.9% (n=250) | 250 | 250 | 1.0% (0.5% to 1.6%) | 1.1% (0.6% to 1.7%) | 0.0% (0.0% to 1.5%) | 0.99 | 0.8% | 34.2% |
+| DeepPCB | 5% | 7.2% (n=250) | 250 | 250 | 6.5% (5.0% to 8.1%) | 6.8% (5.6% to 8.1%) | 0.4% (0.0% to 2.2%) | 0.12 | 0.8% | 19.8% |
+| DeepPCB | 10% | 13.2% (n=250) | 250 | 250 | 11.6% (9.7% to 13.5%) | 12.3% (10.7% to 14.0%) | 0.8% (0.1% to 2.9%) | 0.07 | 0.8% | 18.8% |
+| PKU-Market-PCB (HRIPCB) | 1% | 2.5% (n=120) | 121 | 2 | 0.5% (0.0% to 1.2%) | 0.5% (0.1% to 1.4%) | 0.0% (0.0% to 3.0%) | 2.80 | 0.0% | 100.0% |
+| PKU-Market-PCB (HRIPCB) | 5% | 8.6% (n=120) | 121 | 2 | 4.5% (2.8% to 6.3%) | 4.4% (2.9% to 6.4%) | 0.0% (0.0% to 3.0%) | 1.07 | 0.0% | 100.0% |
+| PKU-Market-PCB (HRIPCB) | 10% | 14.7% (n=120) | 121 | 2 | 8.1% (5.6% to 10.7%) | 8.0% (6.0% to 10.5%) | 0.0% (0.0% to 3.0%) | 0.50 | 0.0% | 99.2% |
+| Mendeley PCB-Defect | 1% (too few calibration defects) | n/a | 27 | 0 | 3.1% (1.0% to 5.5%) | 2.9% (1.1% to 6.2%) | 0.0% (0.0% to 12.8%) | 8.00 | 0.0% | 100.0% |
+| Mendeley PCB-Defect | 5% | 7.6% (n=38) | 27 | 0 | 3.6% (1.1% to 6.4%) | 3.4% (1.4% to 6.8%) | 0.0% (0.0% to 12.8%) | 7.07 | 0.0% | 100.0% |
+| Mendeley PCB-Defect | 10% | 15.7% (n=38) | 27 | 0 | 12.9% (8.7% to 17.3%) | 13.0% (8.8% to 18.4%) | 0.0% (0.0% to 12.8%) | 1.26 | 0.0% | 100.0% |
 
 ### Detector versions on the same held-out test boards (mAP@0.5)
 
@@ -85,8 +87,8 @@ Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated o
 | Evidence | Missed, one random defect per board (95% CI) | Missed, all defects (95% CI) | False calls per board | Named correctly |
 |---|---|---|---|---|
 | Detector only | 6.3% (4.9% to 7.9%) | 6.6% (5.4% to 7.9%) | 0.12 | 99.3% |
-| Golden-board difference only | 4.9% (3.6% to 6.3%) | 5.0% (4.0% to 6.2%) | 1.02 | 80.8% |
-| Detector + golden difference (fused) | 4.0% (3.1% to 5.0%) | 4.2% (3.3% to 5.4%) | 0.66 | 98.8% |
+| Golden-board difference only | 4.8% (3.6% to 6.2%) | 4.9% (3.9% to 6.1%) | 0.98 | 80.5% |
+| Detector + golden difference (fused) | 4.2% (3.3% to 5.2%) | 4.4% (3.5% to 5.6%) | 0.57 | 98.9% |
 
 ### Detection-limit eye test, in silico (defects drawn on held-out DeepPCB patterns)
 
@@ -94,32 +96,32 @@ Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated o
 
 | Camera condition | Defect | Detector only | Detector + golden board |
 |---|---|---|---|
-| clean | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). |
+| clean | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds opens from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). |
 | clean | short | Finds shorts across gaps only between 0.15 and 0.45 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). |
-| clean | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds pin holes from 0.30 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). |
-| clean | spurious copper | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Finds spurious copper spots from 0.30 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). |
-| clean | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.45 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
-| clean | spur | Finds spurs only between 0.11 and 0.14 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=302 trials). | Finds spurs from 0.17 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials). |
+| clean | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds pin holes from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). |
+| clean | spurious copper | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Finds spurious copper spots from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). |
+| clean | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.42 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
+| clean | spur | Finds spurs only between 0.11 and 0.14 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=302 trials). | Finds spurs from 0.16 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials). |
 | webcam | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). |
 | webcam | short | Finds shorts across gaps only between 0.15 and 0.36 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). |
-| webcam | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds pin holes from 0.19 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). |
+| webcam | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds pin holes from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). |
 | webcam | spurious copper | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Finds spurious copper spots from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). |
-| webcam | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.48 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
-| webcam | spur | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 0.55 mm, n=302). | Finds spurs from 0.14 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials). |
+| webcam | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.42 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
+| webcam | spur | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 0.55 mm, n=302). | Finds spurs from 0.12 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials). |
 | scale_0.5 | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). |
 | scale_0.5 | short | Finds shorts across gaps only between 0.15 and 0.45 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). |
 | scale_0.5 | pin hole | Finds pin holes only between 0.15 and 0.24 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=310 trials). | Finds pin holes from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). |
-| scale_0.5 | spurious copper | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Finds spurious copper spots from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). |
-| scale_0.5 | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.43 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
+| scale_0.5 | spurious copper | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Finds spurious copper spots from 0.16 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). |
+| scale_0.5 | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds mouse bites from 0.41 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). |
 | scale_0.5 | spur | Finds spurs only between 0.11 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=302 trials). | Finds spurs from 0.14 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials). |
 
 False calls per clean board at the operating threshold:
 
 | Camera condition | Detector only | Detector + golden board |
 |---|---|---|
-| clean | 0.12 | 0.09 |
-| webcam | 0.22 | 0.17 |
-| scale_0.5 | 0.24 | 0.21 |
+| clean | 0.12 | 0.05 |
+| webcam | 0.22 | 0.06 |
+| scale_0.5 | 0.24 | 0.06 |
 
 ### Eye-test card read from SIMULATED photos (print + camera model, not real photos)
 
@@ -127,33 +129,38 @@ Inkjet dot gain 40 um, camera 30 px/mm on paper, perspective, blur, noise and JP
 
 | Evidence | Defect | Statement | Found / planted per size (mm) |
 |---|---|---|---|
-| detector | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:25/30 0.3:22/30 0.4:17/30 0.5:10/30 0.7:8/30 1.0:1/30 |
-| detector | short | Does NOT reach 90% detection of shorts across gaps at 95% confidence at any tested size (up to 0.50 mm, n=180). | 0.15:25/30 0.2:22/30 0.25:19/30 0.3:24/30 0.4:20/30 0.5:14/30 |
-| detector | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:25/30 0.3:27/30 0.4:26/30 0.5:12/30 0.7:0/30 1.0:0/30 |
-| detector | spurious copper | Does NOT reach 90% detection of spurious copper spots at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:17/30 0.3:10/30 0.4:5/30 0.5:5/30 0.7:4/30 1.0:3/30 |
-| detector | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:17/30 0.3:19/30 0.4:17/30 0.5:11/30 0.7:6/30 1.0:2/30 |
-| detector | spur | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:25/30 0.3:3/30 0.4:4/30 0.5:2/30 0.7:1/30 1.0:0/30 |
-| fused_golden | open | Finds opens from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:28/30 0.3:30/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
-| fused_golden | short | Finds shorts across gaps from 0.34 mm up to 0.50 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.15:10/30 0.2:19/30 0.25:22/30 0.3:30/30 0.4:30/30 0.5:30/30 |
-| fused_golden | pin hole | Finds pin holes from 0.42 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:14/30 0.3:23/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
+| detector | open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:24/30 0.3:19/30 0.4:14/30 0.5:10/30 0.7:6/30 1.0:2/30 |
+| detector | short | Does NOT reach 90% detection of shorts across gaps at 95% confidence at any tested size (up to 0.50 mm, n=180). | 0.15:25/30 0.2:22/30 0.25:21/30 0.3:23/30 0.4:19/30 0.5:12/30 |
+| detector | pin hole | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:22/30 0.3:25/30 0.4:24/30 0.5:9/30 0.7:0/30 1.0:0/30 |
+| detector | spurious copper | Does NOT reach 90% detection of spurious copper spots at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:18/30 0.3:8/30 0.4:6/30 0.5:3/30 0.7:5/30 1.0:1/30 |
+| detector | mouse bite | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:15/30 0.3:19/30 0.4:14/30 0.5:12/30 0.7:6/30 1.0:1/30 |
+| detector | spur | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 1.00 mm, n=180). | 0.2:24/30 0.3:4/30 0.4:2/30 0.5:1/30 0.7:0/30 1.0:0/30 |
+| fused_golden | open | Finds opens from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:29/30 0.3:30/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
+| fused_golden | short | Finds shorts across gaps from 0.34 mm up to 0.50 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.15:10/30 0.2:14/30 0.25:23/30 0.3:29/30 0.4:30/30 0.5:30/30 |
+| fused_golden | pin hole | Finds pin holes from 0.42 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:13/30 0.3:23/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
 | fused_golden | spurious copper | Finds spurious copper spots from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:30/30 0.3:30/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
-| fused_golden | mouse bite | Finds mouse bites from 0.50 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:6/30 0.3:12/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
+| fused_golden | mouse bite | Finds mouse bites from 0.48 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:6/30 0.3:14/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
 | fused_golden | spur | Finds spurs from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials). | 0.2:30/30 0.3:30/30 0.4:30/30 0.5:30/30 0.7:30/30 1.0:30/30 |
 
 ### Customer requirements to rules (Llama on ExecuTorch vs keyword reader)
 
 Tuning = 80 clauses used while writing the checks; held-out = 40 clauses written independently and never used for tuning. Silently wrong = the checks passed but the rule is wrong.
 
+Free generation: Llama writes each field as text. Constrained decoding: Llama can only output an entry of the option list (a prefix tree over its next-token scores). Grounded choice: the clause's own words narrow each list first. Methods were compared on the tuning set; the held-out set was run once for a method that was kept.
+
 | Reader | Set | Clauses | Exactly right | Auto-accepted and right | Silently wrong | Sent to operator | No rule | Median time (x86 host) |
 |---|---|---|---|---|---|---|---|---|
 | Keyword reader | tuning | 80 | 78.8% | 78.8% | 21.2% | 0.0% | 0.0% | 0 |
 | Keyword reader | heldout | 40 | 52.5% | 55.0% | 45.0% | 0.0% | 0.0% | 0 |
-| Llama 3.2 1B, zero-shot | tuning | 80 | 2.5% | 2.5% | 1.2% | 11.2% | 85.0% | 2.2 s |
-| Llama 3.2 1B, zero-shot | heldout | 40 | 5.0% | 5.0% | 0.0% | 7.5% | 87.5% | 2.1 s |
-| Llama 3.2 3B, zero-shot | tuning | 80 | 30.0% | 30.0% | 3.8% | 38.8% | 27.5% | 5.8 s |
-| Llama 3.2 3B, zero-shot | heldout | 40 | 27.5% | 25.0% | 0.0% | 32.5% | 42.5% | 5.8 s |
-| Llama 3.2 3B, worked examples (deployed) | tuning | 80 | 51.2% | 51.2% | 6.2% | 32.5% | 10.0% | 4.5 s |
-| Llama 3.2 3B, worked examples (deployed) | heldout | 40 | 47.5% | 32.5% | 5.0% | 52.5% | 10.0% | 8.2 s |
+| Llama 3.2 1B, free generation, zero-shot | tuning | 80 | 2.5% | 2.5% | 1.2% | 11.2% | 85.0% | 2.2 s |
+| Llama 3.2 1B, free generation, zero-shot | heldout | 40 | 5.0% | 5.0% | 0.0% | 7.5% | 87.5% | 2.1 s |
+| Llama 3.2 3B, free generation, zero-shot | tuning | 80 | 30.0% | 30.0% | 3.8% | 38.8% | 27.5% | 5.8 s |
+| Llama 3.2 3B, free generation, zero-shot | heldout | 40 | 27.5% | 25.0% | 0.0% | 32.5% | 42.5% | 5.8 s |
+| Llama 3.2 3B, constrained decoding, full option lists | tuning | 80 | 46.2% | 46.2% | 5.0% | 43.8% | 5.0% | 4.2 s |
+| Llama 3.2 3B, free generation, worked examples | tuning | 80 | 51.2% | 51.2% | 6.2% | 32.5% | 10.0% | 4.5 s |
+| Llama 3.2 3B, free generation, worked examples | heldout | 40 | 47.5% | 32.5% | 5.0% | 52.5% | 10.0% | 8.2 s |
+| Llama 3.2 3B, grounded choice, constrained decoding (deployed) | heldout | 40 | 62.5% | 55.0% | 2.5% | 42.5% | 0.0% | 4.5 s |
+| Llama 3.2 3B, grounded choice, constrained decoding (deployed) | tuning | 80 | 77.5% | 77.5% | 2.5% | 20.0% | 0.0% | 4.3 s |
 
 Checks on deliberately corrupted correct rules (share caught):
 
