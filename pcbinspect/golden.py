@@ -86,6 +86,9 @@ def copper_mask(bgr: np.ndarray) -> np.ndarray:
     return m
 
 
+NEAR_CC = 0.9        # fine alignment from the identity is accepted at this correlation
+
+
 def _ecc(a, b, warp, motion, iters, gauss):
     try:
         return cv2.findTransformECC(a, b, warp, motion,
@@ -98,6 +101,7 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
     """Warp `golden` onto `test`. Returns (warped, cc); cc 0.0 = no alignment found.
 
     Coarse to fine, so a board put down a few millimetres off or a few degrees turned still locks on:
+      0. `max_side` px from the identity: accepted when it already correlates well (board nearly in place)
       1. ~160 px, heavy blur: rigid (shift + rotation) from several starting rotations, best correlation wins
       2. ~400 px: rigid refinement
       3. `max_side` px: affine refinement (a few iterations: it starts almost aligned)
@@ -112,6 +116,17 @@ def align(test: np.ndarray, golden: np.ndarray, max_side: int = 1000) -> tuple[n
         s = min(1.0, side / full)
         f = (lambda im: cv2.resize(im, None, fx=s, fy=s, interpolation=cv2.INTER_AREA).astype(np.float32))
         return f(g1), f(g2), s
+
+    # A board that is already nearly in place (a fixture, a rectified card coupon, a scan) is best served by
+    # one fine alignment from where it is: the coarse search can settle a fraction of a trace pitch away.
+    a, b, s1 = level(max_side)
+    r = _ecc(a, b, np.eye(2, 3, dtype=np.float32), cv2.MOTION_AFFINE, 60, 3)
+    if r is not None and r[0] >= NEAR_CC:
+        cc, warp = r
+        warp[:, 2] /= s1
+        out = cv2.warpAffine(golden, warp, (test.shape[1], test.shape[0]),
+                             flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
+        return out, float(cc)
 
     a, b, s0 = level(160)
     best = None
