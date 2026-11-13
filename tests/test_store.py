@@ -90,6 +90,20 @@ def test_a_persons_decision_records_who_and_why_and_reaches_the_export(tmp_path)
     assert rows[0]["decided_by"] == "Asha" and rows[0]["decision_reason"].startswith("dust")
 
 
+def test_the_exported_log_carries_the_advice_summary_and_who_wrote_it(tmp_path):
+    s = Store(tmp_path)
+    iid = s.log_inspection(make_insp(n=1), None)
+    other = s.log_inspection(make_insp(verdict="PASS", n=0), None)
+    s.log_advice(iid, "template", None, {"summary": "first try"}, False, "empty summary", 1.0, None, None)
+    s.log_advice(iid, "llama-executorch", "llama3_2_3b", {"summary": "Short at top-left; check etching."},
+                 True, None, 7000.0, None, None)
+    out = tmp_path / "log.csv"
+    s.export_csv(out)
+    rows = {int(r["id"]): r for r in csv.DictReader(open(out, encoding="utf-8"))}
+    assert rows[iid]["log_note"] == "Short at top-left; check etching." and rows[iid]["note_by"] == "llama-executorch"
+    assert rows[other]["log_note"] == "" and rows[other]["note_by"] == ""      # no advice: empty, not invented
+
+
 def test_a_database_made_before_decisions_had_names_is_upgraded(tmp_path):
     s = Store(tmp_path)
     s.conn.execute("ALTER TABLE inspections DROP COLUMN decided_by")

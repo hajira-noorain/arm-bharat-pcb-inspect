@@ -289,6 +289,73 @@ def advice_section(r: Path) -> list[str]:
             "the advisor, not claimed as model skill."]
 
 
+ADVICE_RUNS = (
+    ("advice_runner_seed1.json", "1B writes the answer as JSON text", "development"),
+    ("advice_logits_sum_seed1.json", "1B, listed causes scored by their text", "development"),
+    ("advice_logits_mean_seed1.json", "1B, same, score averaged per token", "development"),
+    ("advice_point_3b_seed1.json", "3B, each cause judged alone with a yes/no question", "development, before the summary fixes"),
+    ("advice_point_3b_seed1_v2.json", "3B, each cause judged alone with a yes/no question", "development"),
+    ("advice_runner_seed2.json", "1B writes the answer as JSON text", "held out"),
+    ("advice_point_3b_seed2.json", "3B, each cause judged alone with a yes/no question (the station's setting)", "held out"),
+)
+
+
+def advice_decisions_section(r: Path) -> list[str]:
+    """Does the advice follow the evidence? Each record says whether a defect type keeps repeating on recent
+    boards (points to a process cause) or is a one-off (points to handling); candidate causes are shuffled,
+    so a model that ignores the evidence lands on the 'chance' figure."""
+    rows = []
+    for name, label, which in ADVICE_RUNS:
+        sm = (load(r / name) or {}).get("summary")
+        if not sm:
+            continue
+        rp, one = sm.get("repeating_defect_process_cause") or {}, sm.get("one_off_defect_handling_cause") or {}
+        rows.append([label, which, sm["n"], pct(sm["accepted_rate"]),
+                     f"{pct(sm.get('cause_position1_share'))} vs {pct(sm.get('cause_position1_chance'))}",
+                     f"{pct(rp.get('rate'))} vs {pct(rp.get('chance'))}",
+                     f"{pct(one.get('rate'))} vs {pct(one.get('chance'))}",
+                     num((sm.get("latency_ms_median") or 0) / 1000, 1)])
+    if not rows:
+        return []
+    return ["### Does Llama's advice follow the evidence?\n",
+            "Seeded defect records with a recent-history line for each defect. A repeating defect should get a "
+            "process cause and a one-off should get a handling cause. The causes are offered in shuffled order, and "
+            "\"vs\" gives what picking without reading the evidence would score. The development records were used to "
+            "choose the method; the held-out records were run once, afterwards. Latency is on an x86 host, not the Pi.\n",
+            table(["How Llama decides", "Records", "Count", "Advice shown (passed every check)",
+                   "First-listed cause chosen vs chance", "Repeating -> process cause vs chance",
+                   "One-off -> handling cause vs chance", "Median s"], rows),
+            "\nAdvice that fails a check is never shown: the operator gets the knowledge-base text for that defect "
+            "instead, labelled as such."]
+
+
+ASK_RUNS = (
+    ("ask_runner_tuning.json", "1B writes the query as JSON text"),
+    ("ask_logits_tuning.json", "1B, query scored as a choice"),
+    ("ask_logits3b_tuning.json", "3B, query scored as a choice (before the summary fix)"),
+    ("ask_logits3b_tuning_v2.json", "3B, query scored as a choice"),
+    ("ask_logits3b_heldout.json", "3B, query scored as a choice (the station's setting)"),
+)
+
+
+def ask_section(r: Path) -> list[str]:
+    rows = []
+    for name, label in ASK_RUNS:
+        for setname, d in ((load(r / name) or {}).get("sets") or {}).items():
+            sc = d["score"]
+            rows.append([label, {"tuning": "development", "heldout": "held out"}.get(setname, setname), sc["n"],
+                         pct(sc["route_accuracy"]), pct(sc["routed_by_llama"]), pct(sc["keyword_route_accuracy"]),
+                         pct(sc["summary_by_llama"]), num(sc["latency_ms_median"] / 1000, 1)])
+    if not rows:
+        return []
+    return ["### Shift questions: does Llama pick the right database query?\n",
+            "An operator types a question; Llama may only choose one of the station's fixed read-only queries and "
+            "its settings, and then words the rows it returns. If Llama's choice cannot be used, a keyword rule "
+            "chooses instead, so the keyword column is the floor.\n",
+            table(["How Llama decides", "Questions", "Count", "Right query", "Chosen by Llama",
+                   "Keyword rule alone", "Answer worded by Llama (numbers checked)", "Median s"], rows)]
+
+
 def learning_section(r: Path) -> list[str]:
     e = (load(r / "exp_learning_v3.json") or load(r / "exp_learning_executorch.json")
          or load(r / "exp_learning_ultralytics.json"))
@@ -329,10 +396,11 @@ def device_section(dev: Path | None) -> list[str]:
         out.append(table(["Model", "Threads", "Median ms", "p90 ms"], rows))
     llm = b.get("llm") or {}
     if "runs" in llm:
-        out.append("\n" + table(["Llama", "File MB", "Load ms", "RSS after load MB", "Prefill tok/s",
-                                 "Decode tok/s"],
+        out.append("\n" + table(["Llama", "File MB", "Load ms", "RSS after load MB", "Time to first token ms",
+                                 "Prefill tok/s", "Decode tok/s", "Whole answer ms"],
                                 [[llm["model"], llm["file_mb"], llm["load_ms"], llm["rss_after_load_mb"],
-                                  num(llm["prefill_tps_median"]), num(llm["decode_tps_median"])]]))
+                                  num(llm.get("first_token_ms_median"), 0), num(llm["prefill_tps_median"]),
+                                  num(llm["decode_tps_median"]), num(llm.get("wall_ms_median"), 0)]]))
     e2e = b.get("end_to_end") or {}
     if e2e:
         out.append("\nEnd to end, median per inspection (ms):\n")
@@ -471,7 +539,7 @@ def main():
              "Nothing in this file is typed by hand.\n"]
     for sec in (bare_section(r, gates=Path(a.gates)), detector_compare_section(r), prf_section(r), external_section(r), golden_section(r),
                 eyetest_section(r), spec_section(r), anomaly_section(r), anomaly_compare_section(r),
-                realiad_section(r), advice_section(r),
+                realiad_section(r), advice_section(r), advice_decisions_section(r), ask_section(r),
                 learning_section(r),
                 device_section(Path(a.device) if a.device else None)):
         if sec:

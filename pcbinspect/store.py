@@ -357,7 +357,12 @@ class Store:
         rows = self.conn.execute(
             "SELECT i.id, datetime(i.ts,'unixepoch','localtime') AS time, i.board_id, i.design, "
             "i.verdict, i.final_verdict, i.decided_by, i.decision_reason, i.board_score, i.alpha, d.defect_key, d.cls, d.severity, "
-            "d.size_mm, d.location, d.confidence, d.operator_label "
+            "d.size_mm, d.location, d.confidence, d.operator_label, "
+            # the log note is the advice summary for the board, and note_by says who wrote it
+            # (Llama, or the knowledge-base text when Llama's answer failed a check)
+            "(SELECT json_extract(a.advice_json,'$.summary') FROM advice a WHERE a.inspection_id=i.id "
+            " ORDER BY a.id DESC LIMIT 1) AS log_note, "
+            "(SELECT a.backend FROM advice a WHERE a.inspection_id=i.id ORDER BY a.id DESC LIMIT 1) AS note_by "
             "FROM inspections i LEFT JOIN defects d ON d.inspection_id=i.id "
             "WHERE i.ts>=? ORDER BY i.id, d.id", (since_ts,)).fetchall()
         with open(path, "w", newline="", encoding="utf-8") as f:
@@ -366,7 +371,7 @@ class Store:
                 "id", "time", "board_id", "design", "verdict", "final_verdict", "decided_by",
                 "decision_reason", "board_score",
                 "alpha", "defect_key", "cls", "severity", "size_mm", "location", "confidence",
-                "operator_label"])
+                "operator_label", "log_note", "note_by"])
             for r in rows:
                 w.writerow(list(r))
         return len(rows)

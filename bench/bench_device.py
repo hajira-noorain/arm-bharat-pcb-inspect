@@ -228,13 +228,18 @@ def bench_llm(root: Path, cfg: dict, quick: bool) -> dict:
     runs = []
     for _ in range(1 if quick else 3):
         g = llm.generate(prompt, 160)
-        runs.append({"wall_ms": round(g.latency_ms, 1), "prefill_tps": g.prefill_tps,
+        st = llm.last_stats
+        ttft = st["first_token"] - st["inference_start"] if "first_token" in st else None
+        runs.append({"wall_ms": round(g.latency_ms, 1), "first_token_ms": ttft, "prefill_tps": g.prefill_tps,
                      "decode_tps": g.decode_tps, "generated": g.n_generated,
                      "prompt_tokens": llm.last_stats.get("prompt_tokens"), "temp_c": temp_c()})
         print("llm", runs[-1], flush=True)
     return {"model": pte.name, "file_mb": round(pte.stat().st_size / 2**20, 1),
             "load_ms": round(llm.load_ms, 1), "rss_before_mb": round(rss0), "rss_after_load_mb": round(rss1),
             "rss_after_runs_mb": round(rss_mb()), "runs": runs,
+            "wall_ms_median": statistics.median([r["wall_ms"] for r in runs]),
+            "first_token_ms_median": statistics.median([r["first_token_ms"] for r in runs
+                                                        if r["first_token_ms"] is not None] or [0]) or None,
             "decode_tps_median": statistics.median([r["decode_tps"] for r in runs if r["decode_tps"]]),
             "prefill_tps_median": statistics.median([r["prefill_tps"] for r in runs if r["prefill_tps"]])}
 
