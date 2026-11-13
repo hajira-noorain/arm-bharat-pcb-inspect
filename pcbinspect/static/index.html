@@ -428,7 +428,7 @@ function verdictText(r) {
     return { word: "CHECK", what: `<strong>Look at this board yourself, then press Pass or Fail.</strong><br>${n ? `${n} possible defect${n > 1 ? "s" : ""} marked` : "The station is not sure"}.` };
   }
   const worst = r.defects[0];
-  return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.${disp}</strong><br>Most serious: ${esc(words(worst.cls))}.` };
+  return { word: "FAIL", what: `<strong>${n} defect${n > 1 ? "s" : ""} found.${disp}</strong><br>Most serious: ${esc(words(worst.cls))}${worst.part && worst.part !== "part" ? " (" + esc(worst.part) + ")" : ""}.` };
 }
 
 function showInspection(r, fresh) {

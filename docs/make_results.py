@@ -429,6 +429,80 @@ def ask_section(r: Path) -> list[str]:
                    "Keyword rule alone", "Answer worded by Llama (numbers checked)", "Median s"], rows)]
 
 
+def parts_section(r: Path) -> list[str]:
+    """Assembled boards: the parts check (pcbinspect/parts.py)."""
+    out: list[str] = []
+    det, cls = load(r / "parts_detector_test.json"), load(r / "parts_classifier_test.json")
+    man = load(r / "parts_manifest.json")
+    if det:
+        st = (man or {}).get("stats", {})
+        boards = (man or {}).get("boards", {})
+        n = {k: sum(v == k for v in boards.values()) for k in ("train", "val", "test")}
+        out += ["### Assembled boards: finding the parts (FPIC boards never trained on)\n",
+                f"One-class part detector (YOLO26n) trained on {n['train']} FPIC boards, selected on {n['val']}, "
+                f"scored on {n['test']} boards it never saw ({st.get('test_tiles', 'n/a')} tiles, "
+                f"{st.get('test_boxes', 'n/a')} labelled parts). Photos resampled to "
+                f"{(man or {}).get('px_per_mm', 'n/a')} px/mm.\n",
+                table(["Precision", "Recall", "F1", "mAP@0.5", "mAP@0.5:0.95"],
+                      [[pct(det["precision"]), pct(det["recall"]), pct(det["f1"]), pct(det["mAP50"]), pct(det["mAP50_95"])]])]
+    if cls:
+        out += [f"\nPart-kind classifier on named parts of the same held-out boards: {pct(cls['top1'])} named correctly "
+                f"({len(cls.get('names', {}))} kinds). It runs only when a board is taught."]
+    ev = (load(r / "parts_check_eval.json") or {}).get("summary")
+    if ev:
+        rows = [[lab, v["n"], pct(v["reported"])] for lab, v in ev["by_size"].items() if v["n"]]
+        rows.append(["All removed parts", ev["removed_parts"]["n"], pct(ev["removed_parts"]["reported"])])
+        m = ev["removed_parts_that_were_on_the_map"]
+        rows.append(["Removed parts that were on the taught map", m["n"], pct(m["reported"])])
+        nm = ev.get("part_names", {})
+        out += ["\n### Assembled boards: parts check end to end, removal simulated\n",
+                f"{ev['photos']} held-out FPIC photos, each taught as the good board; a copy has parts painted out and is "
+                "re-photographed in software (shifted, turned, exposure and noise changed). This is a simulation: "
+                "the real-photo test is the next table.\n",
+                table(["Removed parts (longer side)", "Count", "Reported missing"], rows),
+                f"\nLabelled parts the taught map contained: {pct(ev['labelled_parts_found_when_teaching'])}. "
+                f"False 'missing' calls per board: {num(ev['false_missing_per_board_with_removals'], 2)} with parts removed, "
+                f"{num(ev['false_missing_per_board_clean'], 2)} with none removed. Unexpected-part calls per board: "
+                f"{num(ev['unexpected_per_board_with_removals'], 2)} and {num(ev['unexpected_per_board_clean'], 2)}. "
+                f"Boards with nothing removed that raised no call at all: {pct(ev['clean_boards_with_no_call_at_all'])}.",
+                f"\nPart names on the taught map, against FPIC's own labels ({nm.get('n', 0)} parts): right "
+                f"{pct(nm.get('right', 0))}, wrong {pct(nm.get('wrong', 0))}, shown only as 'part' because the "
+                f"classifier was not sure {pct(nm.get('left as part', 0))}."]
+    vs = load(r / "parts_check_visa.json")
+    if vs:
+        order = ["good", "missing", "extra", "wrong place"]
+        allt = vs["all_designs"]
+        rows = []
+        for k in order + sorted(k for k in allt if k not in order):
+            v = allt.get(k)
+            if not v:
+                continue
+            n = v["images"]
+            rows.append([{"good": "Good boards"}.get(k, f"Labelled '{k}'"), n, pct(v.get("lined_up", 0) / n),
+                         pct(v.get("any_parts_finding", 0) / n),
+                         "n/a" if k == "good" else pct(v.get("missing_on_the_labelled_area", 0) / n),
+                         "n/a" if k == "good" else pct(v.get("unexpected_on_the_labelled_area", 0) / n)])
+        per = [[d, v["taught"]["parts"], v["taught"].get("left_off_as_unreliable", 0), v.get("ignore_zones", 0),
+                v.get("scale_chosen")] for d, v in vs["designs"].items()]
+        out += ["\n### Assembled boards: parts check on real missing and extra parts (VisA pcb1-4)\n",
+                "Real photographs. The part detector never saw these boards or this camera. Each design is taught "
+                "from four good photos; no mm scale is available, so teaching picks the resampling factor. A finding "
+                "counts only if it lies on the area VisA marks as the anomaly.\n",
+                table(["Photos", "Count", "Lined up with the taught board", "Parts check raised something",
+                       "Missing part reported on the labelled area", "Unexpected part reported on the labelled area"], rows),
+                "\nWhat teaching kept for each design:\n",
+                table(["Design", "Parts on the map", "Left off as unreliable", "Ignore zones", "Resampling factor"], per)]
+    ex = load(r / "parts_export.json")
+    if ex:
+        c = ex.get("classifier", {})
+        d = ex.get("detector", {})
+        out += [f"\nBoth models exported to ExecuTorch: detector {d.get('bytes', 0) / 2**20:.1f} MB, classifier "
+                f"{c.get('bytes', 0) / 2**20:.1f} MB. The exported classifier gives the same answer as PyTorch on "
+                f"{pct(c.get('same_answer_as_torch'))} of {c.get('crops')} test crops. Parts found on 12 test tiles, "
+                f"PyTorch vs exported: {d.get('parts_found_torch_vs_pte_on_12_test_tiles')}."]
+    return out
+
+
 def learning_section(r: Path) -> list[str]:
     e = (load(r / "exp_learning_v3.json") or load(r / "exp_learning_executorch.json")
          or load(r / "exp_learning_ultralytics.json"))
@@ -612,7 +686,7 @@ def main():
              "Nothing in this file is typed by hand.\n"]
     for sec in (bare_section(r, gates=Path(a.gates)), detector_compare_section(r), prf_section(r), external_section(r), golden_section(r),
                 eyetest_section(r), spec_section(r), anomaly_section(r), anomaly_compare_section(r),
-                realiad_section(r), advice_section(r), advice_decisions_section(r), ask_section(r),
+                realiad_section(r), parts_section(r), advice_section(r), advice_decisions_section(r), ask_section(r),
                 learning_section(r),
                 device_section(Path(a.device) if a.device else None)):
         if sec:

@@ -210,7 +210,8 @@ def build_scored_prompt(record: dict, history: dict[str, int] | None, kb: Knowle
         rep_txt = (f"REPEATING: on {seen} of the last {window} boards" if seen >= 3 else
                    "ONE-OFF: not on other recent boards")
         cids, aids = orders[d["id"]]
-        lines.append(f"{d['id']}: {d['type'].replace('_', ' ')}, {d.get('severity')}{size}, {d.get('location')}, "
+        what = d["type"].replace("_", " ") + (f" ({d['part']})" if d.get("part") and d["part"] != "part" else "")
+        lines.append(f"{d['id']}: {what}, {d.get('severity')}{size}, {d.get('location')}, "
                      f"confidence {d.get('confidence')}. {rep_txt}.")
         if list_causes:
             lines.append("  causes: " + "; ".join(
@@ -276,7 +277,8 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
         e = kb.entry(d["type"])
         cause = kb.by_id[s["cause"]]
         out.append({
-            "defect": s["defect"], "type": d["type"], "name": e["name"],
+            "defect": s["defect"], "type": d["type"],
+            "name": e["name"] + (f": {d['part']}" if d.get("part") and d["part"] != "part" else ""),
             "severity": d.get("severity"), "location": d.get("location"),
             "cause_id": s["cause"], "cause": cause["text"],
             "process_step": kb.process_steps.get(cause.get("step", ""), ""),
