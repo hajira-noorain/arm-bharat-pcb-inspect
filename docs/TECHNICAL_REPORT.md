@@ -126,7 +126,15 @@ When a known-good image of the design exists, the station compares against it, w
 5. **Check connectivity.** Two golden conductors now joined is a short. One golden conductor now split is an open. Either upgrades the candidate to a near-certain defect.
 6. Fuse with the detector: the higher confidence wins, boxes are merged.
 
-On DeepPCB test boards, with the golden image re-captured under a random warp, at the same 5% setting: [[PENDING golden v3 table]].
+On DeepPCB test boards (250 boards, 1,579 defects), with the golden image re-captured under a random warp, each channel with its own per-defect gate at the same 5% setting:
+
+| Evidence | One random defect per board missed (95% CI) | False calls per board | Named correctly |
+|---|---|---|---|
+| Detector only | 6.3% (4.9% to 7.9%) | 0.12 | 99% |
+| Golden difference only | 4.9% (3.6% to 6.3%) | 1.02 | 81% |
+| Fused (deployed) | 4.0% (3.1% to 5.0%) | 0.66 | 99% |
+
+Fusing keeps the detector's naming and the golden comparison's reach: fewer misses than either alone, inside the 5% target.
 
 ### 3.4 Measuring defects in millimetres
 
@@ -183,11 +191,22 @@ A dataset score says how a model did on someone else's photos. A factory needs t
 
 **Reading it.** The operator photographs the golden sheet and each test sheet. The station finds the coupons, runs the full inspection on each, and records hit or miss at the operating threshold.
 
-**The statement.** For each defect type the hits and misses are fitted with a bias-reduced (Firth) logistic curve of hit probability against log size, following MIL-HDBK-1823A. The station reports a90/95: the size above which it finds 90% of defects with 95% confidence. When the curve cannot be fitted honestly, it falls back to a model-free window (Clopper-Pearson), and when even that cannot certify a size, it says so. [[PENDING example sentence from the v3 simulation]]
+**The statement.** For each defect type the hits and misses are fitted with a bias-reduced (Firth) logistic curve of hit probability against log size, following MIL-HDBK-1823A. The station reports a90/95: the size above which it finds 90% of defects with 95% confidence. When the curve cannot be fitted honestly, it falls back to a model-free window (Clopper-Pearson), and when even that cannot certify a size, it says so. A statement reads, for example: "Finds mouse bites from 0.50 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n = 180 trials)."
 
 **In silico, before the card is printed.** The same pipeline was run on defects drawn onto held-out DeepPCB patterns, under clean, webcam-like and half-resolution conditions: [[PENDING pod v3 summary]].
 
-**Simulated photos of the card.** A print and camera model (inkjet dot gain, perspective, blur, noise, JPEG) checks the reader end to end: [[PENDING eyetest v3 summary]]. This validates the reader, not the physical print or camera. The real card is photographed on the Pi on 20-21 November.
+**Simulated photos of the card.** A print and camera model (inkjet dot gain, perspective, blur, noise, JPEG) checks the reader end to end. With the golden board, every defect type gets a stated limit; the detector alone certifies none:
+
+| Defect | Detector + golden board | Detector only |
+|---|---|---|
+| Opens | from 0.20 mm (smallest tested) | not certified up to 1.00 mm |
+| Spurs | from 0.20 mm (smallest tested) | not certified up to 1.00 mm |
+| Spurious copper | from 0.20 mm (smallest tested) | not certified up to 1.00 mm |
+| Shorts across gaps | from 0.34 mm | not certified up to 0.50 mm |
+| Pin holes | from 0.42 mm | not certified up to 1.00 mm |
+| Mouse bites | from 0.50 mm | not certified up to 1.00 mm |
+
+That table is the strongest argument for the golden comparison: a detector that scores 96% mAP on DeepPCB cannot promise 90% detection of any size on a printed card. This validates the reader, not the physical print or camera. The real card is photographed on the Pi on 20-21 November.
 
 The full method, including what the eye test found wrong in our own system and fixed, is in `docs/EYE_TEST_AND_RULES.md`.
 
