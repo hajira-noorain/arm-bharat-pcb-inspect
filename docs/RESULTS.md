@@ -55,6 +55,8 @@ Each version adds training data; the test boards are the same for all of them an
 | cam: + camera-style augmentation | 34.6% | 97.0% | 95.5% | 77.6% | 0.0% | 32.1% |
 | v2: + DsPCBSD+ | 70.4% | 96.6% | 91.2% | 83.3% | 75.1% | 30.2% |
 | v3: + half of DefectDet's boards, solder-mask recolouring (deployed) | 83.3% | 96.3% | 95.8% | 81.1% | 73.8% | 84.2% |
+| v4: + synthetic tiles rendered from 61 open-hardware KiCad boards (not deployed) | 82.8% | 95.6% | 95.4% | 82.8% | 72.9% | 83.9% |
+| v3_et: v3 through the exported ExecuTorch FP32 .pte | 83.3% | 96.3% | 95.8% | 81.2% | 73.8% | 84.2% |
 
 ### DefectDet held-out boards, resized before inspection (128 boards)
 

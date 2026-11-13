@@ -85,7 +85,10 @@ SOURCES = ("deeppcb", "hripcb", "mendeley", "dspcbsd", "defectdet")
 SOURCE_NAMES = {"all": "All test boards", "deeppcb": "DeepPCB", "hripcb": "PKU-Market-PCB (HRIPCB)",
                 "mendeley": "Mendeley PCB-Defect", "dspcbsd": "DsPCBSD+", "defectdet": "DefectDet (held-out boards)"}
 DETECTORS = (("base", "DeepPCB + HRIPCB + Mendeley"), ("cam", "+ camera-style augmentation"),
-             ("v2", "+ DsPCBSD+"), ("v3", "+ half of DefectDet's boards, solder-mask recolouring (deployed)"))
+             ("v2", "+ DsPCBSD+"), ("v3", "+ half of DefectDet's boards, solder-mask recolouring (deployed)"),
+             ("v4", "+ synthetic tiles rendered from 61 open-hardware KiCad boards (not deployed)"),
+             ("v3_et", "v3 through the exported ExecuTorch FP32 .pte"),
+             ("v3_et_int8", "v3 through the exported ExecuTorch INT8 .pte"))
 
 
 def detector_compare_section(r: Path) -> list[str]:
