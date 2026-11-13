@@ -2,9 +2,11 @@
 
 Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5 (real-time industrial defect detection and quality-control assistant).
 
-Every inspection system claims a high accuracy figure. This one **measures the smallest defect it can find on your camera, says what it cannot see, and refuses customer rules it cannot guarantee.** It runs on a Raspberry Pi 5's Arm CPU with no cloud: vision through ExecuTorch (or Arm's optimised YOLO26 runtime), Llama 3.2 through ExecuTorch.
+**One station, one question: is this bare circuit board good?** Put a board under the camera of a Raspberry Pi 5. Its picture is compared with a known-good board; every difference is named, measured in millimetres and graded; the board gets PASS, FAIL or CHECK and a light; Llama 3.2 on ExecuTorch explains the likely cause and the next action; and the inspection is logged. Nothing leaves the Pi. On boards it had never seen, at a 5% miss-rate setting, it missed 4.2% of defects.
 
-For each board it:
+Every inspection system claims a high accuracy figure. This one also **measures the smallest defect it can find on your camera, says what it cannot see, and refuses customer rules it cannot guarantee.** Vision runs through ExecuTorch (or Arm's optimised YOLO26 runtime), Llama 3.2 through ExecuTorch, all on the Pi's Arm CPU.
+
+In more detail, for each board it:
 
 - **finds and names defects** on bare boards (11 types) and flags anything unusual on assembled boards;
 - **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;

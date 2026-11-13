@@ -4,13 +4,23 @@ Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5: real-time industrial d
 
 ## Summary
 
-Every inspection system claims a high accuracy figure. None of them can tell a factory the one thing it needs before trusting it: **the smallest defect it will reliably catch on this camera, on this line, today.**
+**One station, one question: is this bare circuit board good?**
 
-This station runs offline on a Raspberry Pi 5 CPU. It finds, names, measures and grades bare-board defects, and flags anything unusual on an assembled board for a person to look at. It logs every inspection and explains every finding with Llama 3.2 running on ExecuTorch. On top of that, it does three things no inspection system we reviewed does:
+1. A board is placed under the camera of a Raspberry Pi 5. Nothing leaves the Pi.
+2. The picture is compared with a known-good board of the same design. Every difference is named (open, short, mouse bite and eight more types), measured in millimetres and graded.
+3. The board gets PASS, FAIL or CHECK, and a green, red or amber light. CHECK means the station is not sure and a person decides.
+4. Llama 3.2 on ExecuTorch reads the findings, never the picture, and tells the operator the likely cause and the next action, in knowledge-base wording.
+5. The inspection is logged on the device.
+
+On boards it had never seen, with the miss rate set to 5%, it missed 4.2% of defects and raised 0.57 false calls per board (section 3.3).
+
+Every inspection system quotes an accuracy figure. None of the ones we reviewed tells a factory what it needs before trusting it: **the smallest defect it will reliably catch on this camera, on this line, today.** This station does, in three ways:
 
 1. **It measures its own detection limit, like an eye test.** The operator photographs a printed test card carrying 252 defects of known size. The station reads the card and states, per defect type, the smallest size it finds 90% of the time with 95% confidence (the a90/95 figure from the US military's non-destructive-testing handbook, MIL-HDBK-1823A). It also says plainly which sizes it cannot certify.
 2. **It says when it is unsure, at a miss rate the operator sets.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.2% of defects.
 3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject mouse bites that remove more than 20% of the trace width"). Llama on ExecuTorch turns each clause into an executable rule, choosing only among answers the clause supports (constrained decoding on the exported model). Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
+
+The same station also checks assembled boards, as a second and simpler path: it learns what a good board looks like, flags any area that differs, and names a part that is missing (section 3.2).
 
 | What a reviewer can check | Where |
 |---|---|
