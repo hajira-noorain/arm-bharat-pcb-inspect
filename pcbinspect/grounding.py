@@ -23,6 +23,31 @@ from .kb import KnowledgeBase
 NUM_RE = re.compile(r"(?<![\w.])\d+(?:\.\d+)?(?![\w.])")
 
 
+def number_filter(record: dict, extra_numbers: list[float] | None = None):
+    """allow(text_so_far, piece) for LogitLlama.write(): a token is vetoed if it would complete, or start,
+    a number that check() would reject (not in the record or the history given to the model). The checker
+    still runs afterwards; this only stops the model from writing what the checker would throw away."""
+    allowed = _record_numbers(record) | {round(float(x), 2) for x in (extra_numbers or [])}
+    ints = {round(x) for x in allowed}
+    forms = {f"{x:g}" for x in allowed} | {f"{x:.2f}" for x in allowed} | {f"{x:.1f}" for x in allowed} | \
+        {str(int(i)) for i in ints}
+
+    def ok_value(tok: str) -> bool:
+        v = round(float(tok), 2)
+        return v in allowed or (v.is_integer() and v in ints)
+
+    def allow(text: str, piece: str) -> bool:
+        if not any(ch.isdigit() for ch in piece) and not (text[-1:].isdigit() or text[-1:] == "."):
+            return True
+        new = text + piece
+        tail = re.search(r"(?<![\w.])(\d+(?:\.\d*)?)$", new)
+        body = new[:tail.start()] if tail else new
+        if any(not ok_value(m) for m in NUM_RE.findall(body)):
+            return False
+        return True if tail is None else any(f.startswith(tail.group(1)) for f in forms)
+    return allow
+
+
 @dataclass
 class GroundingResult:
     ok: bool

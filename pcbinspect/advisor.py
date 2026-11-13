@@ -194,6 +194,37 @@ def build_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase
             (prefix if prefix is not None else assistant_prefix(record, style)))
 
 
+LLAMA_BACKEND = "llama-executorch"     # what an accepted Llama answer is logged as, whichever runner made it
+SCORED_SYSTEM = ("You are the quality assistant on a PCB inspection station. For each defect you name the "
+                 "most likely cause and the best next action, using only the options listed for it.")
+
+
+def build_scored_prompt(record: dict, history: dict[str, int] | None, kb: KnowledgeBase,
+                        orders: dict[str, tuple[list, list]], window: int = 20) -> str:
+    """Prompt for the scored path. Each cause carries its process step in brackets, and each defect line
+    says whether that defect has been repeating, so the rule in the last paragraph can be applied."""
+    lines = []
+    for d in _sorted_defects(record)[:MAX_LLM_DEFECTS]:
+        size = f", {d['size_mm']} mm" if d.get("size_mm") is not None else ""
+        seen = (history or {}).get(d["type"], 0)
+        rep_txt = (f"REPEATING: on {seen} of the last {window} boards" if seen >= 3 else
+                   "ONE-OFF: not on other recent boards")
+        cids, aids = orders[d["id"]]
+        lines.append(f"{d['id']}: {d['type'].replace('_', ' ')}, {d.get('severity')}{size}, {d.get('location')}, "
+                     f"confidence {d.get('confidence')}. {rep_txt}.")
+        lines.append("  causes: " + "; ".join(
+            f"{kb.by_id[x]['short']} ({kb.by_id[x].get('step', 'process')})" for x in cids))
+        lines.append("  actions: " + "; ".join(kb.by_id[x]["short"] for x in aids))
+    user = (f"Board {record['board_id']} verdict {record['verdict']}. Defects:\n" + "\n".join(lines) +
+            "\nRule: a REPEATING defect comes from the process (imaging, etching, drilling, plating, assembly), "
+            "so choose a cause from one of those steps. A ONE-OFF defect comes from handling or a local "
+            "accident, so choose a handling cause if one is listed.\n"
+            "Answer one line per item, copying the option text, then one line 'Summary:' with one or two "
+            "sentences for the operator that use only the facts above.")
+    return (HDR + SCORED_SYSTEM + "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n" + user +
+            "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n")
+
+
 def assistant_prefix(record: dict, style: str | None = None) -> str:
     """Start of the answer for the single-shot path: the first thing the model produces is the cause
     choice for the most severe defect."""
@@ -255,7 +286,9 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
 class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
-                 option_order: str | None = None):
+                 option_order: str | None = None, score_norm: str = "sum"):
+        self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
+        self.last_forwards = 0
         self.fewshot = fewshot
         self.option_order = option_order or OPTION_ORDER
         self.backend = backend
@@ -275,11 +308,72 @@ class Advisor:
         if self.backend is None:
             return self._template(record, ["no LLM backend loaded"])
         try:
+            if hasattr(self.backend, "score"):
+                return self._advise_scored(record, history)
             if hasattr(self.backend, "cont"):
                 return self._advise_stepwise(record, history)
             return self._advise_single(record, history)
         except Exception as exc:  # runtime failure must never block the inspection
             return self._template(record, [f"LLM error: {exc!r}"])
+
+    # ---------------------------------------------------------------- scored choices (logits backend)
+    def _advise_scored(self, record: dict, history: dict[str, int] | None, window: int = 20) -> Advice:
+        """Llama through llm_logits.LogitLlama. Nothing it outputs can be malformed:
+          cause / action  the option whose TEXT is the most probable continuation (full-sequence score,
+                          including the probability that the answer ends there). No option numbers, so
+                          the habit of answering "1" has nothing to hold on to.
+          summary         free text, but a number that is not in the findings cannot be written.
+        The grounding checker still runs on the result."""
+        be, kb = self.backend, self.kb
+        defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
+        orders = option_orders(record, kb, history=history, mode=self.option_order)
+        t0 = time.perf_counter()
+        be.reset()
+        n0 = be.n_forward
+        be.feed(build_scored_prompt(record, history, kb, orders, window))
+        n_prompt, t1 = be.pos, time.perf_counter()
+        steps, choices, lines = [], [], []
+        for i, d in enumerate(defects):
+            cids, aids = orders[d["id"]]
+            picked = {}
+            for what, ids in (("cause", cids), ("action", aids)):
+                be.feed(("" if not lines else "\n") + f"{d['id']} {what}:")
+                opts = [" " + kb.by_id[x]["short"] for x in ids]
+                sc = be.score(opts, end="\n")
+                val = [lp / n if self.score_norm == "mean" else lp for lp, n in sc]
+                j = max(range(len(ids)), key=lambda k: val[k])
+                be.feed(opts[j])
+                picked[what] = (j, ids[j])
+                lines.append(f"{d['id']} {what}:{opts[j]}")
+            steps.append({"defect": d["id"], "cause": picked["cause"][1], "action": picked["action"][1]})
+            choices.append({"defect": d["id"], "type": d["type"], "cause_pos": picked["cause"][0] + 1,
+                            "n_causes": len(cids), "action_pos": picked["action"][0] + 1,
+                            "n_actions": len(aids), "cause": picked["cause"][1]})
+        be.feed("\nSummary:")
+        from .grounding import number_filter
+        summary = be.write(self.summary_tokens, stop=("\n",),
+                           allow=number_filter(record, history_numbers(history))).strip().strip('"').strip()
+        t2 = time.perf_counter()
+        n_gen = be.pos - n_prompt
+        raw = "\n".join(lines) + "\nSummary: " + summary
+        total = GenResult(raw, (t2 - t0) * 1e3, n_prompt / max(t1 - t0, 1e-6), n_gen / max(t2 - t1, 1e-6),
+                          n_gen, n_prompt)
+        self.last_forwards = be.n_forward - n0
+        if not summary:
+            adv = self._template(record, ["empty summary"], be.model, raw, total)
+            adv.choices = choices
+            return adv
+        res: GroundingResult = check(json.dumps({"steps": steps, "summary": summary}), record, kb,
+                                     extra_numbers=history_numbers(history))
+        if not res.ok:
+            adv = self._template(record, res.reasons, be.model, raw, total)
+            adv.choices = choices
+            return adv
+        covered = {s["defect"] for s in res.advice["steps"]}
+        extra = [s for s in template_advice(record, kb)["steps"] if s["defect"] not in covered]
+        res.advice["steps"].extend(extra)
+        return Advice(LLAMA_BACKEND, be.model, res.advice["summary"], render(res.advice, record, kb), True,
+                      [], [s["defect"] for s in extra], raw, total, choices)
 
     # ---------------------------------------------------------------- step-wise (default)
     def _advise_stepwise(self, record: dict, history: dict[str, int] | None) -> Advice:

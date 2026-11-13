@@ -113,3 +113,53 @@ def test_grounded_compiler_reads_a_class_only_clause():
     r = ConstrainedSpecCompiler(be, grounded=True).compile("Build and inspect to Class 3.")
     assert dict(be.asked)["Defect"] == ["none", "any defect"] or sorted(dict(be.asked)["Defect"]) == ["any defect", "none"]
     assert r.rule.kind == "class" and r.rule.customer_class == 3
+
+
+def test_full_sequence_scores_use_every_token_and_rewind_between_options():
+    """Option A = [1, 2], B = [1, 3], C = [4]. P(1)=0.5, P(4)=0.5 at the start; after 1: P(2)=0.9, P(3)=0.1.
+    A first-token choice cannot tell A from B; the full score must (A 0.45, B 0.05, C 0.5)."""
+    from pcbinspect.llm_logits import score_sequences
+    calls = []
+
+    def step(off, tok):
+        calls.append((off, tok))
+        lg = np.full(V, -1e9, np.float32)
+        if tok is None:
+            lg[1] = lg[4] = 0.0
+        elif tok == 1:
+            lg[2], lg[3] = np.log(0.9), np.log(0.1)
+        return lg
+
+    s = score_sequences(step, [[1, 2], [1, 3], [4]])
+    assert [n for _, n in s] == [2, 2, 1]
+    assert np.exp([lp for lp, _ in s]) == pytest.approx([0.45, 0.05, 0.5], rel=1e-4)
+    assert calls == [(0, None), (0, 1)]                       # token 1 is evaluated once for both A and B
+
+
+def test_scores_can_include_the_probability_of_stopping_after_the_option():
+    from pcbinspect.llm_logits import score_sequences
+
+    def step(off, tok):
+        lg = np.full(V, -1e9, np.float32)
+        if tok is None:
+            lg[1] = 0.0
+        elif tok == 1:                                        # after "spur": 80% stop, 20% go on to "ious copper"
+            lg[9], lg[2] = np.log(0.8), np.log(0.2)
+        elif tok == 2:
+            lg[9] = 0.0
+        return lg
+
+    short, long_ = score_sequences(step, [[1], [1, 2]], end=[9])
+    assert np.exp(short[0]) == pytest.approx(0.8, rel=1e-4) and np.exp(long_[0]) == pytest.approx(0.2, rel=1e-4)
+
+
+def test_summary_decoding_refuses_numbers_that_are_not_in_the_findings():
+    from pcbinspect.grounding import number_filter
+    record = {"board_id": "B-7", "defects": [{"id": "D1", "type": "short", "size_mm": 0.18, "confidence": 0.87}]}
+    allow = number_filter(record, extra_numbers=[5, 20])
+    assert allow("The short is ", "0") and allow("The short is 0", ".") and allow("The short is 0.", "18")
+    assert not allow("The short is 0.", "25")                 # 0.25 is not a size on this board
+    assert allow("seen on ", "5") and allow("of the last ", "20") and allow("confidence ", "87")
+    assert not allow("seen on ", "3") and not allow("about ", "12")
+    assert not allow("seen on 5", "0")                        # 50 would not be a fact either
+    assert allow("Defect D", "1") and allow("quarantine the board", " and")     # ids and words are free

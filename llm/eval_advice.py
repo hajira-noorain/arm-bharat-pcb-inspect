@@ -68,14 +68,24 @@ def main():
     ap.add_argument("--n", type=int, default=60)
     ap.add_argument("--out", required=True)
     ap.add_argument("--fewshot", action="store_true")
+    ap.add_argument("--backend", default="runner", choices=["runner", "logits"],
+                    help="runner = text runner, numbered options; logits = scored option text + number-safe summary")
+    ap.add_argument("--score-norm", default="sum", choices=["sum", "mean"])
+    ap.add_argument("--seed", type=int, default=0, help="record set: 0 = the original set (used while "
+                    "developing prompts), 1 = development set for the logits path, 2 = held-out, run once")
     args = ap.parse_args()
-    from pcbinspect.llm import ExecuTorchLlama
     kb = default_kb()
-    llm = ExecuTorchLlama(args.pte, args.tok)
-    adv = Advisor(llm, kb, fewshot=args.fewshot, option_order="shuffle")   # measure the model itself
+    if args.backend == "logits":
+        from pcbinspect.llm_logits import LogitLlama
+        llm = LogitLlama(args.pte, args.tok)
+    else:
+        from pcbinspect.llm import ExecuTorchLlama
+        llm = ExecuTorchLlama(args.pte, args.tok)
+    # options shuffled per board: measure the model itself, not the order they are listed in
+    adv = Advisor(llm, kb, fewshot=args.fewshot, option_order="shuffle", score_norm=args.score_norm)
     rows = []
     t0 = time.time()
-    for i, (rec, hist) in enumerate(make_records(args.n)):
+    for i, (rec, hist) in enumerate(make_records(args.n, args.seed)):
         a = adv.advise(rec, hist)
         accepted = a.backend == "llama-executorch"
         first = a.steps[0]["defect"] if a.steps else None
@@ -117,6 +127,7 @@ def main():
 
     summary = {
         "model": Path(args.pte).name, "fewshot": args.fewshot, "n": len(rows), "load_ms": llm.load_ms,
+        "backend": args.backend, "score_norm": args.score_norm, "seed": args.seed,
         "accepted_rate": len(acc) / len(rows),
         "rejection_reasons": dict(reasons),
         "choices_parsed": len(choices),

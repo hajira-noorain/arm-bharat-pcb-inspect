@@ -78,6 +78,41 @@ def constrained_pick(step, seqs: list[list[int]]) -> tuple[int, float, list[int]
         logits = step(tok)
 
 
+def _log_softmax(x: np.ndarray) -> np.ndarray:
+    return x - np.logaddexp.reduce(x)
+
+
+def score_sequences(step, seqs: list[list[int]], end: list[int] | None = None) -> list[tuple[float, int]]:
+    """Exact log-probability of every option's full token sequence (not just its first token).
+
+    step(pos_offset, token | None) -> logits after `token` was written at that offset from the start
+    (None = the logits at the start). Options share work through a prefix tree; a branch is scored by
+    rewinding to the branching position, which a KV-cache model allows because a position only ever
+    attends to earlier ones. `end`: token ids of a terminator (e.g. a newline); if given, the probability
+    that the answer stops right after the option is included, so "spur" and "spurious copper" compete
+    fairly. Returns [(log_prob, n_tokens)] in the order of `seqs`."""
+    if not seqs or any(len(q) == 0 for q in seqs):
+        raise ValueError("options must be non-empty token sequences")
+    root = Trie(seqs).root
+    out: list = [None] * len(seqs)
+    end_tok = end[0] if end else None
+
+    def rec(node, logits, off, lp, n):
+        logp = _log_softmax(logits)
+        for tok, child in node.items():
+            if tok is None:
+                out[child] = (lp + (float(logp[end_tok]) if end_tok is not None else 0.0), n)
+                continue
+            l2 = lp + float(logp[tok])
+            if end_tok is None and set(child) == {None}:
+                out[child[None]] = (l2, n + 1)          # nothing left to decide below this token
+                continue
+            rec(child, step(off, tok), off + 1, l2, n + 1)
+
+    rec(root, step(0, None), 0, 0.0, 0)
+    return out
+
+
 class LogitLlama:
     """Llama .pte through executorch.runtime, with a KV cache position we control."""
     name = "llama-executorch-logits"
@@ -123,6 +158,64 @@ class LogitLlama:
             except Exception:                                    # noqa: BLE001  (static-shape export: one by one)
                 for tk in toks:
                     self._forward([tk])
+
+    def score(self, options: list[str], end: str | None = "\n") -> list[tuple[float, int]]:
+        """Log-probability of each option as the continuation of the context (see score_sequences).
+        The context is left exactly as it was: feed() the chosen option afterwards."""
+        if self._last is None:
+            raise RuntimeError("feed() a prompt first")
+        base_pos, base = self.pos, self._last.copy()
+
+        def step(off, tok):
+            if tok is None:
+                return base
+            self.pos = base_pos + off                   # rewind to the branching position
+            return self._forward([tok]).copy()
+        try:
+            return score_sequences(step, [self.encode(o) for o in options], self.encode(end) if end else None)
+        finally:
+            self.pos, self._last = base_pos, base
+
+    def write(self, max_new_tokens: int, stop: tuple[str, ...] = ("\n",), allow=None, top_k: int = 40) -> str:
+        """Greedy free text from the current context, until a stop string, an end token or the limit.
+        allow(text_so_far, piece) -> bool vetoes a token (e.g. a digit that would form a number that is
+        not in the findings); the best allowed token among the top_k is taken instead."""
+        if self._last is None:
+            raise RuntimeError("feed() a prompt first")
+        text = ""
+        for _ in range(max_new_tokens):
+            pick = None
+            for tok in np.argsort(-self._last)[:top_k]:
+                tok = int(tok)
+                if tok in (SPECIAL["<|eot_id|>"], SPECIAL["<|end_of_text|>"]):
+                    return text
+                if tok >= 128000:
+                    continue
+                piece = self.tok.decode([tok])
+                if allow is None or allow(text, piece):
+                    pick = (tok, piece)
+                    break
+            if pick is None:
+                break
+            text += pick[1]
+            cut = [text.find(st) for st in stop if st in text]
+            if cut:
+                return text[:min(cut)]
+            self._forward([pick[0]])
+        return text
+
+    def generate(self, prompt: str, max_new_tokens: int):
+        """Drop-in for the text runner (shift questions, alert wording): reset, prefill, greedy text."""
+        from .advisor import GenResult
+        t0 = time.perf_counter()
+        self.reset()
+        self.feed(prompt)
+        n_prompt, t1 = self.pos, time.perf_counter()
+        text = self.write(max_new_tokens, stop=())
+        t2 = time.perf_counter()
+        n_gen = self.pos - n_prompt
+        return GenResult(text, (t2 - t0) * 1e3, n_prompt / max(t1 - t0, 1e-6),
+                         n_gen / max(t2 - t1, 1e-6) if n_gen else None, n_gen, n_prompt)
 
     def choose(self, options: list[str]) -> tuple[str, float]:
         """The model continues the context with exactly one of `options`. Returns (option, margin)."""
