@@ -31,7 +31,7 @@ class Scripted:
         self.scored.append([o.strip() for o in options])
         return [(0.0 if any(k in o for k in self.prefer) else -5.0 - i, 3) for i, o in enumerate(options)]
 
-    def write(self, max_new_tokens, stop=("\n",), allow=None, top_k=40):
+    def write(self, max_new_tokens, stop=("\n",), allow=None, top_k=40, nonempty=False):
         text = ""
         for alternatives in self.pieces:                 # each step: candidates in the model's order
             piece = next((p for p in alternatives if allow is None or allow(text, p)), None)

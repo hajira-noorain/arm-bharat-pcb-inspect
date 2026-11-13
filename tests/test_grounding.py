@@ -78,6 +78,18 @@ def test_rejects_mentioning_absent_defect_type(kb):
     assert not r.ok and any("missing hole" in x for x in r.reasons)
 
 
+def test_words_of_the_chosen_cause_are_not_a_claim_about_another_defect(kb):
+    record = {"board_id": "B-1", "design": "deeppcb", "verdict": "FAIL", "defects": [
+        {"id": "D1", "type": "open", "severity": "critical", "confidence": 0.9, "size_mm": 0.2,
+         "location": "centre", "ipc": {}}]}
+    said = "D1 is likely a handling scratch; check how panels are stacked."
+    chosen = json.dumps({"steps": [{"defect": "D1", "cause": "OPEN-C4", "action": "OPEN-A1"}], "summary": said})
+    assert check(chosen, record, kb).ok                        # OPEN-C4 is "handling scratch"
+    other = json.dumps({"steps": [{"defect": "D1", "cause": "OPEN-C2", "action": "OPEN-A1"}], "summary": said})
+    r = check(other, record, kb)                               # a cause it did not choose: still refused
+    assert not r.ok and any("scratch" in x for x in r.reasons)
+
+
 def test_ordinary_word_open_is_not_a_defect_mention(kb):
     out = json.loads(good_output())
     out["summary"] = "Keep the board open on the bench and check the short circuit."

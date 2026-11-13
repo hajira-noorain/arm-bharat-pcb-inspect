@@ -163,3 +163,58 @@ def test_summary_decoding_refuses_numbers_that_are_not_in_the_findings():
     assert not allow("seen on ", "3") and not allow("about ", "12")
     assert not allow("seen on 5", "0")                        # 50 would not be a fact either
     assert allow("Defect D", "1") and allow("quarantine the board", " and")     # ids and words are free
+
+
+def test_a_summary_cannot_end_before_it_says_anything():
+    from pcbinspect.llm_logits import SPECIAL, LogitLlama
+    words = {1: "\n", 2: " ", 3: "Board", 4: " fails", 5: "."}
+    eot = SPECIAL["<|eot_id|>"]
+
+    class Tok:
+        def decode(self, ids):
+            return "".join(words.get(i, "?") for i in ids)
+
+    def logits(prefs):
+        lg = np.full(128256, -9.0, np.float32)
+        for t, v in prefs.items():
+            lg[t] = v
+        return lg
+    # the model wants to stop at once (end token, then newline, then a space); afterwards it writes a sentence
+    script = [logits({eot: 9, 1: 8, 2: 7, 3: 6}), logits({4: 9}), logits({5: 9}), logits({1: 9})]
+    be = LogitLlama.__new__(LogitLlama)
+    be.tok, be._last, fed = Tok(), script[0], []
+
+    def forward(toks):
+        fed.extend(toks)
+        be._last = script[min(len(fed), len(script) - 1)]
+    be._forward = forward
+    assert be.write(10, stop=("\n",), nonempty=True) == "Board fails."
+    be._last, fed[:] = script[0], []
+    assert be.write(10, stop=("\n",)) == ""                   # without the option the old behaviour stands
+
+
+def test_a_summary_cannot_end_on_a_number_that_is_not_a_fact():
+    from pcbinspect.grounding import number_filter_values
+    from pcbinspect.llm_logits import SPECIAL, LogitLlama
+    words = {3: "Failed: ", 4: "1", 5: "0", 6: " boards."}
+    eot = SPECIAL["<|eot_id|>"]
+
+    class Tok:
+        def decode(self, ids):
+            return "".join(words.get(i, "?") for i in ids)
+
+    def logits(prefs):
+        lg = np.full(128256, -9.0, np.float32)
+        for t, v in prefs.items():
+            lg[t] = v
+        return lg
+    # after "1" the model wants to stop, but 1 is not in the rows (10 is): it has to finish the number
+    script = [logits({3: 9}), logits({4: 9}), logits({eot: 9, 5: 5}), logits({6: 9}), logits({eot: 9})]
+    be = LogitLlama.__new__(LogitLlama)
+    be.tok, be._last, fed = Tok(), script[0], []
+
+    def forward(toks):
+        fed.extend(toks)
+        be._last = script[min(len(fed), len(script) - 1)]
+    be._forward = forward
+    assert be.write(10, stop=(), allow=number_filter_values({10.0})) == "Failed: 10 boards."

@@ -365,7 +365,7 @@ class Advisor:
                             "n_actions": len(aids), "cause": picked["cause"][1]})
         be.feed("\nSummary:")
         from .grounding import number_filter
-        summary = be.write(self.summary_tokens, stop=("\n",),
+        summary = be.write(self.summary_tokens, stop=("\n",), nonempty=True,
                            allow=number_filter(record, history_numbers(history))).strip().strip('"').strip()
         t2 = time.perf_counter()
         n_gen = be.pos - n_prompt

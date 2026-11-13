@@ -193,13 +193,19 @@ def check(raw_text: str, record: dict, kb: KnowledgeBase,
             reasons.append(f"summary contains number {m} that is not in the record")
 
     # the summary must not mention defect types absent from the board
+    # ... except in the words of a cause or action it chose: "handling scratch" is the knowledge base's own
+    # name for a cause of an open, not a claim that a scratch defect was found
     present = {d["type"] for d in record["defects"]}
     low = summary.lower()
+    chosen = " ".join(str(kb.by_id.get(s[k], {}).get("short", "")) for s in clean_steps
+                      for k in ("cause", "action")).lower()
     for cls, words in kb.all_class_names().items():
         if cls in present:
             continue
         for w in words:
             if re.search(rf"\b{re.escape(w)}\b", low):
+                if re.search(rf"\b{re.escape(w)}\b", chosen):
+                    continue
                 # "open"/"short" are also ordinary English words; only flag them in a defect context
                 if cls in ("open", "short") and not re.search(
                         rf"\b{cls} (circuit|trace|conductor)s?\b", low):

@@ -200,10 +200,12 @@ class LogitLlama:
         finally:
             self.pos, self._last = base_pos, base
 
-    def write(self, max_new_tokens: int, stop: tuple[str, ...] = ("\n",), allow=None, top_k: int = 40) -> str:
+    def write(self, max_new_tokens: int, stop: tuple[str, ...] = ("\n",), allow=None, top_k: int = 40,
+              nonempty: bool = False) -> str:
         """Greedy free text from the current context, until a stop string, an end token or the limit.
         allow(text_so_far, piece) -> bool vetoes a token (e.g. a digit that would form a number that is
-        not in the findings); the best allowed token among the top_k is taken instead."""
+        not in the findings); the best allowed token among the top_k is taken instead.
+        nonempty: the text may not end (end token or stop string) before it has any content."""
         if self._last is None:
             raise RuntimeError("feed() a prompt first")
         text = ""
@@ -215,13 +217,18 @@ class LogitLlama:
             for lo, hi in ((0, top_k), (top_k, 6000)):
                 for tok in order[lo:hi]:
                     tok = int(tok)
+                    blank = nonempty and not text.strip()
                     if tok in (SPECIAL["<|eot_id|>"], SPECIAL["<|end_of_text|>"]):
-                        if lo == 0:
+                        # ending is a choice like any other: it may not leave a half-written or
+                        # unpermitted number as the last thing in the text
+                        if lo == 0 and not blank and (allow is None or allow(text, " ")):
                             return text
                         continue
                     if tok >= 128000:
                         continue
                     piece = self.tok.decode([tok])
+                    if blank and (not piece.strip() or any(st in text + piece for st in stop)):
+                        continue        # nothing written yet: a blank or a stop cannot be the answer
                     if allow is None or allow(text, piece):
                         pick = (tok, piece)
                         break

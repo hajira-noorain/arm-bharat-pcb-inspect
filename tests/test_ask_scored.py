@@ -24,7 +24,7 @@ class Scripted:
         assert [o.strip() for o in options] == list(ask.QUERIES)
         return [(0.0 if o.strip() == self.want else -9.0, 2) for o in options]
 
-    def write(self, max_new_tokens, stop=("\n",), allow=None, top_k=40):
+    def write(self, max_new_tokens, stop=("\n",), allow=None, top_k=40, nonempty=False):
         text = ""
         for alts in self.pieces:
             piece = next((p for p in alts if allow(text, p)), None)
