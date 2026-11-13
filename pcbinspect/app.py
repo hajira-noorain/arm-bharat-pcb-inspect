@@ -110,30 +110,8 @@ class Station:
         return feature_fn, det
 
     def _load_llm(self):
-        # advice_llm_pte: the model that writes advice and answers questions, if different from llm_pte
-        # (the 3B model follows the evidence where the 1B model does not; see docs/RESULTS.md)
-        p = self.root / self.cfg.get("llm_pte", "")
-        alt = self.root / self.cfg.get("advice_llm_pte", "") if self.cfg.get("advice_llm_pte") else None
-        if alt is not None and alt.is_file():
-            p = alt
-        if not p.is_file():
-            log.warning("Llama .pte not found at %s: advice will use templates", p)
-            return None
-        if self.cfg.get("llm_backend", "runner") == "logits":
-            # The same .pte through executorch.runtime, with next-token scores (pcbinspect/llm_logits.py):
-            # advice choices by option text, summaries that cannot contain a number that is not a fact.
-            try:
-                from .llm_logits import LogitLlama
-                return LogitLlama(p, self.root / self.cfg["llm_tokenizer"], threads=self.cfg.get("llm_threads", 4))
-            except Exception as exc:    # noqa: BLE001
-                log.exception("Llama (scores) failed to load (%s): trying the text runner", exc)
-        from .llm import ExecuTorchLlama
-        try:
-            return ExecuTorchLlama(p, self.root / self.cfg["llm_tokenizer"],
-                                   threads=self.cfg.get("llm_threads", 4))
-        except Exception as exc:
-            log.exception("Llama failed to load (%s): advice will use templates", exc)
-            return None
+        from .llm_select import load_llama
+        return load_llama(self.root, self.cfg)
 
     def _open_camera(self):
         kind = self.cfg.get("camera", "auto")

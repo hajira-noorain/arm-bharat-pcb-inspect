@@ -259,7 +259,7 @@ def bench_llm_scores(root: Path, cfg: dict, quick: bool) -> dict:
         {"id": "D1", "type": "short", "severity": "critical", "confidence": 0.91, "size_mm": 0.31, "location": "top-left"},
         {"id": "D2", "type": "open", "severity": "critical", "confidence": 0.84, "size_mm": 0.22, "location": "centre"}]}
     out = {}
-    for key in ("llm_pte", "spec_llm_pte"):
+    for key in ("advice_llm_pte", "spec_llm_pte", "llm_pte"):
         pte = root / cfg.get(key, "")
         if not cfg.get(key) or not pte.is_file() or pte.name in out:
             continue

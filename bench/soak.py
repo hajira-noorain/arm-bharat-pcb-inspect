@@ -38,10 +38,10 @@ def main():
     fn = executorch_feature_fn(root / cfg["backbone_pte"])
     insp = Inspector(root, designs, det, fn)
     llm = None
-    if not args.no_llm and (root / cfg["llm_pte"]).exists():
-        from pcbinspect.llm import ExecuTorchLlama
-        llm = ExecuTorchLlama(root / cfg["llm_pte"], root / cfg["llm_tokenizer"])
-    advisor = Advisor(llm)
+    if not args.no_llm:             # the same model and decision method the station itself uses
+        from pcbinspect.llm_select import load_llama
+        llm = load_llama(root, cfg)
+    advisor = Advisor(llm, cause_mode=cfg.get("advice_cause_mode", "list"))
     imgs = sorted(glob.glob(str(root / "demo" / "boards" / f"{args.design}_*.jpg")))
     if not imgs:
         raise SystemExit(f"no demo boards for {args.design}")

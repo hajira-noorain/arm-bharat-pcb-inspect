@@ -10,7 +10,10 @@ arm_runtime_model: ""         # empty = find our converted model (a folder with 
 detector_pte: models/vision/pcb_y26n_xnnpack.pte
 detector_pt: models/vision/pcb_y26n.pt
 backbone_pte: models/vision/resnet18_patch_xnnpack.pte
-llm_pte: models/llm/llama3_2_1b_spinquant.pte
+llm_pte: models/llm/llama3_2_1b_spinquant.pte          # small model: fallback, and the tokens/s benchmark
+advice_llm_pte: models/llm/llama3_2_3b_spinquant.pte   # decides advice and shift questions (falls back to llm_pte)
+llm_backend: logits            # decisions read from next-token scores; "runner" = the text runner writing JSON
+advice_cause_mode: pointwise   # each candidate cause judged alone with a yes/no question; "list" = pick from a list
 llm_tokenizer: models/llm/tokenizer.model
 spec_llm_pte: models/llm/llama3_2_3b_spinquant.pte   # reads customer requirements (loaded on first use)
 eyetest_dir: assets/eyetest
