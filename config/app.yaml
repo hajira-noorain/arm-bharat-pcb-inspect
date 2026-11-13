@@ -7,6 +7,8 @@ replay_glob: demo/boards/*.jpg
 vision_backend: executorch    # executorch | arm-runtime (Arm Optimized-Runtimes YOLO26, Pi 5) | ultralytics (laptop dev)
 arm_runtime_lib: ""           # empty = find libarm-yolo26n.so.0 under the runtime's dist/ (deploy/pi_setup.sh builds it)
 arm_runtime_model: ""         # empty = find our converted model (a folder with model.bin) under the same dist/
+detector_variant: n          # n | s | m: which bare-board detector runs; its own thresholds come with it
+#                              (pcbinspect/variants.py). Chosen from the Pi timings.
 detector_pte: models/vision/pcb_y26n_xnnpack.pte
 detector_pt: models/vision/pcb_y26n.pt
 backbone_pte: models/vision/resnet18_patch_xnnpack.pte

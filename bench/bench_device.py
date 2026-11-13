@@ -312,7 +312,8 @@ def bench_e2e(root: Path, cfg: dict, n: int) -> dict:
     from pcbinspect.anomaly import executorch_feature_fn
     from pcbinspect.detect_bare import BareDetector, ExecuTorchTiles
     from pcbinspect.pipeline import Inspector, load_designs
-    designs = load_designs(root / cfg["designs_dir"])
+    from pcbinspect.variants import apply_detector_variant
+    cfg, designs, _ = apply_detector_variant(cfg, load_designs(root / cfg["designs_dir"]), root)
     det = BareDetector(ExecuTorchTiles(root / cfg["detector_pte"])) if (root / cfg["detector_pte"]).exists() else None
     fn = executorch_feature_fn(root / cfg["backbone_pte"]) if (root / cfg["backbone_pte"]).exists() else None
     insp = Inspector(root, designs, det, fn)

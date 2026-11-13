@@ -38,7 +38,8 @@ def main():
     ap.add_argument("--work", default=r"C:\Users\sulai\pcb_work")
     ap.add_argument("--out", default=r"C:\Users\sulai\pcb_work\bundle\pcb-station")
     ap.add_argument("--llm", default="llama3_2_1b_spinquant.pte")
-    ap.add_argument("--extra-llm", default="", help="also ship another .pte (e.g. the 3B) for comparison")
+    ap.add_argument("--extra-llm", default="llama3_2_3b_spinquant.pte",
+                    help="also ship these .pte files (the 3B decides advice, questions and rules; see config/app.yaml)")
     ap.add_argument("--demo-per-design", type=int, default=24)
     ap.add_argument("--tar", action="store_true")
     args = ap.parse_args()
@@ -59,8 +60,11 @@ def main():
         copy(m / "anomaly", out / "models" / "anomaly")
     if (m / "gate").exists():
         copy(m / "gate", out / "models" / "gate")
-    if (m / "vision" / "pcb_y26n.pt").exists():
-        copy(m / "vision" / "pcb_y26n.pt", out / "models" / "vision" / "pcb_y26n.pt")
+    for v in ("n", "s", "m"):
+        if (m / "vision" / f"pcb_y26{v}.pt").exists():
+            copy(m / "vision" / f"pcb_y26{v}.pt", out / "models" / "vision" / f"pcb_y26{v}.pt")
+    for p in (m / "vision").glob("parts_kind*.json"):
+        copy(p, out / "models" / "vision" / p.name)
 
     # calibration boards (cal split, never trained on): lets the station re-calibrate the conformal
     # gate itself after a learning update

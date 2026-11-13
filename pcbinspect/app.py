@@ -51,6 +51,9 @@ class Station:
         self.store = Store(self.data)
         self.kb = default_kb()
         self.designs = load_designs(self.root / cfg["designs_dir"])
+        from .variants import apply_detector_variant
+        self.cfg, self.designs, self.detector_variant = apply_detector_variant(cfg, self.designs, self.root)
+        cfg = self.cfg
         self.feature_fn, self.detector = self._load_vision()
         self.parts_detector, self.parts_classifier = self._load_parts()
         self.light = StackLight(cfg.get("gpio", True))

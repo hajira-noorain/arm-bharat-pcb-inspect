@@ -34,6 +34,9 @@ def main():
     cfg = yaml.safe_load((root / "config" / "app.yaml").read_text())
     set_threads(cfg.get("llm_threads", 4))
     designs = load_designs(root / cfg["designs_dir"])
+    from pcbinspect.variants import apply_detector_variant
+    cfg, designs, variant = apply_detector_variant(cfg, designs, root)
+    print("detector variant:", variant, flush=True)
     det = BareDetector(ExecuTorchTiles(root / cfg["detector_pte"]))
     fn = executorch_feature_fn(root / cfg["backbone_pte"])
     insp = Inspector(root, designs, det, fn)
