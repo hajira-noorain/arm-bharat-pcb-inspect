@@ -94,8 +94,8 @@ def test_pointwise_mode_judges_each_cause_alone_and_keeps_the_list_out_of_the_pr
 
         def yes_no(self, text):
             self.questions.append(text)
-            repeating = "is REPEATING" in text
-            handling = "handling cause" in text
+            repeating = "is a REPEATING defect" in text
+            handling = "(handling)" in text
             return 3.0 if (repeating != handling) else -3.0      # the rule: repeating -> process, one-off -> handling
 
     be = YesNo(("continuity",), [["A short and an open were found."]])
