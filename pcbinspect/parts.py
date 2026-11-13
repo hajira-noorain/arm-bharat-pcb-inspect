@@ -133,8 +133,12 @@ def build_map(dets: list[dict], size: tuple[int, int], px_per_mm: float | None =
     return PartsMap([int(size[0]), int(size[1])], px_per_mm, parts)
 
 
-LIKE_DEFAULT = 0.5       # likeness below this = "does not look like the good board here" (no good-board range known)
-LIKE_MARGIN = 0.25       # ... or this far below the lowest likeness the part showed across the good boards
+# Chosen on FPIC VALIDATION boards with simulated removal (training/eval_parts.py method; 1,752 present and 261
+# removed parts): at 0.7, 97% of removed parts read as unlike and 0.4% of present ones do. Software re-photographing
+# is gentler than a real second photo, which is why a board taught from several good pictures uses each part's own
+# measured range instead of this default.
+LIKE_DEFAULT = 0.7       # likeness below this = "does not look like the good board here" (no good-board range known)
+LIKE_MARGIN = 0.15       # ... or this far below the lowest likeness the part showed across the good boards
 CHANGED_EXTRA = 0.2      # a part that IS detected must look this much worse still before it is called changed
 
 
@@ -142,7 +146,7 @@ def unlike_below(p: Part) -> float:
     """The likeness under which this part's place counts as not looking like the good board."""
     if p.sim_min is None:
         return LIKE_DEFAULT
-    return min(0.6, max(0.2, p.sim_min - LIKE_MARGIN))
+    return min(0.85, max(0.3, p.sim_min - LIKE_MARGIN))
 
 
 def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | None:
@@ -152,21 +156,26 @@ def likeness(ref_gray, test_gray, box, search: int | None = None) -> float | Non
     same frame (grey or colour: both work). None when the part is too small or too plain to compare."""
     import cv2
     h, w = test_gray.shape[:2]
-    # the part with a rim of board around it: the rim holds the part's outline, and the pads and print that
-    # show when the part is gone (a plain-topped part alone has nothing to compare)
-    gx, gy = 0.2 * (box[2] - box[0]) + 4, 0.2 * (box[3] - box[1]) + 4
-    x0, y0 = int(max(box[0] - gx, 0)), int(max(box[1] - gy, 0))
-    x1, y1 = int(min(box[2] + gx, w)), int(min(box[3] + gy, h))
-    if x1 - x0 < 6 or y1 - y0 < 6:
-        return None
-    tpl = ref_gray[y0:y1, x0:x1]
-    if float(tpl.std()) < 4.0:
-        return None
-    s = search if search is not None else int(min(max(0.15 * max(x1 - x0, y1 - y0), 4), 20))
-    win = test_gray[max(y0 - s, 0):min(y1 + s, h), max(x0 - s, 0):min(x1 + s, w)]
-    if win.shape[0] < tpl.shape[0] or win.shape[1] < tpl.shape[1]:
-        return None
-    return float(cv2.matchTemplate(win, tpl, cv2.TM_CCOEFF_NORMED).max())
+    # The part itself is compared first: on the validation boards a removed part scored a median of 0.26 this
+    # way, against 0.53 when a rim of board was included (the unchanged rim props the score up). A plain-topped
+    # part has nothing of its own to compare, so only then is a rim added: it holds the part's outline, and the
+    # pads and print that show when the part is gone.
+    for rim in (0.0, 0.2):
+        gx = rim * (box[2] - box[0]) + (4 if rim else 0)
+        gy = rim * (box[3] - box[1]) + (4 if rim else 0)
+        x0, y0 = int(max(box[0] - gx, 0)), int(max(box[1] - gy, 0))
+        x1, y1 = int(min(box[2] + gx, w)), int(min(box[3] + gy, h))
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            continue
+        tpl = ref_gray[y0:y1, x0:x1]
+        if float(tpl.std()) < 4.0:
+            continue
+        s = search if search is not None else int(min(max(0.15 * max(x1 - x0, y1 - y0), 3), 20))
+        win = test_gray[max(y0 - s, 0):min(y1 + s, h), max(x0 - s, 0):min(x1 + s, w)]
+        if win.shape[0] < tpl.shape[0] or win.shape[1] < tpl.shape[1]:
+            continue
+        return float(cv2.matchTemplate(win, tpl, cv2.TM_CCOEFF_NORMED).max())
+    return None
 
 
 def compare(pmap: PartsMap, dets: list[dict], present_conf: float = 0.25, extra_conf: float = 0.6,

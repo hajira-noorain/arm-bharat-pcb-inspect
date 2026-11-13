@@ -198,6 +198,6 @@ def test_teaching_records_how_alike_each_part_looks_across_good_boards(tmp_path)
     pm = teach_parts(BrightBoxes(), None, goods, mm_per_px=1 / 16)
     assert len(pm.parts) == len(PARTS) and all(p.sim_min is not None and p.sim_min > 0.8 for p in pm.parts)
     from pcbinspect.parts import PartsMap, unlike_below
-    assert all(0.2 <= unlike_below(p) <= 0.6 for p in pm.parts)
+    assert all(0.3 <= unlike_below(p) <= 0.85 and unlike_below(p) <= p.sim_min for p in pm.parts)
     pm.save(tmp_path / "p.json")
     assert PartsMap.load(tmp_path / "p.json").parts[0].sim_min == pm.parts[0].sim_min
