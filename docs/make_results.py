@@ -59,7 +59,9 @@ def bare_section(r: Path, tag_pref=("v3_et", "v3", "executorch", "final", "ultra
                 lo, hi = g["miss_rate_ci95"]
                 dlo, dhi = g.get("defect_recall_ci95", (None, None))
                 rc = g.get("random_defect_miss_ci95")
-                rows.append([design, f"{100 * g['alpha']:.0f}%", g["n_defective"], g["n_good"],
+                arate = f"{100 * g['alpha']:.0f}%" + ("" if g.get("supported_alpha", True)
+                                                      else " (too few calibration defects)")
+                rows.append([SOURCE_NAMES.get(design, design), arate, g["n_defective"], g["n_good"],
                              f"{pct(g.get('random_defect_miss'))} ({pct(rc[0])} to {pct(rc[1])})" if rc else "n/a",
                              f"{pct(1 - g['defect_recall'])} ({pct(1 - dhi)} to {pct(1 - dlo)})" if dlo is not None else "n/a",
                              f"{pct(g['miss_rate'])} ({pct(lo)} to {pct(hi)})",
@@ -69,7 +71,8 @@ def bare_section(r: Path, tag_pref=("v3_et", "v3", "executorch", "final", "ultra
                    "shown when its evidence reaches the threshold. Miss rates are measured on test boards. "
                    "\"One random defect per board\" is the quantity the guarantee covers (interval: bootstrap over "
                    "boards); \"all defects\" pools every defect, so boards with many defects weigh more. A design "
-                   "with no good calibration boards never says PASS, so every board goes to a person.\n")
+                   "with no good calibration boards never says PASS, so every board goes to a person. A rate marked "
+                   "\"too few calibration defects\" needs at least 1/rate - 1 of them and carries no guarantee.\n")
         out.append(table(["Design", "Allowed miss rate", "Defective", "Good",
                           "Missed, one random defect per board (95% CI)", "Missed, all defects (95% CI)",
                           "Defective boards passed (95% CI)", "False calls per board",
@@ -172,7 +175,7 @@ def anomaly_compare_section(r: Path) -> list[str]:
                      pct(sum(miss) / 4), pct(sum(rev) / 4)])
     if not rows:
         return []
-    return ["### Assembled boards: anomaly backbone comparison (VisA official split)\n",
+    return ["### Assembled boards: anomaly settings compared (VisA official split)\n",
             table(["Backbone", "pcb1", "pcb2", "pcb3", "pcb4", "Mean image AUROC", "Mean pixel AUROC",
                    "Mean 10-shot AUROC", "Mean miss rate at 5%", "Mean share sent to a person"], rows),
             "\nImage AUROC per board with the full memory (200 good boards). The miss rate and the "
@@ -331,7 +334,8 @@ def spec_section(r: Path) -> list[str]:
                     continue
                 seen_kw = True
             for sname, sc in by_set.items():
-                label = "keyword" if name == "keyword" else f"{name} ({SPEC_TAGS.get(tag, tag)})"
+                size = "3B" if "3b" in name else "1B" if "1b" in name else name
+                label = "Keyword reader" if name == "keyword" else f"Llama 3.2 {size}, {SPEC_TAGS.get(tag, tag)}"
                 rows.append([label, sname, sc["n"], pct(sc["exact"]), pct(sc["auto_correct"]), pct(sc["silent_wrong"]),
                              pct(sc["to_operator"]), pct(sc["failed"]),
                              "0" if name == "keyword" else f"{sc['latency_ms_median'] / 1000:.1f} s"])
