@@ -372,6 +372,8 @@ Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 
 What is known today is from an x86 development host and is labelled as such wherever it appears (for example about 7 s per board for Llama's advice). A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
 
+**Which detector size ships.** Three bare-board detectors are in the bundle: YOLO26n, and the retrained YOLO26s and YOLO26m, which find more on every held-out test set (section 3.1). Each comes with its own PASS/FAIL/CHECK thresholds, calibrated on its own scores; one setting (`detector_variant`) swaps a model and its thresholds together and refuses to mix them. The size that ships is the largest one whose measured time on the Pi keeps a board's verdict under about two seconds.
+
 **Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
 
 ## 8. Logging and traceability
