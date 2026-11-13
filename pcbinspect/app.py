@@ -58,7 +58,7 @@ class Station:
         for name, d in self.designs.items():
             self.store.upsert_design(name, d.kind, d.rules.min_trace_width_mm, d.rules.min_spacing_mm)
         self.llm = self._load_llm()
-        self.advisor = Advisor(self.llm, self.kb)
+        self.advisor = Advisor(self.llm, self.kb, cause_mode=cfg.get("advice_cause_mode", "list"))
         self.camera = self._open_camera()
         self.cache: OrderedDict[int, tuple] = OrderedDict()   # iid -> (insp, analysis, bgr)
         self.buffers: dict[str, FeedbackBuffer] = {}
@@ -110,7 +110,12 @@ class Station:
         return feature_fn, det
 
     def _load_llm(self):
+        # advice_llm_pte: the model that writes advice and answers questions, if different from llm_pte
+        # (the 3B model follows the evidence where the 1B model does not; see docs/RESULTS.md)
         p = self.root / self.cfg.get("llm_pte", "")
+        alt = self.root / self.cfg.get("advice_llm_pte", "") if self.cfg.get("advice_llm_pte") else None
+        if alt is not None and alt.is_file():
+            p = alt
         if not p.is_file():
             log.warning("Llama .pte not found at %s: advice will use templates", p)
             return None
@@ -322,8 +327,12 @@ class Station:
             # 47.5% for free generation, never "no rule"; llm/eval_spec.py --constrained --grounded).
             try:
                 from .llm_logits import LogitLlama
+                same = isinstance(self.llm, LogitLlama) and self.llm.model == p.stem
+                # one instance when the advice model is this same .pte (it is 2.4 GB: never load it twice);
+                # every use holds llm_lock and starts with reset(), so sharing is safe
                 self.spec_compiler = ConstrainedSpecCompiler(
-                    LogitLlama(p, self.root / self.cfg["llm_tokenizer"]), grounded=True)
+                    self.llm if same else LogitLlama(p, self.root / self.cfg["llm_tokenizer"],
+                                                     threads=self.cfg.get("llm_threads", 4)), grounded=True)
                 self.spec_reader_name = "grounded choice (constrained decoding)"
                 return self.spec_compiler
             except Exception as exc:    # noqa: BLE001
