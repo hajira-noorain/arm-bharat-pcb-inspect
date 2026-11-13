@@ -7,12 +7,15 @@ Every inspection system claims a high accuracy figure. This one **measures the s
 For each board it:
 
 - **finds and names defects** on bare boards (11 types) and flags anything unusual on assembled boards;
-- **compares against a known-good board** when one exists, which catches defects the detector misses, checks connectivity (a short joins two conductors, an open splits one) and **measures each defect in millimetres**;
+- **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;
 - **grades severity** against IPC-style limits for the customer's class;
-- **returns PASS, FAIL or CHECK** (a person decides). The operator picks how many defects may slip through (1%, 5%, 10%); conformal calibration guarantees that rate per defect on boards like the calibration boards;
-- **explains each finding with Llama 3.2 1B**, which picks causes and actions from a defect knowledge base; a checker rejects anything not supported by the findings;
+- **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.0% missed at the 5% setting with the known-good board; 6.5% with the detector alone, see `docs/RESULTS.md`);
+- **explains each finding with Llama 3.2 1B**: the causes and actions the operator reads are knowledge-base text, word for word; Llama selects among them and writes the summary, and a checker rejects any answer that states something not in the findings. (Measured: its choice of cause is no better than chance, so the knowledge base orders the options and Llama is not credited with diagnosis.);
 - **logs everything** on the device and lights a green, amber or red stack light;
-- **learns on the floor**: a new design is taught from 5-10 good boards, and operator corrections train a small head that is switched on only if it provably does not hide defects.
+- **learns on the floor**:
+  - a new bare board is taught in minutes from two or more pictures of a good board. The first becomes the reference picture; the station then draws test defects of known size onto the pictures to set that board's pass and fail thresholds and to state what size of defect it finds on it;
+  - a new assembled board is taught from 5-10 good boards;
+  - operator corrections train a small head that is switched on only if checks on held-out labels show it does not hide defects.
 
 And it proves what it can do:
 
