@@ -27,7 +27,8 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from pcbinspect.anomaly import descriptors, enrol_from_desc, preprocess, torch_feature_fn  # noqa: E402
+from pcbinspect.anomaly import (descriptors, enrol_from_desc, grey_thumb, preprocess,  # noqa: E402
+                                torch_feature_fn)
 from pcbinspect.gate import ConformalGate  # noqa: E402
 from pcbinspect.gate import evaluate as gate_evaluate  # noqa: E402
 
@@ -43,7 +44,7 @@ def read_split(visa: Path, obj: str):
 
 class FeatureCache:
     def __init__(self, fn, visa: Path, size: int):
-        self.fn, self.visa, self.size, self.c = fn, visa, size, {}
+        self.fn, self.visa, self.size, self.c, self.thumbs = fn, visa, size, {}, {}
 
     def get(self, rel: str):
         if rel not in self.c:
@@ -52,7 +53,16 @@ class FeatureCache:
                 raise FileNotFoundError(self.visa / rel)
             f = self.fn(preprocess(im, self.size))
             self.c[rel] = (descriptors(f), f.shape[2], f.shape[3], im.shape[1], im.shape[0])
+            self.thumbs[rel] = grey_thumb(im)    # for the optional foreground mask
         return self.c[rel]
+
+    def enrol_opts(self, rels, fg_mask=False, posnorm=False, topk_frac=0.0) -> dict:
+        """Keyword options for enrol_from_desc for the images `rels` (all off = the original model)."""
+        for r in rels:
+            self.get(r)
+        gh, gw = self.c[rels[0]][1:3]
+        return dict(fg_mask=fg_mask, posnorm=posnorm, topk_frac=topk_frac, grid=(gh, gw),
+                    thumbs=[self.thumbs[r] for r in rels] if fg_mask else None)
 
 
 def evaluate(model, test_rows, cache: FeatureCache, visa: Path, with_pixels: bool):
@@ -90,6 +100,9 @@ def main():
     ap.add_argument("--max-train", type=int, default=200)
     ap.add_argument("--coreset", type=float, default=0.02)
     ap.add_argument("--tag", default="")
+    ap.add_argument("--fg-mask", action="store_true", help="ignore patches outside the board foreground")
+    ap.add_argument("--posnorm", action="store_true", help="per-grid-position normalisation of patch distances")
+    ap.add_argument("--topk-frac", type=float, default=0.0, help="image score = mean of top this fraction of patches (0 = max)")
     ap.add_argument("--save", action="store_true", help="write the deployable memory and gate")
     args = ap.parse_args()
     visa, out = Path(args.visa), Path(args.out)
@@ -103,12 +116,16 @@ def main():
         random.Random(0).shuffle(train)
         cache = FeatureCache(fn, visa, args.input)
         print(f"== {obj}: {args.arch}@{args.input}, train {len(train)} good, test {len(test)}", flush=True)
-        report = {"object": obj, "arch": args.arch, "input": args.input}
+        report = {"object": obj, "arch": args.arch, "input": args.input, "tag": args.tag,
+                  "fg_mask": args.fg_mask, "posnorm": args.posnorm, "topk_frac": args.topk_frac}
 
         goods = train[:args.max_train]
         t0 = time.time()
         feats = [cache.get(r["image"])[0] for r in goods]
-        model = enrol_from_desc(fn, feats, obj, args.coreset, 16384, input_size=args.input, arch=args.arch)
+        rels = [r["image"] for r in goods]
+        model = enrol_from_desc(fn, feats, obj, args.coreset, 16384, input_size=args.input, arch=args.arch,
+                                **cache.enrol_opts(rels, args.fg_mask, args.posnorm, args.topk_frac))
+        report["fg_status"] = model.fg_status
         report["enrol_seconds"] = time.time() - t0
         report["bank_size"] = int(len(model.bank))
         ev, scores, labels = evaluate(model, test, cache, visa, with_pixels=True)
@@ -140,8 +157,10 @@ def main():
             aurocs = []
             for rep in range(args.fewshot_reps):
                 sample = random.Random(100 + rep).sample(train, k)
-                m = enrol_from_desc(fn, [cache.get(r["image"])[0] for r in sample], obj, 0.25, 16384,
-                                    seed=rep, input_size=args.input, arch=args.arch)
+                srel = [r["image"] for r in sample]
+                m = enrol_from_desc(fn, [cache.get(x)[0] for x in srel], obj, 0.25, 16384,
+                                    seed=rep, input_size=args.input, arch=args.arch,
+                                    **cache.enrol_opts(srel, args.fg_mask, args.posnorm, args.topk_frac))
                 aurocs.append(evaluate(m, test, cache, visa, with_pixels=False)[0]["image_auroc"])
             report["fewshot"][k] = {"image_auroc_mean": float(np.mean(aurocs)),
                                     "image_auroc_min": float(np.min(aurocs)), "reps": aurocs}

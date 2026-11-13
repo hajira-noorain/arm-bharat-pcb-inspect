@@ -93,3 +93,19 @@ def test_head_learns_from_operator_labels(tmp_path):
     assert buf2.remove_event(105) and buf2.counts() == (20, 19)
     head.save(tmp_path / "h.json")
     assert RescoreHead.load(tmp_path / "h.json").p_real(centre_real.astype(np.float32)) > 0.9
+
+
+def test_new_options_default_off_and_old_meta_loads(fn, model, tmp_path):
+    assert model.fg_mask is None and model.pos_mu is None and model.topk_frac == 0.0
+    res = model.score(board(400, defect=True))
+    d = model.nn.dist(res.grid_desc).reshape(res.heatmap.shape)
+    assert res.raw_score == float(d.max()) and np.array_equal(res.heatmap, d)
+    model.save(tmp_path / "m")
+    assert not (tmp_path / "m" / "scoring_extras.npz").exists()
+    again = AnomalyModel.load(tmp_path / "m", fn)
+    assert again.score(board(400, defect=True)).raw_score == pytest.approx(res.raw_score, rel=1e-5)
+
+
+def test_real_backbone_grid_at_384(fn):
+    from pcbinspect.anomaly import preprocess
+    assert fn(preprocess(board(0), 384)).shape[2:] == (48, 48)
