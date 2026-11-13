@@ -58,6 +58,7 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 | Eye-test reader on simulated photos of the card; in-silico detection limits under three camera conditions | Component presence/polarity and solder-joint judgement on assembled boards (anomaly flag only) |
 | Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
 | Llama advice grounding and choice vs chance; Llama rule compiler on 80 tuning and 40 held-out clauses | |
+| Learning from operator feedback, simulated on held-out boards (DeepPCB: boards sent to a person 20% to 4%, no defective board passed) | |
 | Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
 
 The public datasets are scans or close-up photos, and some defects are synthetic: PKU-Market-PCB defects were drawn in with an image editor, and some of DeepPCB's were added by hand. Dataset results and real-camera results are therefore reported separately.
