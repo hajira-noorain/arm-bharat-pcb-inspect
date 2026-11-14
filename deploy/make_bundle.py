@@ -33,6 +33,42 @@ def copy(src: Path, dst: Path) -> None:
         shutil.copy2(src, dst)
 
 
+def teach_visa_parts(out: Path, work: Path, goods: int = 8) -> None:
+    """Pre-teach the parts maps of the VisA assembled-board designs from their good TRAINING photos (the demo
+    boards are test photos), with the shipped ExecuTorch models, so the parts check works in replay mode."""
+    det_p, cls_p = out / "models" / "vision" / "parts_y26n_xnnpack.pte", out / "models" / "vision" / "parts_kind_xnnpack.pte"
+    visa = work / "data" / "VisA"
+    if not det_p.is_file() or not (visa / "split_csv" / "1cls.csv").is_file():
+        print("parts maps: skipped (no parts detector or no VisA)")
+        return
+    import sys
+    sys.path.insert(0, str(out))
+    import cv2
+    import yaml
+    from pcbinspect.detect_bare import BareDetector, ExecuTorchTiles
+    from pcbinspect.parts import PartKindClassifier, teach_parts
+    det = BareDetector(ExecuTorchTiles(det_p, conf_thr=0.1), names=("part",))
+    cls = None
+    if cls_p.is_file() and cls_p.with_suffix(".json").is_file():
+        cls = PartKindClassifier(cls_p, json.loads(cls_p.with_suffix(".json").read_text())["names"])
+    with open(visa / "split_csv" / "1cls.csv", newline="") as f:
+        rows = [r for r in csv.DictReader(f) if r["split"] == "train" and r["label"] == "normal"]
+    for obj in ("pcb1", "pcb2", "pcb3", "pcb4"):
+        dy = out / "config" / "designs" / f"visa_{obj}.yaml"
+        if not dy.is_file():
+            continue
+        d = yaml.safe_load(dy.read_text())
+        imgs = [cv2.imread(str(visa / r["image"])) for r in rows if r["object"] == obj][:goods]
+        pm = teach_parts(det, cls, imgs)
+        target = out / d["anomaly_dir"]
+        target.mkdir(parents=True, exist_ok=True)
+        pm.save(target / "parts.json")
+        cv2.imwrite(str(target / "parts_ref.jpg"), imgs[0], [cv2.IMWRITE_JPEG_QUALITY, 95])
+        d["parts_map"] = f"{d['anomaly_dir']}/parts.json"
+        dy.write_text(yaml.safe_dump(d, sort_keys=False))
+        print(f"parts map visa_{obj}: {pm.summary()}", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", default=r"C:\Users\sulai\pcb_work")
@@ -138,6 +174,7 @@ def main():
         for sp in sorted(card.glob("sheet_*.png")):
             photo = photograph(inkjet(cv2.imread(str(sp), cv2.IMREAD_GRAYSCALE), 40, r), 30, r)
             cv2.imwrite(str(ed / f"simulated_{sp.stem}.jpg"), photo, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    teach_visa_parts(out, work)
     (out / "results").mkdir(exist_ok=True)
     for p in (work / "results").glob("*.json"):
         if not p.name.startswith(("bare_dets_", "emb_")):
