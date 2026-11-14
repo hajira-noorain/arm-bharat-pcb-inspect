@@ -1,0 +1,38 @@
+# Demo image: the station in demo mode (held-out test boards, photo upload), on an x86 CPU.
+# The same file builds the local demo and the Hugging Face Space (where it is copied as ./Dockerfile).
+#
+#   docker build --secret id=HF_TOKEN,env=HF_TOKEN -f deploy/Dockerfile.demo -t pcb-demo .
+#   docker run -p 7860:7860 pcb-demo            # then open http://localhost:7860
+#
+# Model files, demo boards and the taught design files come from the private Hugging Face repo
+# Sulaiman-shariff/arm-bharat-pcb-inspect (its pi_bundle/ folder); the token is a build secret, mounted for one
+# step only and never written into a layer. The station's code comes from this repository, on top.
+FROM python:3.13-slim-trixie
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+COPY deploy/requirements-pi.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r /tmp/requirements.txt huggingface_hub
+
+# Hugging Face Spaces run the container as uid 1000
+RUN useradd -m -u 1000 user
+USER user
+WORKDIR /home/user/app
+
+RUN --mount=type=secret,id=HF_TOKEN,mode=0444,required=true \
+    HF_TOKEN="$(cat /run/secrets/HF_TOKEN)" python -c "from huggingface_hub import snapshot_download as s; \
+s('Sulaiman-shariff/arm-bharat-pcb-inspect', allow_patterns=['pi_bundle/pcb-station/models/*', \
+'pi_bundle/pcb-station/demo/*', 'pi_bundle/pcb-station/config/designs/*'], local_dir='/tmp/hf')" \
+    && mv /tmp/hf/pi_bundle/pcb-station/models /tmp/hf/pi_bundle/pcb-station/demo . \
+    && mkdir -p config && mv /tmp/hf/pi_bundle/pcb-station/config/designs config/ \
+    && rm -rf /tmp/hf ~/.cache/huggingface
+
+COPY --chown=user pcbinspect pcbinspect
+COPY --chown=user kb kb
+COPY --chown=user assets assets
+COPY --chown=user config/app.yaml config/severity.yaml config/
+ENV PYTHONUNBUFFERED=1
+EXPOSE 7860
+CMD ["python", "-m", "pcbinspect.app", "--config", "config/app.yaml", "--set", "demo=true", "--set", "camera=replay", \
+     "--set", "gpio=false", "--set", "host=0.0.0.0", "--set", "port=7860"]

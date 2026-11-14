@@ -70,6 +70,11 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 
 The public datasets are scans or close-up photos, and some defects are synthetic: PKU-Market-PCB defects were drawn in with an image editor, and some of DeepPCB's were added by hand. Dataset results and real-camera results are therefore reported separately.
 
+## Try it without a Pi
+
+- **Online, recorded:** the station's own dashboard showing what it did on each held-out test board (verdict, findings marked on the board, the dataset's known answer, Llama's own advice): https://pcb-inspection-demo.vercel.app. It is a recording made with `deploy/record_demo.py` and packaged by `deploy/build_static_demo.py`, run on an x86 CPU, not the Pi; Llama's answers to example shift questions and customer requirements are recorded too.
+- **Live, on your computer:** one Docker command runs the real station in demo mode. Pick any test board or upload a photo of a bare board, and Llama 3.2 3B writes the advice on your CPU. See `deploy/DEMO.md`.
+
 ## Run it
 
 **On the Raspberry Pi 5** (Raspberry Pi OS 64-bit, with the active cooler fitted):

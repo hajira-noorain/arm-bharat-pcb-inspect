@@ -219,6 +219,10 @@ textarea { min-height: 96px; resize: vertical; }
   border: 1.5px solid var(--blue); color: var(--blue); font: 700 13px var(--narrow); }
 .steps h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
 .answer { margin: 10px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.chip { cursor: pointer; border: 1px solid var(--blue-2); background: var(--blue-3); color: var(--blue); border-radius: 14px;
+  padding: 4px 11px; font: 500 13px var(--narrow); text-align: left; }
+.chip:hover { border-color: var(--blue); }
 progress { width: 100%; accent-color: var(--blue); }
 .chk { margin: 6px 0; padding: 6px 10px; border-radius: 6px; }
 .chk.ok { background: var(--pass-bg); color: #1F5A22; }

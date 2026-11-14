@@ -8,7 +8,45 @@ const words = (s) => String(s || "").replaceAll("_", " ");
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private window: not remembered */ } } };
 
+// Recorded mode (the static online demo, deploy/build_static_demo.py): every reply is a file the station wrote
+// while it inspected the test boards; nothing can change, so uploads, decisions and setup are hidden.
+const RECORDED = !!window.PCB_RECORDED;
+const RECORDED_NOTE = "Recorded from the station: every verdict, finding and piece of Llama advice here is what the station's own code produced on these test boards, on an x86 computer's CPU rather than the Pi (Pi timings are in the technical report). To upload your own photo, run the local demo (deploy/DEMO.md in the repository).";
+let recordedIndex = null;
+async function recorded(path, opts) {
+  const [p] = path.split("?");
+  const json = async (f) => { const r = await fetch(f); if (!r.ok) throw new Error("not in this recording"); return r.json(); };
+  if ((opts.method || "GET") !== "GET") {
+    const body = typeof opts.body === "string" ? JSON.parse(opts.body) : {};
+    if (p === "/api/inspect" && body.sample) return json(`data/inspections/${encodeURIComponent(body.sample)}.json`);
+    if (p === "/api/ask") {
+      const hit = (await json("data/ask.json")).find((r) => r.question === body.question);
+      if (hit) return hit;
+      throw new Error("The recorded demo has Llama's answers to the example questions above; pick one of those.");
+    }
+    if (p === "/api/rules/compile") {
+      const hit = (await json("data/rules.json")).find((r) => r.clause === body.clause);
+      if (hit) return hit;
+      throw new Error("The recorded demo has Llama's readings of the example requirements above; pick one of those.");
+    }
+    throw new Error("This is a recorded demo, so it cannot change anything. The local demo can.");
+  }
+  const fixed = { "/api/state": "data/state.json", "/api/samples": "data/samples.json", "/api/stats": "data/stats.json", "/api/log": "data/log.json" };
+  if (fixed[p]) return json(fixed[p]);
+  if (/^\/api\/rules\//.test(p)) return [];
+  let m;
+  if ((m = /^\/api\/spc\/(.+)$/.exec(p))) return json(`data/spc_${m[1]}.json`);
+  if ((m = /^\/api\/inspection\/(\d+)$/.exec(p))) {
+    recordedIndex = recordedIndex || await json("data/index.json");
+    if (!recordedIndex[m[1]]) throw new Error("This board was inspected before the recording; pick a test board instead.");
+    return json(`data/inspections/${encodeURIComponent(recordedIndex[m[1]])}.json`);
+  }
+  throw new Error("Not available in the recorded demo.");
+}
+const thumbUrl = (file) => RECORDED ? `data/thumbs/${encodeURIComponent(file)}.jpg` : `/api/samples/${encodeURIComponent(file)}.jpg`;
+
 async function api(path, opts = {}) {
+  if (RECORDED) return recorded(path, opts);
   const isForm = opts.body instanceof FormData;
   const r = await fetch(path, { ...opts, headers: isForm ? {} : { "Content-Type": "application/json", ...(opts.headers || {}) } });
   const body = await r.json().catch(() => ({}));
@@ -37,7 +75,7 @@ function show(name) {
   $$(".side nav button").forEach((b) => { if (b.dataset.screen === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   $$("section[data-screen]").forEach((s) => s.hidden = s.dataset.screen !== name);
   $("#title").textContent = TITLES[name];
-  $("#source").hidden = !(state?.demo && name === "inspect");
+  $("#source").hidden = RECORDED || !(state?.demo && name === "inspect");
   $("#side").classList.remove("open"); $("#menu-btn").setAttribute("aria-expanded", "false");
   if (name === "log") loadLog();
   if (name === "trends") loadTrends();
@@ -66,9 +104,14 @@ async function loadState() {
   set("#st-llm", !!state.llm, state.llm ? `${L.modelName(state.llm)} · ExecuTorch` : "Llama not loaded");
   set("#st-camera", !!state.camera, state.demo ? "Source · test boards" : state.camera ? `Camera · ${state.camera}` : "No camera");
   $("#llm-banner").hidden = !!state.llm;
-  $("#disclosure").hidden = !state.disclosure; $("#disclosure").textContent = state.disclosure || "";
-  $("#source").hidden = !(state.demo && screen === "inspect");
+  const note = RECORDED ? RECORDED_NOTE : state.disclosure;
+  $("#disclosure").hidden = !note; $("#disclosure").textContent = note || "";
+  $("#source").hidden = RECORDED || !(state.demo && screen === "inspect");
+  $("#operator").closest(".control").hidden = RECORDED;
   $('#source [data-src="camera"]').hidden = !state.camera || state.camera === "replay";
+  $('#source [data-src="upload"]').hidden = RECORDED;
+  $$(".upload, #start-upload").forEach((el) => { if (RECORDED) el.hidden = true; });
+  ["teach", "eyetest"].forEach((k) => { $(`.side nav [data-screen="${k}"]`).hidden = RECORDED; });
   if (busy) $("#start-go").textContent = state.queue > 1 ? `Waiting for ${state.queue - 1} ahead` : "Inspecting";
   if (!current) renderStart();
 }
@@ -111,10 +154,10 @@ async function loadSamples() {
   samples = await api("/api/samples").catch(() => []);
   const label = (s) => s.kind === "assembled" ? "Assembled" : ({ deeppcb: "DeepPCB", hripcb: "PKU", mendeley: "Real photo" }[s.design] || s.design);
   $("#thumbs").innerHTML = samples.map((s, i) => `<button class="thumb" type="button" data-i="${i}" aria-pressed="false" title="${esc(s.design)}: ${s.kind === "assembled" ? (s.good ? "good board" : "faulty board") : `${s.marked} marked defect${s.marked === 1 ? "" : "s"}`}">
-    <img alt="" loading="lazy" src="/api/samples/${encodeURIComponent(s.file)}.jpg"><span>${esc(label(s))}</span></button>`).join("");
+    <img alt="" loading="lazy" src="${thumbUrl(s.file)}"><span>${esc(label(s))}</span></button>`).join("");
   $("#strip-note").textContent = samples.length ? "never used in training" : "No test boards installed";
   $("#gallery").innerHTML = samples.slice(0, 12).map((s, i) => `<button class="tile" type="button" data-i="${i}">
-    <img alt="" loading="lazy" src="/api/samples/${encodeURIComponent(s.file)}.jpg">
+    <img alt="" loading="lazy" src="${thumbUrl(s.file)}">
     <span class="t"><span>${s.kind === "assembled" ? "Assembled" : "Bare"} · ${esc(label(s))}</span><b>${s.good ? "good" : s.kind === "assembled" ? "faulty" : `${s.marked} defect${s.marked === 1 ? "" : "s"}`}</b></span></button>`).join("");
 }
 function setSource(src) {
@@ -139,7 +182,7 @@ function renderStart() {
     ? "These boards were never used for training. Pick one, or upload your own photo. The verdict comes first; Llama's advice follows."
     : state && !state.designs.length ? "Teach a board design first: Setup, Teach a board." : "Place a board against the corner stops and press Inspect.";
   $("#start-go").textContent = demo ? "Inspect a random test board" : "Inspect";
-  $("#start-upload").hidden = !demo;
+  $("#start-upload").hidden = !demo || RECORDED;
   $("#start-keys").hidden = !!demo;
   $("#gallery").hidden = !demo || !samples.length;
 }
@@ -244,7 +287,7 @@ function render(r, fresh) {
 
 function renderActions(r) {
   const next = state?.demo ? (source === "upload" ? "Upload another" : "Next test board") : "Inspect next";
-  const decide = !r.upload && r.verdict === "REVIEW" && !r.final_verdict
+  const decide = !RECORDED && !r.upload && r.verdict === "REVIEW" && !r.final_verdict
     ? `<div class="decision"><input id="review-reason" maxlength="200" placeholder="reason (optional)" aria-label="Reason for the decision">
        <button class="btn pass" data-review="PASS" type="button">Pass board</button><button class="btn fail" data-review="FAIL" type="button">Fail board</button></div>`
     : r.final_verdict ? `<span class="meta">Decided by ${esc(r.decided_by || "a person")}: ${r.final_verdict === "PASS" ? "passed" : "failed"}${r.decision_reason ? ` (${esc(r.decision_reason)})` : ""}</span>` : "";
@@ -252,10 +295,10 @@ function renderActions(r) {
   $("[data-go]", $("#vactions")).addEventListener("click", inspectNext);
 }
 
-function imgUrl(r) { return r.upload ? `/api/upload/${r.token}.jpg` : `/api/image/${r.id}.jpg`; }
+function imgUrl(r) { return RECORDED ? `data/images/${r.id}.jpg` : r.upload ? `/api/upload/${r.token}.jpg` : `/api/image/${r.id}.jpg`; }
 function renderBoard(r) {
   const views = [["board", "Board"]];
-  if (!r.upload) views.push(["marks", "Station marks"]);
+  if (!r.upload && !RECORDED) views.push(["marks", "Station marks"]);
   if (state?.camera && state.camera !== "replay" && !state.demo) views.push(["live", "Live camera"]);
   $("#views").innerHTML = views.map(([k, t]) => `<button type="button" data-view="${k}" aria-pressed="${view === k}">${t}</button>`).join("");
   if (view === "live") return;
@@ -316,7 +359,7 @@ function renderFindings(r) {
   $("#findings-card").hidden = !r.defects.length;
   if (!r.defects.length) return;
   const rows = showAll ? r.defects : r.defects.slice(0, 6);
-  const fb = (d) => r.upload ? "" : d.operator_label ? `<span class="labelled">${d.operator_label === "false_alarm" ? "false alarm" : "confirmed"}</span>`
+  const fb = (d) => r.upload || RECORDED ? "" : d.operator_label ? `<span class="labelled">${d.operator_label === "false_alarm" ? "false alarm" : "confirmed"}</span>`
     : `<button class="btn small" type="button" data-fb="confirmed" data-d="${d.id}">Confirm</button> <button class="btn small" type="button" data-fb="false_alarm" data-d="${d.id}">False alarm</button>`;
   $("#findings").innerHTML = `<table class="findings"><thead><tr><th>#</th><th>Defect</th><th>Size</th><th>Where</th><th>Class ${ipcClass}</th><th class="conf">Conf.</th><th></th></tr></thead><tbody>
     ${rows.map((d) => { const n = num(d); return `<tr data-n="${n}" tabindex="0" class="${hot === n ? "hot" : ""}">
@@ -375,7 +418,7 @@ function renderAdvice(r) {
   const note = llama ? `${swapped ? "Causes and actions chosen" : "Written"} by ${esc(L.modelName(a.model))} on this device. Every cause and action is checked against the defect knowledge base.${swapped ? ` Llama's summary sentence was replaced by the standard one${a.rejected_reason ? ` (${esc(a.rejected_reason)})` : ""}.` : ""}`
     : /busy with newer boards/.test(a.rejected_reason || "") ? "Standard advice from the defect knowledge base: Llama was busy with newer boards on this shared demo."
     : `From the defect knowledge base${a.rejected_reason ? `. Llama's answer was not used: ${esc(a.rejected_reason)}` : ""}.`;
-  const rate = r.upload ? "" : a.operator_rating == null
+  const rate = r.upload || RECORDED ? "" : a.operator_rating == null
     ? `Useful? <button class="btn small" type="button" data-rate="1" data-a="${a.id}">Yes</button> <button class="btn small" type="button" data-rate="-1" data-a="${a.id}">No</button>`
     : `Rated ${a.operator_rating > 0 ? "useful" : "not useful"}.`;
   $("#advice").innerHTML = `<p class="summary">${esc(adv.summary)}</p>
@@ -523,6 +566,23 @@ function drawPChart(pc, boards) {
 }
 
 // ======================= ask =======================
+// Examples for Llama's two other jobs. The recorded demo has Llama's own answers to exactly these
+// (deploy/record_demo.py); on a station they are just a quick way to try it.
+const EXAMPLE_QUESTIONS = ["Which defect is the most common this shift?", "What is the pass rate today?",
+  "How many boards went to a person for checking today?", "Split the defects from today into critical, major and minor",
+  "What happened with board B00005?", "Are there any open alerts?"];
+const EXAMPLE_CLAUSES = ["Mouse bites up to 0.15 mm are acceptable.", "Conductor width reduction from nicks or bites not to exceed 30%.",
+  "Spurs longer than 100 µm must be removed.", "Shorted nets are to be held for MRB disposition.",
+  "Pinholes exceeding 75 microns shall be referred to engineering."];
+const chips = (list) => list.map((t) => `<button class="chip" type="button">${esc(t)}</button>`).join("");
+$("#ask-examples").innerHTML = chips(EXAMPLE_QUESTIONS);
+$("#rule-examples").innerHTML = chips(EXAMPLE_CLAUSES);
+if (RECORDED) {     // the recording decides which examples there are answers for
+  fetch("data/ask.json").then((r) => r.json()).then((d) => { $("#ask-examples").innerHTML = chips(d.map((x) => x.question)); }).catch(() => {});
+  fetch("data/rules.json").then((r) => r.json()).then((d) => { $("#rule-examples").innerHTML = chips(d.map((x) => x.clause)); }).catch(() => {});
+}
+$("#ask-examples").addEventListener("click", (e) => { const c = e.target.closest(".chip"); if (c) { $("#question").value = c.textContent; $("#ask-form").requestSubmit(); } });
+$("#rule-examples").addEventListener("click", (e) => { const c = e.target.closest(".chip"); if (c) { $("#clause").value = c.textContent; $("#rule-form").requestSubmit(); } });
 $("#ask-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const q = $("#question").value.trim(); if (!q) return;
@@ -651,7 +711,7 @@ function readerBlock(rd, i) {
   const checks = v.status === "verified" ? `<p class="chk ok">Checks passed: the number, defect, comparison and action match the text.</p>` : `<p class="chk ${v.status === "check" ? "warn" : "bad"}">${esc(v.problems.join("; "))}</p>`;
   return `<div class="reader"><div class="who">Read by ${rd.reader === "llama" ? "Llama on this station" : "the keyword reader"}</div>
     <p class="rule">${esc(rd.sentence)}</p>${checks}<p class="chk ${ct[0]}">${esc(ct[1])}: ${esc(c.reason)}</p>
-    <button class="btn primary" type="button" data-use="${i}">Use this rule</button></div>`;
+    ${RECORDED ? "" : `<button class="btn primary" type="button" data-use="${i}">Use this rule</button>`}</div>`;
 }
 $("#rule-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();

@@ -1,0 +1,15 @@
+# only what deploy/Dockerfile.demo copies goes into the build context
+.git
+.env
+*.token
+.superpowers
+results
+models
+var
+docs
+training
+tests
+llm
+bench
+__pycache__
+*.pyc

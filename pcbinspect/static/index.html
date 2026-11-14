@@ -185,6 +185,7 @@
         <div class="card-h"><h2>Add a customer requirement</h2></div>
         <div class="card-b">
           <p class="sub">Paste one acceptance requirement as the customer wrote it. Llama on this station and a keyword reader each turn it into a rule; you confirm before it is used. The station also says whether it can guarantee the rule, from its last eye test.</p>
+          <div class="chips" id="rule-examples"></div>
           <form id="rule-form"><textarea id="clause" placeholder="for example: Nicks that reduce the conductor width by more than 20% are rejectable."></textarea>
             <div class="actions" style="margin-top:10px"><button class="btn primary" id="rule-read">Read requirement</button></div></form>
           <div id="rule-out"></div>
@@ -200,7 +201,8 @@
     <div class="card wide">
       <div class="card-h"><h2>Ask about the inspection log</h2></div>
       <div class="card-b">
-        <p class="sub">For example: how many shorts in the last 3 hours, what was the yield this shift, history of board B00042.</p>
+        <p class="sub">Llama picks one of the station's fixed read-only queries, and words the rows it gets back. Try one:</p>
+        <div class="chips" id="ask-examples"></div>
         <form class="actions" id="ask-form"><input id="question" autocomplete="off" placeholder="Type a question" style="flex:1;min-width:14ch;border:1px solid var(--blue-2);border-radius:6px;padding:8px 10px"><button class="btn primary">Ask</button></form>
         <div id="ask-out"></div>
       </div>
