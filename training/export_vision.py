@@ -45,7 +45,8 @@ def quantize_int8(module: torch.nn.Module, example: tuple, calib: list[np.ndarra
 
 def run_pte(path: Path, x: np.ndarray) -> np.ndarray:
     from executorch.runtime import Runtime
-    m = Runtime.get().load_program(str(path)).load_method("forward")
+    prog = Runtime.get().load_program(str(path))
+    m = prog.load_method("forward")
     return m.execute([torch.from_numpy(x)])[0].numpy()
 
 

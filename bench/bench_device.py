@@ -121,7 +121,8 @@ def time_method(pte: Path, x: np.ndarray, warmup: int, reps: int) -> dict:
     import torch
     from executorch.runtime import Runtime
     t0 = time.perf_counter()
-    m = Runtime.get().load_program(str(pte)).load_method("forward")
+    prog = Runtime.get().load_program(str(pte))     # kept alive while m runs (see pcbinspect/detect_bare.py)
+    m = prog.load_method("forward")
     load_ms = (time.perf_counter() - t0) * 1e3
     xt = torch.from_numpy(x)
     for _ in range(warmup):

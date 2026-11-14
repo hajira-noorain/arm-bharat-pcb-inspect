@@ -317,7 +317,9 @@ class PartKindClassifier:
     def __init__(self, pte_path, names: list[str], batch: int = 1):
         from executorch.runtime import Runtime
         self.names = list(names)
-        self._m = Runtime.get().load_program(str(pte_path)).load_method("forward")
+        # keep the Program: executorch's Method does not hold it, and a freed Program crashes the next execute()
+        self._program = Runtime.get().load_program(str(pte_path))
+        self._m = self._program.load_method("forward")
 
     def __call__(self, crops) -> list[tuple[str, float]]:
         import numpy as np

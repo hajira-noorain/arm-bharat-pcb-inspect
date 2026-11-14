@@ -78,7 +78,9 @@ class ExecuTorchTiles:
         import torch
         from executorch.runtime import Runtime
         self._torch = torch
-        self.method = Runtime.get().load_program(str(pte_path)).load_method("forward")
+        # keep the Program: executorch's Method does not hold it, and a freed Program crashes the next execute()
+        self._program = Runtime.get().load_program(str(pte_path))
+        self.method = self._program.load_method("forward")
         self.conf_thr = conf_thr
 
     def infer(self, tile_bgr: np.ndarray) -> np.ndarray:

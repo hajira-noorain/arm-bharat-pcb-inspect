@@ -80,6 +80,22 @@ def main():
         if pick != " Paris":
             sys.exit(f"ARM CHECK FAILED: constrained decoding chose {pick!r}")
         print(f"llama constrained choice on {pte.name}: {pick.strip()} (margin {margin:.1f}) in {ms:.0f} ms", flush=True)
+        # The station keeps Llama loaded and runs each inspection in a web-server worker thread. That exact
+        # situation once crashed the process (segmentation fault), so it is checked here, not assumed.
+        import threading
+        box = {}
+
+        def worker():
+            try:
+                box["n"] = len(det.detect(bgr)[0])
+            except Exception as exc:   # noqa: BLE001
+                box["err"] = repr(exc)
+        th = threading.Thread(target=worker)
+        th.start()
+        th.join(120)
+        if th.is_alive() or "n" not in box:
+            sys.exit(f"ARM CHECK FAILED: detector in a worker thread with Llama loaded: {box.get('err', 'hung')}")
+        print(f"detector in a worker thread with Llama loaded: {box['n']} detections", flush=True)
         del ll
     print("ARM CHECK OK")
 

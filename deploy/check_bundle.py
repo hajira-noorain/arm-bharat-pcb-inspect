@@ -47,7 +47,8 @@ def main() -> int:
     print(f"detector variant: {variant} ({cfg['detector_pte']})", flush=True)
     problems = []
     det_pte, bb_pte = root / cfg["detector_pte"], root / cfg["backbone_pte"]
-    out = Runtime.get().load_program(str(det_pte)).load_method("forward").execute(
+    prog = Runtime.get().load_program(str(det_pte))
+    out = prog.load_method("forward").execute(
         [torch.zeros(1, 3, 640, 640)])[0]
     if out.shape[1] != 4 + len(BARE_CLASSES):
         problems.append(f"detector outputs {out.shape[1]} channels, expected {4 + len(BARE_CLASSES)}")

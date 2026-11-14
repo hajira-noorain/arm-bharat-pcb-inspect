@@ -123,16 +123,17 @@ class LogitLlama:
         import torch
         from executorch.runtime import Runtime
         self._torch = torch
-        if threads:
-            try:    # ExecuTorch's shared threadpool (the Pi has 4 cores; the vision models use it too)
-                from executorch.extension.pybindings import portable_lib
-                portable_lib._unsafe_reset_threadpool(int(threads))
-            except Exception:   # noqa: BLE001  (not exposed in this build: keep the default)
-                pass
+        # `threads` is accepted for compatibility but the shared thread pool is NOT resized here. ExecuTorch's
+        # _unsafe_reset_threadpool rebuilds the pool for the whole process; afterwards any model run from
+        # another thread (the web server runs each inspection in a worker thread) crashed with a segmentation
+        # fault. The default pool already uses every core (4 on the Pi 5). Benchmarks that compare 1/2/4
+        # threads resize it themselves, in single-threaded scripts (bench/bench_device.py).
+        self.threads_requested = threads
         self.model = Path(pte_path).stem
         t0 = time.perf_counter()
-        prog = Runtime.get().load_program(str(pte_path))
-        self.method = prog.load_method("forward")
+        # keep the Program: executorch's Method does not hold it, and a freed Program crashes the next execute()
+        self._program = Runtime.get().load_program(str(pte_path))
+        self.method = self._program.load_method("forward")
         self.load_ms = (time.perf_counter() - t0) * 1e3
         self.tok = load_tokenizer(tokenizer_path)
         self.max_ctx = 2048

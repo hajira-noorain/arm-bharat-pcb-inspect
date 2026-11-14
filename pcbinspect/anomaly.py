@@ -84,9 +84,12 @@ def torch_feature_fn(device: str = "cpu", arch: str = "resnet18") -> FeatureFn:
 def executorch_feature_fn(pte_path: str | Path) -> FeatureFn:
     from executorch.runtime import Runtime
     import torch
-    method = Runtime.get().load_program(str(pte_path)).load_method("forward")
+    # keep the Program: executorch's Method does not hold it, and a freed Program crashes the next execute()
+    program = Runtime.get().load_program(str(pte_path))
+    method = program.load_method("forward")
 
     def fn(x: np.ndarray) -> np.ndarray:
+        _ = program                                    # held by the closure for as long as fn lives
         outs = []
         for i in range(x.shape[0]):  # the .pte is exported for batch 1
             outs.append(method.execute([torch.from_numpy(np.ascontiguousarray(x[i:i + 1]))])[0].numpy())
