@@ -652,7 +652,8 @@ def device_section(dev: Path | None) -> list[str]:
 
 
 def golden_section(r: Path) -> list[str]:
-    files = sorted(r.glob("golden_eval_*.json"))
+    # the deployed default detector (YOLO26n, tag v3); the other sizes are compared in variants_section
+    files = [f for f in (r / "golden_eval_deeppcb_v3.json",) if f.exists()] or sorted(r.glob("golden_eval_*.json"))
     if not files:
         return []
     ev = load(files[-1])

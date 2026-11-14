@@ -2,7 +2,7 @@
 
 Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5 (real-time industrial defect detection and quality-control assistant).
 
-**One station, one question: is this bare circuit board good?** Put a board under the camera of a Raspberry Pi 5. Its picture is compared with a known-good board; every difference is named, measured in millimetres and graded; the board gets PASS, FAIL or CHECK and a light; Llama 3.2 on ExecuTorch explains the likely cause and the next action; and the inspection is logged. Nothing leaves the Pi. On boards it had never seen, at a 5% miss-rate setting, it missed 4.2% of defects.
+**One station, one question: is this bare circuit board good?** Put a board under the camera of a Raspberry Pi 5. Its picture is compared with a known-good board; every difference is named, measured in millimetres and graded; the board gets PASS, FAIL or CHECK and a light; Llama 3.2 on ExecuTorch explains the likely cause and the next action; and the inspection is logged. Nothing leaves the Pi. On boards it had never seen, at a 5% miss-rate setting, it missed 4.0% of defects.
 
 Every inspection system claims a high accuracy figure. This one also **measures the smallest defect it can find on your camera, says what it cannot see, and refuses customer rules it cannot guarantee.** Vision runs through ExecuTorch (or Arm's optimised YOLO26 runtime), Llama 3.2 through ExecuTorch, all on the Pi's Arm CPU.
 
@@ -11,7 +11,7 @@ In more detail, for each board it:
 - **finds and names defects** on bare boards (11 types) and flags anything unusual on assembled boards;
 - **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;
 - **grades severity** against IPC-style limits for the customer's class;
-- **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.2% missed at the 5% setting with the known-good board; 6.5% with the detector alone; each beside the level that calibration can promise with 95% confidence, see `docs/RESULTS.md`);
+- **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.0% missed at the 5% setting with the known-good board; 6.5% with the detector alone; each beside the level that calibration can promise with 95% confidence, see `docs/RESULTS.md`);
 - **explains each finding with Llama 3.2 3B**: the causes and actions the operator reads are knowledge-base text, word for word; Llama chooses among them from the evidence and writes the summary, and a checker rejects any answer that states something not in the findings. (Measured on 150 held-out records: a defect that keeps repeating gets a process cause 95% of the time and a one-off gets a handling cause 88% of the time, against about 50% for picking blind. The 1B model we started with stayed at chance, which is why it is now only the fallback.);
 - **logs everything** on the device and lights a green, amber or red stack light;
 - **learns on the floor**:

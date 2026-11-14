@@ -12,12 +12,12 @@ Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5: real-time industrial d
 4. Llama 3.2 on ExecuTorch reads the findings, never the picture, and tells the operator the likely cause and the next action, in knowledge-base wording.
 5. The inspection is logged on the device.
 
-On boards it had never seen, with the miss rate set to 5%, it missed 4.2% of defects and raised 0.57 false calls per board (section 3.3).
+On boards it had never seen, with the miss rate set to 5%, it missed 4.0% of defects and raised 0.29 false calls per board (section 3.3).
 
 Every inspection system quotes an accuracy figure. None of the ones we reviewed tells a factory what it needs before trusting it: **the smallest defect it will reliably catch on this camera, on this line, today.** This station does, in three ways:
 
 1. **It measures its own detection limit, like an eye test.** The operator photographs a printed test card carrying 252 defects of known size. The station reads the card and states, per defect type, the smallest size it finds 90% of the time with 95% confidence (the a90/95 figure from the US military's non-destructive-testing handbook, MIL-HDBK-1823A). It also says plainly which sizes it cannot certify.
-2. **It says when it is unsure, at a miss rate the operator sets.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.2% of defects.
+2. **It says when it is unsure, at a miss rate the operator sets.** Every board gets PASS, FAIL or CHECK. The operator picks how many defects may slip through (1%, 5% or 10%). Conformal calibration sets the threshold so that rate holds, statistically, on boards like the calibration boards, and sends the uncertain ones to a person. On held-out boards at a 5% setting the deployed station (detector plus golden board) missed 4.0% of defects.
 3. **It refuses customer rules it cannot keep.** A customer's acceptance rules arrive in plain English ("reject mouse bites that remove more than 20% of the trace width"). Llama on ExecuTorch turns each clause into an executable rule, choosing only among answers the clause supports (constrained decoding on the exported model). Deterministic checks verify it, and the station compares it with the measured detection limit. If the station cannot see defects that small, it says so instead of silently accepting the rule.
 
 The same station also checks assembled boards, as a second and simpler path: it learns what a good board looks like, flags any area that differs, and names a part that is missing (section 3.2).
@@ -132,9 +132,9 @@ The first version scored 97% on the datasets it was trained on, and 18% on photo
 
 | Detector | Missed, with the good board (as deployed) | Missed, detector alone | False calls per board | Boards sent to a person |
 |---|---|---|---|---|
-| YOLO26n (first) | 4.2% | 6.5% | 0.57 | 20% |
-| YOLO26s | 6.5% | 8.2% | 0.55 | 7% |
-| YOLO26m | 5.1% | 5.4% | 0.57 | 8% |
+| YOLO26n (first) | 4.0% | 6.5% | 0.29 | 20% |
+| YOLO26s | 6.1% | 8.2% | 0.28 | 7% |
+| YOLO26m | 5.1% | 5.4% | 0.29 | 8% |
 
 YOLO26m keeps its misses close to the target while sending far fewer boards to a person; YOLO26s's detector-alone miss rate (8.2%) is above the 7.2% the calibration can promise with 95% confidence, which should happen only about one time in twenty. So a better mAP did not by itself mean fewer misses on the line, and YOLO26s is not recommended. All three ship, each with its own thresholds; YOLO26m is used if the Pi is fast enough (section 7), otherwise YOLO26n.
 
@@ -184,13 +184,15 @@ When a known-good image of the design exists, the station compares against it, w
 5. **Check connectivity.** Two golden conductors now joined is a short. One golden conductor now split is an open. Either upgrades the candidate to a near-certain defect.
 6. Fuse with the detector: the higher confidence wins, boxes are merged.
 
-On DeepPCB test boards (250 boards, 1,579 defects), with the golden image re-captured under a random warp, each channel with its own per-defect gate at the same 5% setting:
+On DeepPCB test boards (250 defective boards with 1,579 defects, and 250 good boards), with the golden image re-captured under a random warp, each channel with its own per-defect gate at the same 5% setting:
 
-| Evidence | One random defect per board missed (95% CI) | False calls per board | Named correctly |
+| Evidence | One random defect per board missed (95% CI) | False calls per board (all 500) | Named correctly |
 |---|---|---|---|
 | Detector only | 6.3% (4.9% to 7.9%) | 0.12 | 99% |
-| Golden difference only | 4.8% (3.6% to 6.2%) | 0.98 | 80% |
-| Fused (deployed) | 4.2% (3.3% to 5.2%) | 0.57 | 99% |
+| Golden difference only | 5.2% (3.9% to 6.6%) | 0.49 | 81% |
+| Fused (deployed) | 4.0% (3.1% to 5.0%) | 0.29 | 99% |
+
+**What it does with the verdict.** In this mode 95% of the good test boards PASS and none FAIL. No defective board passes, but none is failed automatically either: all go to a person (CHECK). The reason is in the scores, not a setting. Where the golden comparison sees a broken or joined conductor it is near-certain (0.99), and 4.8% of good DeepPCB boards also produce such a call somewhere, so a threshold that fails at most 1% of good boards cannot sit below 0.99. A board taught on the station is calibrated on its own captures (section 9) and does FAIL a cut board; on DeepPCB, the station finds the defects and a person confirms them.
 
 Fusing keeps the detector's naming and the golden comparison's reach: fewer misses than either alone, inside the 5% target. In the fused channel a detection with no copper change under it is kept but trusted at 0.7 of its confidence: the golden board saw nothing there. That setting (0.7 and 0.5 gave the same result) cost 0.2 points of misses on these boards and removed false calls here and, more so, on the eye-test card (section 5.2).
 
@@ -249,7 +251,7 @@ On held-out test boards at a 5% allowed miss rate:
 
 The detector alone misses 6.5% here and 6.3% in the golden-board table of section 3.3. Both are measured on the same DeepPCB test boards, but they count a defect as seen in slightly different ways: here a detection must overlap the defect (IoU of 0.3 or more); in section 3.3, where the golden comparison's free-form regions are scored too, a detection also counts if it overlaps a little (IoU 0.1) or its centre lies inside the defect. Each gate is calibrated with its own rule, so each figure is correct for its own table.
 
-**What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.2%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
+**What the calibration actually promises.** Split-conformal calibration bounds the miss rate at the target *on average over calibration sets*. A station has one calibration set, and for that one set the miss rate is itself uncertain: with n calibration defects and the threshold at the k-th smallest score, it follows a Beta(k, n + 1 - k) distribution (Vovk, 2012). The station therefore states both numbers: the target, and the level it will not exceed with 95% confidence (`gate.miss_rate_bound`, checked by Monte Carlo in the tests). For DeepPCB's 250 calibration defects those bounds are 1.9%, 7.2% and 13.2% at targets of 1%, 5% and 10%; measured on test boards: 1.0%, 6.5% and 11.6%. For HRIPCB (120 defects) the 5% bound is 8.6% and the measurement 4.5%; for Mendeley (38) 7.6% and 3.6%. Every measurement is inside its bound. The plain reading for an operator: the setting is a target, more calibration boards tighten it, and with the golden board fused in (section 3.3) the 5% setting measured 4.0%. Pooling every defect (the "all defects" column in `docs/RESULTS.md`) weights boards with many defects more, so it is reported separately. A target needs at least 1/α - 1 calibration defects; Mendeley's 38 are too few for 1%, and the results say so.
 
 DeepPCB's "good boards" are its defect-free templates, which are cleaner than a production good board would be, so its 20% sent to a person and 0.8% of good boards failed are best cases. PASS needs good boards to calibrate against. HRIPCB and the Mendeley scans have almost no defect-free boards (2 and 0 defect-free boards in each of their calibration and test sets), so for those designs the station never says PASS: every board without a confident defect goes to a person. That is the honest answer when the station has never seen what good looks like.
 

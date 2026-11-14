@@ -67,9 +67,9 @@ All on the same held-out test boards, through the exported ExecuTorch files; eac
 
 | Detector | mAP@0.5, all test boards | INT8 file | Missed, detector alone | Missed, with the good board (as deployed) | False calls per board, with the good board | Boards sent to a person (detector alone) |
 |---|---|---|---|---|---|---|
-| YOLO26n (first) | 83.3% |  | 6.5% (5.0% to 8.1%) | 4.2% (3.3% to 5.2%) | 0.57 | 19.8% |
-| YOLO26s (retrained) | 85.8% | 85.7% | 8.2% (6.5% to 10.1%) | 6.5% (5.3% to 7.7%) | 0.55 | 7.2% |
-| YOLO26m (retrained) | 86.8% | 86.7% | 5.4% (4.1% to 6.7%) | 5.1% (4.1% to 6.2%) | 0.57 | 7.8% |
+| YOLO26n (first) | 83.3% |  | 6.5% (5.0% to 8.1%) | 4.0% (3.1% to 5.0%) | 0.29 | 19.8% |
+| YOLO26s (retrained) | 85.8% | 85.7% | 8.2% (6.5% to 10.1%) | 6.1% (5.0% to 7.3%) | 0.28 | 7.2% |
+| YOLO26m (retrained) | 86.8% | 86.7% | 5.4% (4.1% to 6.7%) | 5.1% (4.0% to 6.2%) | 0.29 | 7.8% |
 
 Detection-limit card, simulated photos, with the good board (smallest size found 90% of the time at 95% confidence):
 
@@ -157,9 +157,9 @@ Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated o
 
 | Evidence | Missed, one random defect per board (95% CI) | Missed, all defects (95% CI) | False calls per board | Named correctly |
 |---|---|---|---|---|
-| Detector only | 8.1% (6.4% to 10.0%) | 8.4% (7.1% to 9.9%) | 0.10 | 99.7% |
-| Golden-board difference only | 5.2% (3.9% to 6.5%) | 5.3% (4.2% to 6.5%) | 0.98 | 80.7% |
-| Detector + golden difference (fused) | 6.5% (5.3% to 7.7%) | 6.9% (5.7% to 8.3%) | 0.55 | 99.2% |
+| Detector only | 6.3% (4.9% to 7.9%) | 6.6% (5.4% to 7.9%) | 0.12 | 99.3% |
+| Golden-board difference only | 5.2% (3.9% to 6.6%) | 5.3% (4.3% to 6.5%) | 0.49 | 80.5% |
+| Detector + golden difference (fused) | 4.0% (3.1% to 5.0%) | 4.3% (3.4% to 5.4%) | 0.29 | 98.9% |
 
 ### Detection-limit eye test, in silico (defects drawn on held-out DeepPCB patterns)
 
