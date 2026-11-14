@@ -45,6 +45,13 @@ def teach_visa_parts(out: Path, work: Path, goods: int = 8) -> None:
     sys.path.insert(0, str(out))
     import cv2
     import yaml
+    try:
+        import executorch.runtime  # noqa: F401
+    except ImportError:
+        print("parts maps: ExecuTorch is not installed here; run them in the export container:\n"
+              "  docker run --rm -v <work>:/work -v <repo>:/repo pcb-export python /repo/deploy/make_bundle.py "
+              "--work /work --out /work/bundle/pcb-station --parts-maps-only")
+        return
     from pcbinspect.detect_bare import BareDetector, ExecuTorchTiles
     from pcbinspect.parts import PartKindClassifier, teach_parts
     det = BareDetector(ExecuTorchTiles(det_p, conf_thr=0.1), names=("part",))
@@ -78,8 +85,13 @@ def main():
                     help="also ship these .pte files (the 3B decides advice, questions and rules; see config/app.yaml)")
     ap.add_argument("--demo-per-design", type=int, default=24)
     ap.add_argument("--tar", action="store_true")
+    ap.add_argument("--parts-maps-only", action="store_true",
+                    help="only (re)teach the VisA parts maps inside an existing bundle (needs ExecuTorch)")
     args = ap.parse_args()
     work, out = Path(args.work), Path(args.out)
+    if args.parts_maps_only:
+        teach_visa_parts(out, work)
+        return
     if out.exists():
         shutil.rmtree(out)
     for c in CODE:

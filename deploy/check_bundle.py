@@ -41,6 +41,10 @@ def main() -> int:
     from pcbinspect.pipeline import Inspector, load_designs
     from pcbinspect.record import BARE_CLASSES
 
+    from pcbinspect.variants import apply_detector_variant
+    designs = load_designs(root / cfg["designs_dir"])
+    cfg, designs, variant = apply_detector_variant(cfg, designs, root)
+    print(f"detector variant: {variant} ({cfg['detector_pte']})", flush=True)
     problems = []
     det_pte, bb_pte = root / cfg["detector_pte"], root / cfg["backbone_pte"]
     out = Runtime.get().load_program(str(det_pte)).load_method("forward").execute(
@@ -49,8 +53,11 @@ def main() -> int:
         problems.append(f"detector outputs {out.shape[1]} channels, expected {4 + len(BARE_CLASSES)}")
     det = BareDetector(ExecuTorchTiles(det_pte))
     fn = executorch_feature_fn(bb_pte)
-    designs = load_designs(root / cfg["designs_dir"])
     insp = Inspector(root, designs, det, fn)
+    parts_pte = root / cfg.get("parts_detector_pte", "models/vision/parts_y26n_xnnpack.pte")
+    if parts_pte.is_file():
+        insp.parts_detector = BareDetector(ExecuTorchTiles(parts_pte, conf_thr=0.1), names=("part",))
+        print(f"parts check: {len(insp.parts)} designs with a parts map", flush=True)
     for name, m in insp.anomaly.items():
         try:
             m.score(np.full((m.input_size, m.input_size, 3), 128, np.uint8))
