@@ -30,7 +30,7 @@ from . import ask as ask_mod
 from .advisor import Advisor
 from .anomaly import enrol
 from .camera import ReplayCamera, open_camera
-from .demo import MAX_UPLOAD_BYTES, UploadError, decode_upload, load_samples, match_known
+from .demo import MAX_UPLOAD_BYTES, UploadError, decode_upload, load_samples, match_known, seconds_until
 from .gpio import StackLight
 from .kb import default_kb
 from .learning import FeedbackBuffer, crop_embedding
@@ -85,6 +85,8 @@ class Station:
         self.spec_compiler = None                              # loaded on first use (setup-time task)
         self._load_customer_rules()
         threading.Thread(target=self._advice_worker, daemon=True).start()
+        if self.demo:
+            threading.Thread(target=self._nightly_reset, daemon=True).start()
 
     def _load_customer_rules(self):
         for name in self.designs:
@@ -245,6 +247,23 @@ class Station:
         finally:   # a frame that fails must not be served again on the next press
             if isinstance(self.camera, ReplayCamera):
                 self.camera.next()
+
+    def _nightly_reset(self):
+        from datetime import datetime
+        while True:
+            time.sleep(seconds_until(int(self.cfg.get("demo_reset_hour", 3)), datetime.now()))
+            try:
+                self.reset_demo()
+            except Exception:   # noqa: BLE001
+                log.exception("demo reset failed")
+
+    def reset_demo(self):
+        """Empty the shared demo log (online visitors all write to one log): inspections, images, uploads."""
+        with self.lock:
+            self.store.reset()
+            self.cache.clear()
+            self.uploads.clear()
+        log.info("demo log reset")
 
     def _advise_upload(self, token: str, record: dict, design: str):
         try:

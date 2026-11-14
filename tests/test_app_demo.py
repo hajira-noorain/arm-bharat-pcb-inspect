@@ -171,3 +171,12 @@ def test_upload_advice_arrives_in_memory(taught_client):
         time.sleep(0.5)
     assert p["advice"] and p["advice"][0]["advice"]["steps"] and p["advice_pending"] is False
     assert st.store.conn.execute("SELECT COUNT(*) FROM advice").fetchone()[0] == n_advice
+
+
+def test_reset_demo_empties_the_log(taught_client):
+    st = taught_client.app.state.station
+    taught_client.post("/api/inspect", json={"design": "demo-board", "sample": "b0.png"})
+    assert taught_client.get("/api/stats").json()["boards"] >= 1
+    st.reset_demo()
+    assert taught_client.get("/api/stats").json()["boards"] == 0
+    assert taught_client.get("/api/state").json()["recent"] == [] and not st.uploads and not st.cache
