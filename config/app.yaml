@@ -23,3 +23,10 @@ llm_threads: 4
 gpio: true
 host: 0.0.0.0
 port: 8000
+
+# demo mode (held-out test boards and photo upload for visitors; off on a real station)
+demo: false
+upload_design: deeppcb        # uploads are judged by this design's detector only (no reference board)
+samples_per_design: 4
+shift_hours: 8                # the dashboard's shift figures cover this many hours
+demo_reset_hour: 3            # the shared online demo log is emptied at this hour every night

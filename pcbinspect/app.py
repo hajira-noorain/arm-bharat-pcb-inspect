@@ -28,6 +28,7 @@ from . import ask as ask_mod
 from .advisor import Advisor
 from .anomaly import enrol
 from .camera import ReplayCamera, open_camera
+from .demo import load_samples, match_known
 from .gpio import StackLight
 from .kb import default_kb
 from .learning import FeedbackBuffer, crop_embedding
@@ -40,6 +41,8 @@ from .store import Store
 log = logging.getLogger("pcbinspect")
 CACHE_FRAMES = 6      # full frames kept for feedback/overlay (a 12 MP frame is ~36 MB; Llama needs the RAM)
 STATIC = Path(__file__).resolve().parent / "static"
+DISCLOSURE = ("Demo on test boards. Online copy runs on a shared cloud CPU, not the Raspberry Pi; "
+              "Pi timings are in the technical report.")
 
 
 class Station:
@@ -72,6 +75,8 @@ class Station:
         self.teach_status: dict[str, dict] = {}
         self.jobs: queue.Queue = queue.Queue()
         self.lock = threading.Lock()                           # one inspection at a time
+        self.waiting = 0                                       # inspections waiting for or holding the lock
+        self.demo = bool(cfg.get("demo"))
         self.llm_lock = threading.Lock()                       # one Llama generation at a time
         self.spec_compiler = None                              # loaded on first use (setup-time task)
         self._load_customer_rules()
@@ -212,27 +217,83 @@ class Station:
             raise HTTPException(404, f"unknown design {design}")
         if alpha is not None and not 0.0 < alpha <= 0.5:
             raise HTTPException(400, "allowed miss rate must be above 0 and at most 50%")
-        with self.lock:
-            t0 = time.perf_counter()
-            live = not isinstance(self.camera, ReplayCamera)
-            bgr = self.camera.capture(n_average=self.cfg.get("average_frames", 1)) if live else self.camera.capture()
-            cap_ms = (time.perf_counter() - t0) * 1e3
-            golden = self.camera.golden() if not live else None
-            force_review, capture_info = None, None
-            if live:
-                bgr, force_review, capture_info = self._check_capture(bgr, design)
-            if board_id is None:
-                n = self.store.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM inspections").fetchone()[0]
-                board_id = f"B{n:05d}"
-            try:
-                insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden,
-                                                             force_review=force_review, capture_info=capture_info)
-            finally:   # a frame that fails must not be served again on the next press
-                if isinstance(self.camera, ReplayCamera):
-                    self.camera.next()
-            self.cache[iid] = (insp, analysis, bgr)
-            while len(self.cache) > CACHE_FRAMES:
-                self.cache.popitem(last=False)
+        self.waiting += 1
+        try:
+            with self.lock:
+                return self._inspect_camera(design, alpha, board_id)
+        finally:
+            self.waiting -= 1
+
+    def _inspect_camera(self, design: str, alpha: float | None, board_id: str | None) -> dict:
+        t0 = time.perf_counter()
+        live = not isinstance(self.camera, ReplayCamera)
+        bgr = self.camera.capture(n_average=self.cfg.get("average_frames", 1)) if live else self.camera.capture()
+        cap_ms = (time.perf_counter() - t0) * 1e3
+        golden = self.camera.golden() if not live else None
+        force_review, capture_info = None, None
+        if live:
+            bgr, force_review, capture_info = self._check_capture(bgr, design)
+        try:
+            return self._run_inspection(bgr, design, alpha, board_id, golden, force_review, capture_info, cap_ms)
+        finally:   # a frame that fails must not be served again on the next press
+            if isinstance(self.camera, ReplayCamera):
+                self.camera.next()
+
+    # ---------------- demo mode: held-out test boards ----------------
+    def samples(self) -> dict:
+        """The test boards a visitor can pick, by file name. Only these names are ever opened."""
+        if not self.demo:
+            raise HTTPException(404)
+        return {s.file: s for s in load_samples(self.root, int(self.cfg.get("samples_per_design", 4)))
+                if s.design in self.designs}
+
+    def inspect_sample(self, file: str, alpha: float | None) -> dict:
+        s = self.samples().get(file)
+        if s is None:
+            raise HTTPException(404, "unknown test board")
+        if alpha is not None and not 0.0 < alpha <= 0.5:
+            raise HTTPException(400, "allowed miss rate must be above 0 and at most 50%")
+        boards = self.root / "demo" / "boards"
+        t0 = time.perf_counter()
+        bgr = cv2.imread(str(boards / s.file))
+        g = boards / f"{Path(s.file).stem}.golden.jpg"
+        golden = cv2.imread(str(g)) if s.has_golden else None
+        cap_ms = (time.perf_counter() - t0) * 1e3
+        self.waiting += 1
+        try:
+            with self.lock:
+                r = self._run_inspection(bgr, s.design, alpha, None, golden, cap_ms=cap_ms)
+        finally:
+            self.waiting -= 1
+        r["sample"] = s.file
+        if s.boxes:
+            r["known"] = match_known([(d["x1"], d["y1"], d["x2"], d["y2"]) for d in r["defects"]], s.boxes)
+        else:
+            r["known"] = {"good": s.good, "verdict_agrees": (r["verdict"] == "PASS") == s.good}
+        return r
+
+    def sample_thumb(self, file: str) -> bytes:
+        s = self.samples().get(file)
+        if s is None:
+            raise HTTPException(404)
+        im = cv2.imread(str(self.root / "demo" / "boards" / s.file))
+        k = 160 / max(im.shape[:2])
+        im = cv2.resize(im, (max(1, round(im.shape[1] * k)), max(1, round(im.shape[0] * k))),
+                        interpolation=cv2.INTER_AREA)
+        return cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+
+    def _run_inspection(self, bgr, design: str, alpha: float | None, board_id: str | None, golden,
+                        force_review=None, capture_info=None, cap_ms: float = 0.0) -> dict:
+        """The shared core of every logged inspection (camera, replay or a demo test board). Caller holds
+        self.lock. Advice is queued, never waited for."""
+        if board_id is None:
+            n = self.store.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM inspections").fetchone()[0]
+            board_id = f"B{n:05d}"
+        insp, analysis, iid = self.inspector.inspect(bgr, design, board_id, alpha, golden=golden,
+                                                     force_review=force_review, capture_info=capture_info)
+        self.cache[iid] = (insp, analysis, bgr)
+        while len(self.cache) > CACHE_FRAMES:
+            self.cache.popitem(last=False)
         insp.latency_ms = {"capture": round(cap_ms, 2), **insp.latency_ms}
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
                                 (json.dumps(insp.latency_ms), iid))
@@ -717,6 +778,7 @@ class InspectReq(BaseModel):
     design: str
     alpha: float | None = None
     board_id: str | None = None
+    sample: str | None = None          # demo mode: a held-out test board instead of the camera
 
 
 class FeedbackReq(BaseModel):
@@ -796,6 +858,7 @@ def create_app(cfg: dict) -> FastAPI:
                     "detector": d.use_detector and st.detector is not None,
                     "anomaly": n in st.inspector.anomaly} for n, d in st.designs.items()]
         return {"designs": designs,
+                "demo": st.demo, "queue": st.waiting, "disclosure": DISCLOSURE if st.demo else None,
                 "camera": None if st.camera is None else st.camera.name,
                 "llm": None if st.llm is None else st.llm.model,
                 "vision": {"detector": None if st.detector is None else st.detector.tiles.name,
@@ -822,7 +885,30 @@ def create_app(cfg: dict) -> FastAPI:
 
     @app.post("/api/inspect")
     def inspect(req: InspectReq):
+        if req.sample is not None:
+            return st.inspect_sample(req.sample, req.alpha)
         return st.inspect(req.design, req.alpha, req.board_id)
+
+    @app.get("/api/samples")
+    def samples():
+        return [{"file": s.file, "design": s.design, "kind": s.kind, "good": s.good, "marked": len(s.boxes)}
+                for s in st.samples().values()]
+
+    @app.get("/api/samples/{file}.jpg")
+    def sample_thumb(file: str):
+        return Response(st.sample_thumb(file), media_type="image/jpeg")
+
+    @app.get("/api/image/{iid}.jpg")
+    def image(iid: int):
+        r = st.store.inspection(iid)
+        if r is None or not r["image_sha"] or not st.store.image_path(r["image_sha"]).exists():
+            raise HTTPException(404)
+        return FileResponse(st.store.image_path(r["image_sha"]), media_type="image/jpeg")
+
+    @app.get("/api/stats")
+    def stats():
+        hours = float(st.cfg.get("shift_hours", 8))
+        return {**st.store.stats(time.time() - hours * 3600), "shift_hours": hours}
 
     @app.get("/api/inspection/{iid}")
     def inspection(iid: int):
