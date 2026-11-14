@@ -1,0 +1,22 @@
++ rm -rf /content/pcb13
++ mkdir -p /content/pcb13
++ unzip -q -o /content/pcb_code13.zip -d /content/pcb13
++ cd /content/pcb13
++ python training/eval_bare.py --work /content/out3 --data /content/data/bare_yolo_v3 --weights /content/out2/runs/y26n_v3/weights/best.pt --tag v3
+all mAP50=0.8332445314471414
+deeppcb mAP50=0.9632073567938709
+defectdet mAP50=0.8416694329390803
+dspcbsd mAP50=0.7382811737072832
+hripcb mAP50=0.9576161263556916
+mendeley mAP50=0.8113586997689786
+gate deeppcb: cal 250d/250g  test miss@5%=0.004 CI(0.0, 0.022) review=0.20
+gate hripcb: cal 120d/2g  test miss@5%=0.000 CI(0.0, 0.03) review=1.00
+gate mendeley: cal 38d/0g  test miss@5%=0.000 CI(0.0, 0.128) review=1.00
++ python training/eval_golden.py --work /content/out3 --tag v3 --design deeppcb
+cal 250 boards
+test 250 boards
+detector     @5%: lam=0.699 defect miss=0.066 CI(0.054,0.079) false/board=0.12 typed=0.99 random-defect miss=0.063
+golden_diff  @5%: lam=0.561 defect miss=0.050 CI(0.040,0.062) false/board=1.02 typed=0.81 random-defect miss=0.049
+fused        @5%: lam=0.784 defect miss=0.042 CI(0.033,0.054) false/board=0.66 typed=0.99 random-defect miss=0.040
++ echo REEVAL_DONE
+REEVAL_DONE

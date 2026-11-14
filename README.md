@@ -8,7 +8,7 @@ Every inspection system claims a high accuracy figure. This one also **measures 
 
 In more detail, for each board it:
 
-- **finds and names defects** on bare boards (11 types) and flags anything unusual on assembled boards;
+- **finds and names defects** on bare boards (11 types); on assembled boards it flags anything unusual and checks the parts one by one (missing, extra or changed part);
 - **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;
 - **grades severity** against IPC-style limits for the customer's class;
 - **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.0% missed at the 5% setting with the known-good board; 6.5% with the detector alone; each beside the level that calibration can promise with 95% confidence, see `docs/RESULTS.md`);
@@ -28,7 +28,7 @@ And it proves what it can do:
 
 | PS5 requirement | What the station does | Where |
 |---|---|---|
-| Detect surface defects, cracks, anomalies | YOLO26n (11 bare-board defect types), golden-board comparison with a connectivity check, and a patch-memory anomaly flag for assembled boards | `pcbinspect/detect_bare.py`, `golden_diff.py`, `fusion.py`, `anomaly.py` |
+| Detect surface defects, cracks, anomalies | YOLO26n (11 bare-board defect types; YOLO26s and YOLO26m also shipped), golden-board comparison with a connectivity check, and for assembled boards a patch-memory anomaly flag plus a part-by-part check | `pcbinspect/detect_bare.py`, `golden_diff.py`, `fusion.py`, `anomaly.py`, `parts.py` |
 | Classify type and severity | Defect type from the detector; size in mm from the golden comparison against IPC-style class limits | `pcbinspect/golden.py`, `severity.py`, `config/severity.yaml` |
 | Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `advisor.py`, `grounding.py` |
 | Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
@@ -60,8 +60,10 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 | Detector accuracy on held-out boards from five public datasets, split by physical board where the data allows | Accuracy on our own boards under a live camera (the eye-test card and one knife-cut board are the real-camera checks) |
 | Per-defect conformal gate on held-out boards | The eye-test limit for etched copper rather than printed paper |
 | Golden-board comparison and fusion on held-out DeepPCB boards | Copper segmentation on solder-masked boards under shop lighting |
-| Eye-test reader on simulated photos of the card; in-silico detection limits under three camera conditions | Component presence/polarity and solder-joint judgement on assembled boards (anomaly flag only) |
+| Eye-test reader on simulated photos of the card; in-silico detection limits under three camera conditions | Polarity, part value and solder joints on assembled boards (not checked); the parts check on real boards under our camera |
 | Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
+| Parts check: part detector on 15 held-out FPIC boards; missing/extra/moved parts on VisA photos (development result) | |
+| Every detector file loads and gives the same findings on aarch64 (arm64 emulator, `deploy/sim_check_detectors.py`) | |
 | Llama advice grounding and choice vs chance; Llama rule reader (free, constrained, grounded) on 80 tuning and 40 held-out clauses | A taught board's gate and limits on real boards (built and tested on camera-like synthetic pictures; first real use is the Pi session) |
 | Learning from operator feedback, simulated on held-out boards (DeepPCB: boards sent to a person 20% to 4%, no defective board passed) | |
 | Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
@@ -95,7 +97,25 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 - `export_vision.py` and `llm/export_llama.sh` produce the ExecuTorch exports (executorch 1.6.0, the version the Pi runs). They run in `deploy/Dockerfile.export` or on Colab.
 - `deploy/Dockerfile.pi` is an arm64 Debian image that installs exactly what the Pi installs. It is used to check the Arm build without hardware.
 
-**Results:** `docs/RESULTS.md` is generated from the result JSON files by `docs/make_results.py`. Research and design decisions are in `docs/RESEARCH_AND_DECISIONS.md`. The full write-up is in `docs/TECHNICAL_REPORT.md`.
+- `prepare_components.py` and `eval_parts*.py` build and score the parts check (FPIC, VisA).
+- `training/colab/` holds the exact Colab jobs that produced the shipped models and measured results.
+- `models/MODELS.md` lists every model file with its size, SHA-256, where it came from and the command that rebuilds it.
+
+**Results:** `docs/RESULTS.md` is generated from the result JSON files in `results/measured/` by `docs/make_results.py`. Research and design decisions are in `docs/RESEARCH_AND_DECISIONS.md`. The full write-up is in `docs/TECHNICAL_REPORT.md`.
+
+## Where things are
+
+| Folder | What is in it |
+|---|---|
+| `pcbinspect/` | The station: camera, vision, golden comparison, parts check, severity, gate, Llama advice and checker, log, dashboard |
+| `config/`, `kb/` | Station settings, IPC-style limits, the defect knowledge base Llama chooses from |
+| `models/` | Calibrated thresholds and anomaly memories (in git); `MODELS.md` lists the model files that are not |
+| `training/`, `llm/` | Dataset building, training, evaluation and export scripts; `training/colab/` has the exact jobs that were run |
+| `results/measured/` | Every measured result file; `results/README.md` explains the names |
+| `bench/`, `deploy/` | Pi benchmarks and soak; Pi setup, bundle builder, Arm checks, the rig guide (`deploy/RIG.md`) |
+| `docs/` | `TECHNICAL_REPORT.md` (the write-up), `RESULTS.md` (generated tables), `RESEARCH_AND_DECISIONS.md`, `EYE_TEST_AND_RULES.md`, `DEMO_VIDEO_SCRIPT.md` |
+| `assets/eyetest/` | The printable eye-test card and its manifest |
+| `tests/` | `pytest` suite |
 
 ## Data and licences
 

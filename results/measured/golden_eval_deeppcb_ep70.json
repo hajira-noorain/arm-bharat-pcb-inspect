@@ -1,0 +1,130 @@
+{
+ "design": "deeppcb",
+ "tag": "ep70",
+ "channels": {
+  "detector": {
+   "alpha_0.01": {
+    "lam": 0.06821215152740479,
+    "defect_miss": 0.013932868904369844,
+    "defect_miss_ci95": [
+     0.008751700989259259,
+     0.021018926823455963
+    ],
+    "typed_correct_share_of_found": 0.9890815671162492,
+    "false_calls_per_board": 0.656,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.05": {
+    "lam": 0.6704561710357666,
+    "defect_miss": 0.05446485117162758,
+    "defect_miss_ci95": [
+     0.04379249478368563,
+     0.0668292532135194
+    ],
+    "typed_correct_share_of_found": 0.9939718687206965,
+    "false_calls_per_board": 0.108,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.1": {
+    "lam": 0.7388928532600403,
+    "defect_miss": 0.10766307789740337,
+    "defect_miss_ci95": [
+     0.09279852624542206,
+     0.12400364192944724
+    ],
+    "typed_correct_share_of_found": 0.9957416607523066,
+    "false_calls_per_board": 0.092,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   }
+  },
+  "golden_diff": {
+   "alpha_0.01": {
+    "lam": 0.23404255319148937,
+    "defect_miss": 0.005066497783407176,
+    "defect_miss_ci95": [
+     0.0021898154339914377,
+     0.009958491303765915
+    ],
+    "typed_correct_share_of_found": 0.8058561425843411,
+    "false_calls_per_board": 3.988,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.05": {
+    "lam": 0.5609756097560976,
+    "defect_miss": 0.0506649778340722,
+    "defect_miss_ci95": [
+     0.04037550433337944,
+     0.06266299413819187
+    ],
+    "typed_correct_share_of_found": 0.8078719146097398,
+    "false_calls_per_board": 1.024,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.1": {
+    "lam": 0.6043956043956044,
+    "defect_miss": 0.08423052564914502,
+    "defect_miss_ci95": [
+     0.07099792614784228,
+     0.09903201545574636
+    ],
+    "typed_correct_share_of_found": 0.8077455048409405,
+    "false_calls_per_board": 0.972,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   }
+  },
+  "fused": {
+   "alpha_0.01": {
+    "lam": 0.06821215152740479,
+    "defect_miss": 0.0031665611146295403,
+    "defect_miss_ci95": [
+     0.0010289485312990898,
+     0.00737410431461627
+    ],
+    "typed_correct_share_of_found": 0.9879288437102922,
+    "false_calls_per_board": 4.864,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.05": {
+    "lam": 0.7613674998283386,
+    "defect_miss": 0.031032298923369228,
+    "defect_miss_ci95": [
+     0.023044194142837093,
+     0.04082047925322141
+    ],
+    "typed_correct_share_of_found": 0.9875816993464053,
+    "false_calls_per_board": 0.764,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   },
+   "alpha_0.1": {
+    "lam": 0.7907921671867371,
+    "defect_miss": 0.0772640911969601,
+    "defect_miss_ci95": [
+     0.0645731181805449,
+     0.09155209245956031
+    ],
+    "typed_correct_share_of_found": 0.9876458476321208,
+    "false_calls_per_board": 0.68,
+    "good_boards_flagged": null,
+    "n_defects": 1579,
+    "n_boards": 250
+   }
+  }
+ },
+ "align_cc_min": 0.8656099786565346
+}

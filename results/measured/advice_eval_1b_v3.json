@@ -1,0 +1,3785 @@
+{
+ "summary": {
+  "model": "llama3_2_1b_spinquant.pte",
+  "n": 60,
+  "load_ms": 4985.0626980000925,
+  "accepted_rate": 0.8833333333333333,
+  "rejection_reasons": {
+   "summary contains number 2 that is not in the record": 4,
+   "D1": 2,
+   "D3": 1
+  },
+  "choices_parsed": 102,
+  "cause_position1_share": 0.7843137254901961,
+  "cause_position1_chance": 0.4199346405228758,
+  "repeating_defect_process_cause": {
+   "n": 14,
+   "rate": 0.7142857142857143,
+   "chance": 0.6488095238095238
+  },
+  "one_off_defect_handling_cause": {
+   "n": 30,
+   "rate": 0.43333333333333335,
+   "chance": 0.3861111111111111
+  },
+  "prompt_tokens_median": 299.5,
+  "latency_ms_median": 4202.963997500092,
+  "prefill_tps_median": 138.90779902134085,
+  "decode_tps_median": 16.452061741462785,
+  "note": "step order (most severe first) and coverage (every defect gets a step) are by construction"
+ },
+ "rows": [
+  {
+   "record": {
+    "board_id": "B-1000",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "minor",
+      "confidence": 0.96,
+      "size_mm": 0.04,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "accept"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.91,
+      "size_mm": 0.1,
+      "location": "top-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_pad": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 1}], \"summary\": \"The missing pad on 3 of the last 20 boards is a repeat of a previous defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing pad on 3 of the last 20 boards is a repeat of a previous defect.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MPAD-C1"
+    },
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 312,
+   "latency_ms": 30238.397859000088,
+   "prefill_tps": 73.72400756143666,
+   "decode_tps": 16.15158762277427
+  },
+  {
+   "record": {
+    "board_id": "B-1001",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.81,
+      "size_mm": 0.16,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.57,
+      "size_mm": 0.16,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.9,
+      "size_mm": 0.13,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}],, {\"defect\": \"D3\", \"cause\": 3, \"action\": 3}], \"summary\": \"The operator should inspect the phototool under magnification to determine if it is contaminated or foreign, and then label it so the station learns.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should inspect the phototool under magnification to determine if it is contaminated or foreign, and then label it so the station learns.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C3"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MPAD-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "unknown_anomaly",
+     "cause_pos": 3,
+     "n_causes": 3,
+     "action_pos": 3,
+     "n_actions": 3,
+     "cause": "ANOM-C2"
+    }
+   ],
+   "prompt_tokens": 397,
+   "latency_ms": 5819.910181000068,
+   "prefill_tps": 144.25872093023256,
+   "decode_tps": 16.291796734524727
+  },
+  {
+   "record": {
+    "board_id": "B-1002",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.84,
+      "size_mm": 0.27,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The pin hole is critical and 0.27 mm, but the cause is dust or bubbles at lamination and the action is to compare the void with IPC limit.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The pin hole is critical and 0.27 mm, but the cause is dust or bubbles at lamination and the action is to compare the void with IPC limit.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 219,
+   "latency_ms": 3633.2257330000175,
+   "prefill_tps": 145.32183145321832,
+   "decode_tps": 17.69945929124363
+  },
+  {
+   "record": {
+    "board_id": "B-1003",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.79,
+      "size_mm": 0.15,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.44,
+      "size_mm": 0.28,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 5
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"Operator should check etch line settings and quarantine, continuity test for phototool spot or resist residue on top-centre board.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should check etch line settings and quarantine, continuity test for phototool spot or resist residue on top-centre board.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C3"
+    }
+   ],
+   "prompt_tokens": 340,
+   "latency_ms": 4594.444936999935,
+   "prefill_tps": 147.5054229934924,
+   "decode_tps": 16.9498498467003
+  },
+  {
+   "record": {
+    "board_id": "B-1004",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.8,
+      "size_mm": 0.2,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "spur": 7
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The spur on Board B-1004 is due to under-etching and incomplete development, causing a critical defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The spur on Board B-1004 is due to under-etching and incomplete development, causing a critical defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 227,
+   "latency_ms": 3111.322993000158,
+   "prefill_tps": 146.26288659793815,
+   "decode_tps": 18.39117999015123
+  },
+  {
+   "record": {
+    "board_id": "B-1005",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.59,
+      "size_mm": 0.22,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.47,
+      "size_mm": 0.09,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "mouse_bite": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"Operator should compare width with IPC limit and check etch time for D1\"}}",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should compare width with IPC limit and check etch time for D1",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C3"
+    }
+   ],
+   "prompt_tokens": 326,
+   "latency_ms": 4121.931110999867,
+   "prefill_tps": 142.66958424507658,
+   "decode_tps": 16.43388506111243
+  },
+  {
+   "record": {
+    "board_id": "B-1006",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.92,
+      "size_mm": 0.39,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole in the D1 board is critical and requires a scrap if the hole needs to be plated.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole in the D1 board is critical and requires a scrap if the hole needs to be plated.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 214,
+   "latency_ms": 3004.458634999992,
+   "prefill_tps": 141.53439153439155,
+   "decode_tps": 17.938923129601093
+  },
+  {
+   "record": {
+    "board_id": "B-1007",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.5,
+      "size_mm": 0.14,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "major",
+      "confidence": 0.77,
+      "size_mm": 0.24,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "mouse_bite",
+      "severity": "major",
+      "confidence": 0.42,
+      "size_mm": 0.14,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1, {\"defect\": \"D3\", \"cause\": 1, \"action\": 1}},], \"summary\": \"The operator should check the etch time for D1 and D3, and compare the width with IPC limit for D3.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should check the etch time for D1 and D3, and compare the width with IPC limit for D3.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D3",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C2"
+    }
+   ],
+   "prompt_tokens": 348,
+   "latency_ms": 5317.3065940000015,
+   "prefill_tps": 147.83347493627866,
+   "decode_tps": 16.241460160565865
+  },
+  {
+   "record": {
+    "board_id": "B-1008",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.42,
+      "size_mm": 0.18,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on Board B-1008 is due to a drill program error and a broken drill bit.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on Board B-1008 is due to a drill program error and a broken drill bit.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 228,
+   "latency_ms": 3217.66397600004,
+   "prefill_tps": 135.23131672597864,
+   "decode_tps": 17.25988526309296
+  },
+  {
+   "record": {
+    "board_id": "B-1009",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.71,
+      "size_mm": 0.06,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The panel has a short, critical defect at the bottom-right corner, caused by 1 conductive debris on the panel and 2 under-etching.\"",
+   "reasons": [
+    "summary contains number 2 that is not in the record"
+   ],
+   "filled": [],
+   "summary": "1 defect found. Most serious: short circuit (copper bridge) (critical) at bottom-right.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C3"
+    }
+   ],
+   "prompt_tokens": 238,
+   "latency_ms": 3511.997934000192,
+   "prefill_tps": 133.4080717488789,
+   "decode_tps": 20.97130242825607
+  },
+  {
+   "record": {
+    "board_id": "B-1010",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.47,
+      "size_mm": 0.09,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 5
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on Board B-1010 is due to a broken drill bit and a drill program error.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on Board B-1010 is due to a broken drill bit and a drill program error.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 229,
+   "latency_ms": 2971.312343000136,
+   "prefill_tps": 153.1772575250836,
+   "decode_tps": 18.42797725150666
+  },
+  {
+   "record": {
+    "board_id": "B-1011",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.96,
+      "size_mm": 0.1,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on Board B-1011 is critical and requires a scrap if the hole is needed for plating.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on Board B-1011 is critical and requires a scrap if the hole is needed for plating.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 229,
+   "latency_ms": 3492.80729100019,
+   "prefill_tps": 130.33579965850882,
+   "decode_tps": 16.48099136250795
+  },
+  {
+   "record": {
+    "board_id": "B-1012",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.88,
+      "size_mm": 0.13,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "major",
+      "confidence": 0.46,
+      "size_mm": 0.14,
+      "location": "top-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.6,
+      "size_mm": 0.19,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1\"}], \"summary\": \"Operator should check plating bath, lamination area, and IPC limit for D1 and D3, and trim if class allows for D2.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should check plating bath, lamination area, and IPC limit for D1 and D3, and trim if class allows for D2.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    }
+   ],
+   "prompt_tokens": 354,
+   "latency_ms": 5584.338052000021,
+   "prefill_tps": 137.85046728971963,
+   "decode_tps": 17.418529233809736
+  },
+  {
+   "record": {
+    "board_id": "B-1013",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.48,
+      "size_mm": 0.3,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.51,
+      "size_mm": 0.14,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.78,
+      "size_mm": 0.04,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 1, {\"defect\": \"D1\", \"cause\": 3, \"action\": 1}},], \"summary\": \"The operator should check if the same spot repeats for each defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should check if the same spot repeats for each defect.",
+   "first_step": "D3",
+   "choices": [
+    {
+     "defect": "D3",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C3"
+    },
+    {
+     "defect": "D2",
+     "type": "open",
+     "cause_pos": 2,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C2"
+    },
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 3,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C3"
+    }
+   ],
+   "prompt_tokens": 433,
+   "latency_ms": 5132.499642000312,
+   "prefill_tps": 147.93303723949435,
+   "decode_tps": 16.055667600182197
+  },
+  {
+   "record": {
+    "board_id": "B-1014",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.51,
+      "size_mm": 0.3,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.56,
+      "size_mm": 0.15,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_pad": 6
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 1}], \"summary\": \"The missing pad on this board is likely due to a pad lifted or scraped, which is a major defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing pad on this board is likely due to a pad lifted or scraped, which is a major defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MPAD-C1"
+    }
+   ],
+   "prompt_tokens": 312,
+   "latency_ms": 4209.090818000277,
+   "prefill_tps": 151.75097276264592,
+   "decode_tps": 16.221805199012795
+  },
+  {
+   "record": {
+    "board_id": "B-1015",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.72,
+      "size_mm": 0.31,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "major",
+      "confidence": 0.61,
+      "size_mm": 0.17,
+      "location": "top-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.45,
+      "size_mm": 0.18,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1\"}], \"summary\": \"Operator should trim if class allows; measure spacing vs IPC limit; inspect phototool at this spot; quarantine, continuity test\"}}",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should trim if class allows; measure spacing vs IPC limit; inspect phototool at this spot; quarantine, continuity test",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D3",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 380,
+   "latency_ms": 5522.1961409997675,
+   "prefill_tps": 168.66400355082112,
+   "decode_tps": 15.13843132633386
+  },
+  {
+   "record": {
+    "board_id": "B-1016",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.79,
+      "size_mm": 0.14,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.51,
+      "size_mm": 0.11,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The operator should quarantine the board and perform a continuity test to identify the root cause of the defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should quarantine the board and perform a continuity test to identify the root cause of the defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C4"
+    }
+   ],
+   "prompt_tokens": 308,
+   "latency_ms": 4352.629642000011,
+   "prefill_tps": 143.45598509548208,
+   "decode_tps": 15.35316194440935
+  },
+  {
+   "record": {
+    "board_id": "B-1017",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.66,
+      "size_mm": 0.24,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.9,
+      "size_mm": 0.35,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.75,
+      "size_mm": 0.21,
+      "location": "top-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 2}],, {\"defect\": \"D3\", \"cause\": 3, \"action\": 3}], \"summary\": \"The operator should inspect the D1 defect under magnification and label it so the station learns. The D2 defect should be scrap if the hole needed plating is not required. The D3 defect should be held until a person clears it.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should inspect the D1 defect under magnification and label it so the station learns. The D2 defect should be scrap if the hole needed plating is not required. The D3 defect should be held until a person clears it.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    },
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "unknown_anomaly",
+     "cause_pos": 3,
+     "n_causes": 3,
+     "action_pos": 3,
+     "n_actions": 3,
+     "cause": "ANOM-C1"
+    }
+   ],
+   "prompt_tokens": 351,
+   "latency_ms": 6847.481486000106,
+   "prefill_tps": 133.05534495830176,
+   "decode_tps": 16.44181950382738
+  },
+  {
+   "record": {
+    "board_id": "B-1018",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "major",
+      "confidence": 0.48,
+      "size_mm": 0.15,
+      "location": "top-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.47,
+      "size_mm": 0.23,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 3, \"action\": 3}], \"summary\": \"The operator should hold until a person clears the unknown anomaly, inspect under magnification, and label it so the station learns.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should hold until a person clears the unknown anomaly, inspect under magnification, and label it so the station learns.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "unknown_anomaly",
+     "cause_pos": 3,
+     "n_causes": 3,
+     "action_pos": 3,
+     "n_actions": 3,
+     "cause": "ANOM-C1"
+    }
+   ],
+   "prompt_tokens": 290,
+   "latency_ms": 4403.2875529997,
+   "prefill_tps": 135.32431171255251,
+   "decode_tps": 16.701654420952664
+  },
+  {
+   "record": {
+    "board_id": "B-1019",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.89,
+      "size_mm": 0.05,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.64,
+      "size_mm": 0.14,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 7
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on 7 of the last 20 boards is likely due to a broken drill bit.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on 7 of the last 20 boards is likely due to a broken drill bit.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 322,
+   "latency_ms": 4513.952098999653,
+   "prefill_tps": 133.99916770703288,
+   "decode_tps": 16.3642938620232
+  },
+  {
+   "record": {
+    "board_id": "B-1020",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.36,
+      "size_mm": 0.07,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool was found to be contaminated with dust and hair, causing a critical defect.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool was found to be contaminated with dust and hair, causing a critical defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C4"
+    }
+   ],
+   "prompt_tokens": 243,
+   "latency_ms": 3169.0048830000705,
+   "prefill_tps": 143.61702127659575,
+   "decode_tps": 16.462303979098188
+  },
+  {
+   "record": {
+    "board_id": "B-1021",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.96,
+      "size_mm": 0.31,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.58,
+      "size_mm": 0.23,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 5
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}], \"summary\": \"The missing hole on 5 of the last 20 boards is likely due to a drill program error; the operator should check the drill file.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on 5 of the last 20 boards is likely due to a drill program error; the operator should check the drill file.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MPAD-C3"
+    }
+   ],
+   "prompt_tokens": 310,
+   "latency_ms": 4780.396373999793,
+   "prefill_tps": 136.02457218078104,
+   "decode_tps": 16.2853990496332
+  },
+  {
+   "record": {
+    "board_id": "B-1022",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.56,
+      "size_mm": 0.1,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "open": 7
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool was found to be contaminated with dust and hair, causing a critical defect.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool was found to be contaminated with dust and hair, causing a critical defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C4"
+    }
+   ],
+   "prompt_tokens": 258,
+   "latency_ms": 3247.496747000241,
+   "prefill_tps": 143.89291689905187,
+   "decode_tps": 16.31288542680948
+  },
+  {
+   "record": {
+    "board_id": "B-1023",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "minor",
+      "confidence": 0.97,
+      "size_mm": 0.06,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The spur on D1 is causing the failure. The cause is a minor defect with a confidence of 0.97, and the action is to trim the board if class allows.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The spur on D1 is causing the failure. The cause is a minor defect with a confidence of 0.97, and the action is to trim the board if class allows.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    }
+   ],
+   "prompt_tokens": 214,
+   "latency_ms": 3902.7602200003457,
+   "prefill_tps": 137.0916079436259,
+   "decode_tps": 17.510826038368414
+  },
+  {
+   "record": {
+    "board_id": "B-1024",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "minor",
+      "confidence": 0.81,
+      "size_mm": 0.09,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "spur": 7
+   },
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"Under-etching; 1 under-etching; 2 incomplete development\"}}",
+   "reasons": [
+    "summary contains number 2 that is not in the record"
+   ],
+   "filled": [],
+   "summary": "1 defect found. Most serious: spur (copper protrusion) (minor) at centre.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 226,
+   "latency_ms": 2837.1876930000326,
+   "prefill_tps": 141.69278996865205,
+   "decode_tps": 17.73503677137554
+  },
+  {
+   "record": {
+    "board_id": "B-1025",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.54,
+      "size_mm": 0.18,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.88,
+      "size_mm": 0.24,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_pad": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}], \"summary\": \"The missing pad on board B-1025 is likely due to a pad lifted or scraped, which is a major cause of missing pads.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing pad on board B-1025 is likely due to a pad lifted or scraped, which is a major cause of missing pads.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MPAD-C1"
+    }
+   ],
+   "prompt_tokens": 313,
+   "latency_ms": 4772.420872000112,
+   "prefill_tps": 136.20539599651872,
+   "decode_tps": 16.585477635201393
+  },
+  {
+   "record": {
+    "board_id": "B-1026",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.81,
+      "size_mm": 0.16,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.97,
+      "size_mm": 0.17,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 4
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 2}], \"summary\": \"The missing hole on 4 of the last 20 boards is likely due to a broken drill bit.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on 4 of the last 20 boards is likely due to a broken drill bit.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    },
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 297,
+   "latency_ms": 4221.845819999999,
+   "prefill_tps": 138.91487371375118,
+   "decode_tps": 16.562855624168353
+  },
+  {
+   "record": {
+    "board_id": "B-1027",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.7,
+      "size_mm": 0.05,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.58,
+      "size_mm": 0.23,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}], \"summary\": \"The phototool spot or resist residue is causing the short defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool spot or resist residue is causing the short defect.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "short",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 4,
+     "cause": "SHORT-C3"
+    }
+   ],
+   "prompt_tokens": 302,
+   "latency_ms": 4229.246461999992,
+   "prefill_tps": 120.17508953442102,
+   "decode_tps": 16.28499078792458
+  },
+  {
+   "record": {
+    "board_id": "B-1028",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "minor",
+      "confidence": 0.42,
+      "size_mm": 0.11,
+      "location": "top-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The pin hole is a minor defect that causes 1 plating voids and 2 dust or bubbles at lamination.\"",
+   "reasons": [
+    "summary contains number 2 that is not in the record"
+   ],
+   "filled": [],
+   "summary": "1 defect found. Most serious: pinhole (minor) at top-left.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 218,
+   "latency_ms": 3667.593898999712,
+   "prefill_tps": 118.28540423223006,
+   "decode_tps": 15.878630842415152
+  },
+  {
+   "record": {
+    "board_id": "B-1029",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.6,
+      "size_mm": 0.05,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.42,
+      "size_mm": 0.21,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool spot on D1 is causing a short, critical defect with a confidence of 0.6. The phototool spot is also causing a short, critical defect on D2 with a confidence of 0.42.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool spot on D1 is causing a short, critical defect with a confidence of 0.6. The phototool spot is also causing a short, critical defect on D2 with a confidence of 0.42.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    }
+   ],
+   "prompt_tokens": 326,
+   "latency_ms": 6125.335181000082,
+   "prefill_tps": 138.90072432893055,
+   "decode_tps": 15.630708939283778
+  },
+  {
+   "record": {
+    "board_id": "B-1030",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.97,
+      "size_mm": 0.22,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The mouse bite on the bottom-left corner of the board is due to over-etching or undercut, which caused poor resist adhesion at the edge.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The mouse bite on the bottom-left corner of the board is due to over-etching or undercut, which caused poor resist adhesion at the edge.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C1"
+    }
+   ],
+   "prompt_tokens": 220,
+   "latency_ms": 3731.173330999809,
+   "prefill_tps": 130.10053222945004,
+   "decode_tps": 17.095470550576184
+  },
+  {
+   "record": {
+    "board_id": "B-1031",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.93,
+      "size_mm": 0.15,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.9,
+      "size_mm": 0.23,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_pad": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 1}], \"summary\": \"The missing pad on 8 of the last 20 boards is a repeat of a previous defect.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing pad on 8 of the last 20 boards is a repeat of a previous defect.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MPAD-C1"
+    },
+    {
+     "defect": "D1",
+     "type": "unknown_anomaly",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "ANOM-C2"
+    }
+   ],
+   "prompt_tokens": 318,
+   "latency_ms": 4155.036780000046,
+   "prefill_tps": 151.7175572519084,
+   "decode_tps": 16.231218794538904
+  },
+  {
+   "record": {
+    "board_id": "B-1032",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.9,
+      "size_mm": 0.2,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.8,
+      "size_mm": 0.26,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}], \"summary\": \"The operator should check the broken-bit log and the drill file to identify the cause of the missing hole.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should check the broken-bit log and the drill file to identify the cause of the missing hole.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "pin_hole",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 283,
+   "latency_ms": 4332.27916099986,
+   "prefill_tps": 134.63368220742151,
+   "decode_tps": 15.514724891578291
+  },
+  {
+   "record": {
+    "board_id": "B-1033",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.43,
+      "size_mm": 0.04,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spurious_copper",
+      "severity": "critical",
+      "confidence": 0.85,
+      "size_mm": 0.39,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "spurious_copper",
+      "severity": "critical",
+      "confidence": 0.92,
+      "size_mm": 0.18,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 3, \"action\": 3}],",
+   "reasons": [
+    "D1: option 3/3 out of range"
+   ],
+   "filled": [],
+   "summary": "3 defects found. Most serious: spurious copper (copper island) (critical) at top-centre.",
+   "first_step": "D3",
+   "choices": [],
+   "prompt_tokens": 379,
+   "latency_ms": 4546.774710000136,
+   "prefill_tps": 130.96060815480303,
+   "decode_tps": 14.465367478455354
+  },
+  {
+   "record": {
+    "board_id": "B-1034",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.92,
+      "size_mm": 0.19,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.65,
+      "size_mm": 0.35,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.85,
+      "size_mm": 0.33,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D3\", \"cause\": 2, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1,], \"summary\": \"The operator should compare the width of the board with IPC limit and check etch time to resolve the issue.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should compare the width of the board with IPC limit and check etch time to resolve the issue.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "short",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C3"
+    },
+    {
+     "defect": "D2",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 376,
+   "latency_ms": 5786.0910579997835,
+   "prefill_tps": 132.3477648715241,
+   "decode_tps": 15.155786815827605
+  },
+  {
+   "record": {
+    "board_id": "B-1035",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.56,
+      "size_mm": 0.2,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.59,
+      "size_mm": 0.23,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 2}], \"summary\": \"The operator should hold until a person clears the assembly fault.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should hold until a person clears the assembly fault.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D1",
+     "type": "unknown_anomaly",
+     "cause_pos": 2,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "ANOM-C3"
+    }
+   ],
+   "prompt_tokens": 285,
+   "latency_ms": 3667.086233000191,
+   "prefill_tps": 135.3919239904988,
+   "decode_tps": 16.9908392183556
+  },
+  {
+   "record": {
+    "board_id": "B-1036",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.87,
+      "size_mm": 0.07,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 4
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"Operator should check etch line settings to resolve short on 4 of the last 20 boards.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should check etch line settings to resolve short on 4 of the last 20 boards.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C3"
+    }
+   ],
+   "prompt_tokens": 251,
+   "latency_ms": 3261.2701140001263,
+   "prefill_tps": 140.61624649859945,
+   "decode_tps": 16.965533767322977
+  },
+  {
+   "record": {
+    "board_id": "B-1037",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.45,
+      "size_mm": 0.33,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.59,
+      "size_mm": 0.12,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.73,
+      "size_mm": 0.02,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "open": 7
+   },
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 3, \"action\": 1}],",
+   "reasons": [
+    "D1: option 3/1 out of range"
+   ],
+   "filled": [],
+   "summary": "3 defects found. Most serious: open circuit (broken conductor) (critical) at middle-right.",
+   "first_step": "D3",
+   "choices": [],
+   "prompt_tokens": 392,
+   "latency_ms": 4280.052227999931,
+   "prefill_tps": 144.5960900036887,
+   "decode_tps": 15.072832638874635
+  },
+  {
+   "record": {
+    "board_id": "B-1038",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.84,
+      "size_mm": 0.14,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.94,
+      "size_mm": 0.24,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool at D1 is under-etched, causing a critical defect. The operator should inspect the phototool at this spot and remove excess copper if class allows.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool at D1 is under-etched, causing a critical defect. The operator should inspect the phototool at this spot and remove excess copper if class allows.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MPAD-C2"
+    }
+   ],
+   "prompt_tokens": 318,
+   "latency_ms": 5252.620154999931,
+   "prefill_tps": 135.54987212276214,
+   "decode_tps": 16.628373777960295
+  },
+  {
+   "record": {
+    "board_id": "B-1039",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.93,
+      "size_mm": 0.36,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"Check plating bath to ensure proper plating of the board.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Check plating bath to ensure proper plating of the board.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 219,
+   "latency_ms": 2815.402585999891,
+   "prefill_tps": 130.27959547888162,
+   "decode_tps": 16.307413376309427
+  },
+  {
+   "record": {
+    "board_id": "B-1040",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.63,
+      "size_mm": 0.33,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on Board B-1040 is due to a broken drill bit and a drill program error.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on Board B-1040 is due to a broken drill bit and a drill program error.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 229,
+   "latency_ms": 3354.4180330000017,
+   "prefill_tps": 128.29131652661064,
+   "decode_tps": 17.128834595269687
+  },
+  {
+   "record": {
+    "board_id": "B-1041",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.92,
+      "size_mm": 0.24,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The missing hole on Board B-1041 is due to a drill program error and a broken drill bit.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The missing hole on Board B-1041 is due to a drill program error and a broken drill bit.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 228,
+   "latency_ms": 3149.8920019998877,
+   "prefill_tps": 140.22140221402216,
+   "decode_tps": 17.406204906204906
+  },
+  {
+   "record": {
+    "board_id": "B-1042",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.44,
+      "size_mm": 0.43,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.61,
+      "size_mm": 0.2,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.62,
+      "size_mm": 0.25,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 1, {\"defect\": \"D1\", \"cause\": 2, \"action\": 1}},], \"summary\": \"The operator should trim the spur if class allows; measure spacing vs IPC limit; check developer and etch.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should trim the spur if class allows; measure spacing vs IPC limit; check developer and etch.",
+   "first_step": "D3",
+   "choices": [
+    {
+     "defect": "D3",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "mouse_bite",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C1"
+    },
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 349,
+   "latency_ms": 5219.423705999816,
+   "prefill_tps": 136.06237816764133,
+   "decode_tps": 16.476882472495404
+  },
+  {
+   "record": {
+    "board_id": "B-1043",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "minor",
+      "confidence": 0.39,
+      "size_mm": 0.05,
+      "location": "top-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "accept"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spurious_copper",
+      "severity": "major",
+      "confidence": 0.36,
+      "size_mm": 0.19,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "spur": 4
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 1}], \"summary\": \"The spur on 4 of the last 20 boards is a repeat of the under-etching cause.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The spur on 4 of the last 20 boards is a repeat of the under-etching cause.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "spurious_copper",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPCU-C3"
+    },
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    }
+   ],
+   "prompt_tokens": 308,
+   "latency_ms": 4196.837176999907,
+   "prefill_tps": 148.43373493975903,
+   "decode_tps": 16.683589315168263
+  },
+  {
+   "record": {
+    "board_id": "B-1044",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.81,
+      "size_mm": 0.31,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"Operator should check etch line settings to resolve short on 8 of the last 20 boards.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should check etch line settings to resolve short on 8 of the last 20 boards.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    }
+   ],
+   "prompt_tokens": 251,
+   "latency_ms": 3171.8882320001285,
+   "prefill_tps": 142.93849658314352,
+   "decode_tps": 17.86996410051855
+  },
+  {
+   "record": {
+    "board_id": "B-1045",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.47,
+      "size_mm": 0.19,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "minor",
+      "confidence": 0.96,
+      "size_mm": 0.06,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "spur",
+      "severity": "major",
+      "confidence": 0.9,
+      "size_mm": 0.12,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1\"}], \"summary\": \"Operator should inspect phototool at this spot, trim if class allows, check developer and etch, measure spacing vs IPC limit\"}",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should inspect phototool at this spot, trim if class allows, check developer and etch, measure spacing vs IPC limit",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 380,
+   "latency_ms": 5915.022352000051,
+   "prefill_tps": 135.1832088224831,
+   "decode_tps": 15.707421867647776
+  },
+  {
+   "record": {
+    "board_id": "B-1046",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "minor",
+      "confidence": 0.92,
+      "size_mm": 0.1,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spurious_copper",
+      "severity": "critical",
+      "confidence": 0.5,
+      "size_mm": 0.13,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.89,
+      "size_mm": 0.25,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "spur": 3
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1, {\"defect\": \"D1\", \"cause\": 1, \"action\": 1}},], \"summary\": \"Operator should measure spacing vs IPC limit and check developer and etch flow and nozzles.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "Operator should measure spacing vs IPC limit and check developer and etch flow and nozzles.",
+   "first_step": "D3",
+   "choices": [
+    {
+     "defect": "D3",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "spurious_copper",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPCU-C1"
+    },
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    }
+   ],
+   "prompt_tokens": 376,
+   "latency_ms": 5461.405506000119,
+   "prefill_tps": 140.9295352323838,
+   "decode_tps": 14.818116635211542
+  },
+  {
+   "record": {
+    "board_id": "B-1047",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.82,
+      "size_mm": 0.13,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.4,
+      "size_mm": 0.21,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2}], \"summary\": \"The operator should trim the board to prevent under-etching.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should trim the board to prevent under-etching.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "spur",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "SPUR-C1"
+    }
+   ],
+   "prompt_tokens": 278,
+   "latency_ms": 3868.9136710004277,
+   "prefill_tps": 125.62132851333031,
+   "decode_tps": 16.55001756994996
+  },
+  {
+   "record": {
+    "board_id": "B-1048",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.36,
+      "size_mm": 0.2,
+      "location": "middle-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.53,
+      "size_mm": 0.09,
+      "location": "top-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "mouse_bite",
+      "severity": "minor",
+      "confidence": 0.7,
+      "size_mm": 0.13,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 2, \"action\": 2, {\"defect\": \"D3\", \"cause\": 3, \"action\": 3}},",
+   "reasons": [
+    "D3: option 3/3 out of range"
+   ],
+   "filled": [],
+   "summary": "3 defects found. Most serious: missing hole (critical) at middle-right.",
+   "first_step": "D1",
+   "choices": [],
+   "prompt_tokens": 366,
+   "latency_ms": 4073.7931100002243,
+   "prefill_tps": 136.31284916201116,
+   "decode_tps": 16.92511135235593
+  },
+  {
+   "record": {
+    "board_id": "B-1049",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "major",
+      "confidence": 0.51,
+      "size_mm": 0.15,
+      "location": "bottom-right",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "pin_hole": 6
+   },
+   "accepted": false,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The pin hole on Board B-1049 is a major defect, caused by 1 dust or bubbles at lamination and 2 plating voids, and requires 1 clean lamination area, 2 compare void with IPC limit, and 3 check plating bath actions.\"",
+   "reasons": [
+    "summary contains number 2 that is not in the record",
+    "summary contains number 2 that is not in the record",
+    "summary contains number 3 that is not in the record"
+   ],
+   "filled": [],
+   "summary": "1 defect found. Most serious: pinhole (major) at bottom-right.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C1"
+    }
+   ],
+   "prompt_tokens": 232,
+   "latency_ms": 5069.35796200014,
+   "prefill_tps": 145.36340852130326,
+   "decode_tps": 17.426230039192824
+  },
+  {
+   "record": {
+    "board_id": "B-1050",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.87,
+      "size_mm": 0.11,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.42,
+      "size_mm": 0.13,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool spot is missing, causing a critical defect. The operator should check the broken-bit log and drill file to resolve the issue.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool spot is missing, causing a critical defect. The operator should check the broken-bit log and drill file to resolve the issue.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 302,
+   "latency_ms": 4558.825733000049,
+   "prefill_tps": 143.5361216730038,
+   "decode_tps": 17.027798058195856
+  },
+  {
+   "record": {
+    "board_id": "B-1051",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "pin_hole",
+      "severity": "critical",
+      "confidence": 0.65,
+      "size_mm": 0.28,
+      "location": "middle-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The pin hole is critical and 0.28 mm, but the cause is a plating voids and dust/bubbles at lamination.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The pin hole is critical and 0.28 mm, but the cause is a plating voids and dust/bubbles at lamination.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "pin_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "PHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 218,
+   "latency_ms": 2763.370197000768,
+   "prefill_tps": 173.4287987271281,
+   "decode_tps": 22.21844185354177
+  },
+  {
+   "record": {
+    "board_id": "B-1052",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.36,
+      "size_mm": 0.17,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.68,
+      "size_mm": 0.11,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "missing_hole": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D2\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D1\", \"cause\": 2, \"action\": 2}], \"summary\": \"The operator should trim the board if the class allows.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should trim the board if the class allows.",
+   "first_step": "D2",
+   "choices": [
+    {
+     "defect": "D2",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    },
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 2,
+     "n_causes": 2,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    }
+   ],
+   "prompt_tokens": 292,
+   "latency_ms": 3559.302628000296,
+   "prefill_tps": 146.51279478173606,
+   "decode_tps": 16.17825081935581
+  },
+  {
+   "record": {
+    "board_id": "B-1053",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spur",
+      "severity": "critical",
+      "confidence": 0.77,
+      "size_mm": 0.21,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.52,
+      "size_mm": 0.05,
+      "location": "top-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The operator should trim the board if class allows and measure spacing vs IPC limit.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should trim the board if class allows and measure spacing vs IPC limit.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spur",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPUR-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    }
+   ],
+   "prompt_tokens": 280,
+   "latency_ms": 3850.0500979998833,
+   "prefill_tps": 139.234211834908,
+   "decode_tps": 16.261596425294066
+  },
+  {
+   "record": {
+    "board_id": "B-1054",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "open",
+      "severity": "critical",
+      "confidence": 0.89,
+      "size_mm": 0.04,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The phototool is dirty, causing a handling scratch.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The phototool is dirty, causing a handling scratch.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "open",
+     "cause_pos": 1,
+     "n_causes": 4,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "OPEN-C4"
+    }
+   ],
+   "prompt_tokens": 244,
+   "latency_ms": 2980.214315000012,
+   "prefill_tps": 130.27229044313935,
+   "decode_tps": 15.62595373252762
+  },
+  {
+   "record": {
+    "board_id": "B-1055",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.95,
+      "size_mm": 0.06,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "unknown_anomaly": 5
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The board is labeled so the station learns.\",",
+   "reasons": [],
+   "filled": [],
+   "summary": "The board is labeled so the station learns.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "unknown_anomaly",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "ANOM-C3"
+    }
+   ],
+   "prompt_tokens": 235,
+   "latency_ms": 2662.384892000773,
+   "prefill_tps": 132.99377475947935,
+   "decode_tps": 16.15086139996896
+  },
+  {
+   "record": {
+    "board_id": "B-1056",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "mouse_bite",
+      "severity": "critical",
+      "confidence": 0.59,
+      "size_mm": 0.26,
+      "location": "top-right",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}], \"summary\": \"The mouse bite on the top-right edge of the board is critical and requires immediate attention to prevent further damage.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The mouse bite on the top-right edge of the board is critical and requires immediate attention to prevent further damage.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "mouse_bite",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MBITE-C2"
+    }
+   ],
+   "prompt_tokens": 220,
+   "latency_ms": 3362.2812900002828,
+   "prefill_tps": 122.22222222222221,
+   "decode_tps": 16.83930544889205
+  },
+  {
+   "record": {
+    "board_id": "B-1057",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "spurious_copper",
+      "severity": "critical",
+      "confidence": 0.82,
+      "size_mm": 0.16,
+      "location": "bottom-centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.76,
+      "size_mm": 0.07,
+      "location": "centre",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "spurious_copper": 6
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1}], \"summary\": \"The spurious copper on board B-1057 is likely due to a combination of factors, including a resist residue or phototool spot, contamination before etching, and incomplete etching.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The spurious copper on board B-1057 is likely due to a combination of factors, including a resist residue or phototool spot, contamination before etching, and incomplete etching.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "spurious_copper",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "SPCU-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "unknown_anomaly",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "ANOM-C1"
+    }
+   ],
+   "prompt_tokens": 318,
+   "latency_ms": 5501.320158999988,
+   "prefill_tps": 133.89473684210526,
+   "decode_tps": 15.87396876748513
+  },
+  {
+   "record": {
+    "board_id": "B-1058",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.65,
+      "size_mm": 0.05,
+      "location": "top-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "unknown_anomaly",
+      "severity": "minor",
+      "confidence": 0.78,
+      "size_mm": 0.2,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "accept",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D3",
+      "type": "missing_hole",
+      "severity": "critical",
+      "confidence": 0.42,
+      "size_mm": 0.08,
+      "location": "centre",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {},
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D3\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 1\"}], \"summary\": \"The operator should quarantine the board and perform a continuity test to determine the cause of the short.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The operator should quarantine the board and perform a continuity test to determine the cause of the short.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    },
+    {
+     "defect": "D3",
+     "type": "missing_hole",
+     "cause_pos": 1,
+     "n_causes": 2,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "MHOLE-C2"
+    },
+    {
+     "defect": "D2",
+     "type": "unknown_anomaly",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 3,
+     "cause": "ANOM-C2"
+    }
+   ],
+   "prompt_tokens": 373,
+   "latency_ms": 5241.0860559994035,
+   "prefill_tps": 146.3318948607297,
+   "decode_tps": 15.432154524203414
+  },
+  {
+   "record": {
+    "board_id": "B-1059",
+    "design": "eval",
+    "verdict": "FAIL",
+    "defects": [
+     {
+      "id": "D1",
+      "type": "short",
+      "severity": "critical",
+      "confidence": 0.71,
+      "size_mm": 0.05,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "reject",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     },
+     {
+      "id": "D2",
+      "type": "missing_pad",
+      "severity": "major",
+      "confidence": 0.59,
+      "size_mm": 0.21,
+      "location": "bottom-left",
+      "ipc": {
+       "class1": "accept",
+       "class2": "reject",
+       "class3": "reject"
+      }
+     }
+    ]
+   },
+   "history": {
+    "short": 8
+   },
+   "accepted": true,
+   "raw": "{\"steps\": [{\"defect\": \"D1\", \"cause\": 1, \"action\": 1}],, {\"defect\": \"D2\", \"cause\": 1, \"action\": 2}], \"summary\": \"The short on 8 of the last 20 boards is likely due to the pad being lifted or scraped.\"",
+   "reasons": [],
+   "filled": [],
+   "summary": "The short on 8 of the last 20 boards is likely due to the pad being lifted or scraped.",
+   "first_step": "D1",
+   "choices": [
+    {
+     "defect": "D1",
+     "type": "short",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 1,
+     "n_actions": 4,
+     "cause": "SHORT-C1"
+    },
+    {
+     "defect": "D2",
+     "type": "missing_pad",
+     "cause_pos": 1,
+     "n_causes": 3,
+     "action_pos": 2,
+     "n_actions": 3,
+     "cause": "MPAD-C3"
+    }
+   ],
+   "prompt_tokens": 332,
+   "latency_ms": 4515.937000000122,
+   "prefill_tps": 141.94100042753314,
+   "decode_tps": 16.383331567145337
+  }
+ ]
+}

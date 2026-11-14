@@ -3,8 +3,8 @@
 # Needs executorch==1.6.0 (the same version the Pi installs) and access to the gated meta-llama repos
 # (accept the licence on Hugging Face; HF_TOKEN in the environment). The weights are never committed here.
 #
-#   HF_TOKEN=... bash llm/export_llama.sh 1B models/llm      # advice model  -> llama3_2_1b_spinquant.pte
-#   HF_TOKEN=... bash llm/export_llama.sh 3B models/llm      # rule reader   -> llama3_2_3b_spinquant.pte
+#   HF_TOKEN=... bash llm/export_llama.sh 1B models/llm      # fallback advice model -> llama3_2_1b_spinquant.pte
+#   HF_TOKEN=... bash llm/export_llama.sh 3B models/llm      # default advice model  -> llama3_2_3b_spinquant.pte
 set -euo pipefail
 SIZE=${1:-1B}; OUT=$(realpath -m "${2:-models/llm}"); PY=${PYTHON:-python}
 size=$(echo "$SIZE" | tr 'A-Z' 'a-z')

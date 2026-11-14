@@ -1,0 +1,247 @@
+{
+ "design": "deeppcb",
+ "tag": "v5s_et",
+ "channels": {
+  "detector": {
+   "alpha_0.01": {
+    "lam": 0.285067617893219,
+    "defect_miss": 0.014566181127295796,
+    "random_defect_miss": 0.01291904761904762,
+    "random_defect_miss_ci95": [
+     0.007330079365079366,
+     0.0190909126984127
+    ],
+    "defect_miss_ci95": [
+     0.009255521902912567,
+     0.0217766735250724
+    ],
+    "typed_correct_share_of_found": 0.9929305912596401,
+    "false_calls_per_board": 0.392,
+    "good_boards_flagged": 0.148,
+    "tau": 0.831765115261078,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.888,
+     "good_failed": 0.008,
+     "good_passed": 0.852,
+     "sent_to_person": 0.126
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.05": {
+    "lam": 0.7367089986801147,
+    "defect_miss": 0.08423052564914502,
+    "random_defect_miss": 0.08056227106227107,
+    "random_defect_miss_ci95": [
+     0.06403123015873018,
+     0.09973174603174603
+    ],
+    "defect_miss_ci95": [
+     0.07099792614784228,
+     0.09903201545574625
+    ],
+    "typed_correct_share_of_found": 0.9965421853388658,
+    "false_calls_per_board": 0.088,
+    "good_boards_flagged": 0.044,
+    "tau": 0.831765115261078,
+    "verdicts": {
+     "defective_passed": 0.004,
+     "defective_failed": 0.888,
+     "good_failed": 0.008,
+     "good_passed": 0.956,
+     "sent_to_person": 0.072
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.1": {
+    "lam": 0.7541555166244507,
+    "defect_miss": 0.11716276124129199,
+    "random_defect_miss": 0.11226043956043955,
+    "random_defect_miss_ci95": [
+     0.09397075396825397,
+     0.1324271459096459
+    ],
+    "defect_miss_ci95": [
+     0.10170582474868028,
+     0.13405860945276693
+    ],
+    "typed_correct_share_of_found": 0.996413199426112,
+    "false_calls_per_board": 0.078,
+    "good_boards_flagged": 0.036,
+    "tau": 0.831765115261078,
+    "verdicts": {
+     "defective_passed": 0.004,
+     "defective_failed": 0.888,
+     "good_failed": 0.008,
+     "good_passed": 0.964,
+     "sent_to_person": 0.068
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   }
+  },
+  "golden_diff": {
+   "alpha_0.01": {
+    "lam": 0.3333333333333333,
+    "defect_miss": 0.007599746675110874,
+    "random_defect_miss": 0.0074730158730158735,
+    "random_defect_miss_ci95": [
+     0.003625396825396826,
+     0.01202603174603175
+    ],
+    "defect_miss_ci95": [
+     0.003932885935314601,
+     0.013237561274650478
+    ],
+    "typed_correct_share_of_found": 0.8047223994894703,
+    "false_calls_per_board": 1.006,
+    "good_boards_flagged": 0.08,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.92,
+     "sent_to_person": 0.54
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.05": {
+    "lam": 0.55,
+    "defect_miss": 0.05319822672577579,
+    "random_defect_miss": 0.051885714285714285,
+    "random_defect_miss_ci95": [
+     0.03930281746031746,
+     0.06606384920634921
+    ],
+    "defect_miss_ci95": [
+     0.04265172449672816,
+     0.06544224505283702
+    ],
+    "typed_correct_share_of_found": 0.8053511705685619,
+    "false_calls_per_board": 0.492,
+    "good_boards_flagged": 0.064,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.936,
+     "sent_to_person": 0.532
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.1": {
+    "lam": 0.6043956043956044,
+    "defect_miss": 0.09436352121595948,
+    "random_defect_miss": 0.09231587301587302,
+    "random_defect_miss_ci95": [
+     0.07424670634920634,
+     0.11215769841269843
+    ],
+    "defect_miss_ci95": [
+     0.08039229671783799,
+     0.10986318806018369
+    ],
+    "typed_correct_share_of_found": 0.8041958041958042,
+    "false_calls_per_board": 0.452,
+    "good_boards_flagged": 0.056,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.004,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.944,
+     "sent_to_person": 0.526
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   }
+  },
+  "fused": {
+   "alpha_0.01": {
+    "lam": 0.6586474180221558,
+    "defect_miss": 0.015199493350221638,
+    "random_defect_miss": 0.014217460317460318,
+    "random_defect_miss_ci95": [
+     0.008625396825396826,
+     0.020440079365079366
+    ],
+    "defect_miss_ci95": [
+     0.009762241083697498,
+     0.02253168636782943
+    ],
+    "typed_correct_share_of_found": 0.992282958199357,
+    "false_calls_per_board": 0.382,
+    "good_boards_flagged": 0.056,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.944,
+     "sent_to_person": 0.528
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.05": {
+    "lam": 0.7844311377245509,
+    "defect_miss": 0.065231158961368,
+    "random_defect_miss": 0.061198412698412696,
+    "random_defect_miss_ci95": [
+     0.05016277777777778,
+     0.07301936507936507
+    ],
+    "defect_miss_ci95": [
+     0.05355247425989129,
+     0.0785563291799094
+    ],
+    "typed_correct_share_of_found": 0.9925474254742548,
+    "false_calls_per_board": 0.278,
+    "good_boards_flagged": 0.044,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.956,
+     "sent_to_person": 0.522
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   },
+   "alpha_0.1": {
+    "lam": 0.7987349629402161,
+    "defect_miss": 0.11526282457251424,
+    "random_defect_miss": 0.10959023199023199,
+    "random_defect_miss_ci95": [
+     0.0942561904761905,
+     0.12575765262515262
+    ],
+    "defect_miss_ci95": [
+     0.09992156949233355,
+     0.1320503917087552
+    ],
+    "typed_correct_share_of_found": 0.9921259842519685,
+    "false_calls_per_board": 0.274,
+    "good_boards_flagged": 0.044,
+    "tau": 0.9900000000000001,
+    "verdicts": {
+     "defective_passed": 0.0,
+     "defective_failed": 0.0,
+     "good_failed": 0.0,
+     "good_passed": 0.956,
+     "sent_to_person": 0.522
+    },
+    "n_defects": 1579,
+    "n_boards": 500
+   }
+  }
+ },
+ "align_cc_min": 0.8664132013510655
+}

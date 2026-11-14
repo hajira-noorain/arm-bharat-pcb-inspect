@@ -1,0 +1,251 @@
+{
+ "note": "real photos (VisA); the part detector was trained on FPIC only",
+ "designs": {
+  "pcb1": {
+   "taught": {
+    "parts": 8,
+    "by_kind": {
+     "part": 7,
+     "transistor": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 1
+   },
+   "scale_chosen": 1.5,
+   "ignore_zones": 8,
+   "likeness_across_good_boards_min": 0.522232174873352,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 10,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 10
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 1,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 1,
+     "finding_on_the_labelled_area": 0,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 54,
+     "lined_up": 54,
+     "any_parts_finding": 12,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 12,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 4
+    },
+    "scratch": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 5,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 5,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 3
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 2,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 2,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 12,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 12
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 3,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 0,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 54,
+     "lined_up": 54,
+     "any_parts_finding": 22,
+     "missing_calls": 24,
+     "changed_calls": 0,
+     "unexpected_calls": 12,
+     "finding_on_the_labelled_area": 6,
+     "missing_on_the_labelled_area": 2,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 4
+    },
+    "scratch": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 7,
+     "missing_calls": 3,
+     "changed_calls": 0,
+     "unexpected_calls": 5,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 3
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 3,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   }
+  }
+ },
+ "all_designs": {
+  "good": {
+   "images": 80,
+   "lined_up": 80,
+   "any_parts_finding": 10,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 10
+  },
+  "bent": {
+   "images": 15,
+   "lined_up": 15,
+   "any_parts_finding": 1,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 1,
+   "finding_on_the_labelled_area": 0,
+   "missing_on_the_labelled_area": 0,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "melt": {
+   "images": 54,
+   "lined_up": 54,
+   "any_parts_finding": 12,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 12,
+   "finding_on_the_labelled_area": 4,
+   "missing_on_the_labelled_area": 0,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 4
+  },
+  "scratch": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 5,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 5,
+   "finding_on_the_labelled_area": 3,
+   "missing_on_the_labelled_area": 0,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "missing": {
+   "images": 20,
+   "lined_up": 19,
+   "any_parts_finding": 2,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 2,
+   "finding_on_the_labelled_area": 2,
+   "missing_on_the_labelled_area": 0,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 2
+  }
+ },
+ "all_designs_detector_only": {
+  "good": {
+   "images": 80,
+   "lined_up": 80,
+   "any_parts_finding": 12,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 12
+  },
+  "bent": {
+   "images": 15,
+   "lined_up": 15,
+   "any_parts_finding": 3,
+   "missing_calls": 2,
+   "changed_calls": 0,
+   "unexpected_calls": 2,
+   "finding_on_the_labelled_area": 0,
+   "missing_on_the_labelled_area": 0,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "melt": {
+   "images": 54,
+   "lined_up": 54,
+   "any_parts_finding": 22,
+   "missing_calls": 24,
+   "changed_calls": 0,
+   "unexpected_calls": 12,
+   "finding_on_the_labelled_area": 6,
+   "missing_on_the_labelled_area": 2,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 4
+  },
+  "scratch": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 7,
+   "missing_calls": 3,
+   "changed_calls": 0,
+   "unexpected_calls": 5,
+   "finding_on_the_labelled_area": 4,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "missing": {
+   "images": 20,
+   "lined_up": 19,
+   "any_parts_finding": 3,
+   "missing_calls": 1,
+   "changed_calls": 0,
+   "unexpected_calls": 2,
+   "finding_on_the_labelled_area": 3,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 2
+  }
+ }
+}

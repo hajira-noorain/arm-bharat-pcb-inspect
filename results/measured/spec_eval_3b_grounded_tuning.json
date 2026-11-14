@@ -1,0 +1,5690 @@
+{
+ "sets": {
+  "tuning": 80
+ },
+ "compilers": {
+  "keyword": {
+   "tuning": {
+    "exact": 0.7875,
+    "exec_equivalent": 0.7875,
+    "auto_correct": 0.7875,
+    "silent_wrong": 0.2125,
+    "to_operator": 0.0,
+    "failed": 0.0,
+    "kind_right": 1.0,
+    "to_operator_but_right": 0.0,
+    "fields": {
+     "defect": 1.0,
+     "measure": 0.9459459459459459,
+     "action": 0.8243243243243243,
+     "op": 0.9795918367346939,
+     "value": 1.0
+    },
+    "n": 80,
+    "latency_ms_median": 0.33783250000851694,
+    "latency_ms_p90": 0.432779999982813,
+    "outputs": [
+     {
+      "t": "No shorts are permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 1
+     },
+     {
+      "t": "Any open circuit is cause for rejection.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Nicks that reduce the conductor width by more than 20% are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 1
+     },
+     {
+      "t": "Conductor width reduction from nicks shall not exceed 10%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurious copper of 0.25 mm or larger must be removed by rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pin holes larger than 0.1 mm in diameter are not acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Inspect all boards to Class 3.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurs reducing spacing by more than 20 percent shall be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Missing holes: reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Boards with more than two mouse bites must go to the engineer for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Copper splash bigger than 4 mil is to be scrapped.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1016,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1016,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pinholes up to 0.05 mm are acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.05,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.05,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Any damaged pad must be held for manual inspection.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spacing reduction of 10% or more caused by spurs is rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "The customer requires IPC Class 2 acceptability.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Reject the board if any defect is 0.5 mm or larger.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Mouse bites deeper than 25% of the track width must be repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Bridging between conductors is not allowed under any circumstances.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Stray copper over 150 microns shall be removed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Send every open for rework; opens are acceptable only once repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "A board with at least three spurs goes to review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "count",
+       "op": ">=",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Treat this order as Class 1 (general electronics).",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 1
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 1
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Residual copper of 0.2 mm or more must be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pin-holes exceeding 3 mil diameter are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.0762,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.0762,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Nicks greater than 0.3 mm long require rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Shorts of any size: scrap the board.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Width reduction greater than 20% due to pin holes is non-conforming.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Flag any spur for engineering review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 1
+     },
+     {
+      "t": "More than one open per board means scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">",
+       "value": 1.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">",
+       "value": 1.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurious copper is acceptable if it does not reduce spacing by more than 30%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "A protrusion that reduces clearance by 20% or more must be trimmed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Every board with a missing drill hole is rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Edge notches larger than 0.15 mm: rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Defects of 1 mm or bigger of any type must be reviewed by QA.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 1.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 1.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pinholes of 2 mil or more are not permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.0508,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.0508,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Conductor width must not be reduced by more than 10% by any defect.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Short circuits are unacceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "If copper residue exceeds 0.4 mm, hold the board for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.4,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.4,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Boards must meet Class 3 for this medical customer.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Open traces may be repaired with a jumper wire; rework all opens.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurs longer than 0.5 millimetres are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Nicks reducing track width by 15 % or more are a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">=",
+       "value": 15.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">=",
+       "value": 15.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Up to two pinholes per board are allowed; more than two is a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Missing pads must be sent for rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Copper splash above 0.3 mm must be removed.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Any bridge between pads is a scrap condition.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spacing loss above 25% from spurious copper requires engineering review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Mouse bites up to 10% of conductor width are acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pin holes larger than 100 \u00b5m require repair.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Use Class 2 criteria.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "The board is rejected if it has any open.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurs that reduce spacing by at least 30% are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Any defect larger than 0.8 mm must be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.8,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.8,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Nicks: rework if over 0.25 mm.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pinholes which reduce conductor width by more than 20% shall be rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Three or more spurious copper spots on one board: review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "count",
+       "op": ">=",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Missing holes are to be reviewed by the process engineer.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Shorts must be reworked by cutting the bridge.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Opens longer than 0.1 mm are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Protrusions over 6 mil should be removed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1524,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1524,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Accept spurs smaller than 0.1 mm; reject anything 0.1 mm or larger.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Width reduction exceeding 20% from mouse bites: scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurious copper which reduces spacing by more than 10% is rejectable for Class 3.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 1
+     },
+     {
+      "t": "More than three nicks on a single board must go for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "A pinhole is acceptable as long as it is below 0.2 mm.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Damaged pads are not permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Bridged conductors must be sent to MRB.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Nicks reducing width by over 30% must be scrapped, regardless of class.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurs: maximum allowed spacing reduction is 20%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Copper islands of 0.5 mm or more need rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Every open circuit shall be reviewed by an engineer before any decision.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pinholes larger than 0.15 mm are acceptable only for Class 1; for this job reject them.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 1
+     },
+     {
+      "t": "Any short must be repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Spurs over 0.2 mm long: hold for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "No more than 20% reduction of conductor width is allowed for nicks.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Customer drawing note: workmanship to IPC Class 3.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Stray copper causing more than 50% loss of clearance is a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 50.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 50.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Boards with two or more opens are scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">=",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Any defect at all must be flagged for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     },
+     {
+      "t": "Pin holes bigger than .2 mm are rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": null,
+      "error": null,
+      "ms": 0
+     }
+    ]
+   }
+  },
+  "llama3_2_3b_spinquant_grounded": {
+   "tuning": {
+    "exact": 0.775,
+    "exec_equivalent": 0.8125,
+    "auto_correct": 0.775,
+    "silent_wrong": 0.025,
+    "to_operator": 0.2,
+    "failed": 0.0,
+    "kind_right": 0.9875,
+    "to_operator_but_right": 0.0375,
+    "fields": {
+     "defect": 0.9863013698630136,
+     "measure": 0.9315068493150684,
+     "action": 0.9315068493150684,
+     "op": 0.8297872340425532,
+     "value": 1.0
+    },
+    "n": 80,
+    "latency_ms_median": 4348.236588499958,
+    "latency_ms_p90": 4934.448642000007,
+    "prompt_tokens_median": 462.0,
+    "generated_tokens_median": 11.0,
+    "decode_tps_median": null,
+    "outputs": [
+     {
+      "t": "No shorts are permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 0.875
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3852
+     },
+     {
+      "t": "Any open circuit is cause for rejection.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 6.759
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3677
+     },
+     {
+      "t": "Nicks that reduce the conductor width by more than 20% are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 10.386,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 8.069,
+        "Action": 5.454
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4293
+     },
+     {
+      "t": "Conductor width reduction from nicks shall not exceed 10%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "10",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 10.691,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.046,
+        "Action": 0.365
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4428
+     },
+     {
+      "t": "Spurious copper of 0.25 mm or larger must be removed by rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "0.25",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.144,
+        "Action": 7.133
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4400
+     },
+     {
+      "t": "Pin holes larger than 0.1 mm in diameter are not acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "0.1",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 5.231,
+        "Action": 2.731
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4262
+     },
+     {
+      "t": "Inspect all boards to Class 3.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "3",
+       "_margins": {
+        "Defect": 8.589,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3711
+     },
+     {
+      "t": "Spurs reducing spacing by more than 20 percent shall be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "spacing loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 2.479,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 9.715,
+        "Action": 8.189
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4299
+     },
+     {
+      "t": "Missing holes: reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing hole",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 6.804
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3636
+     },
+     {
+      "t": "Boards with more than two mouse bites must go to the engineer for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "count",
+       "Number as written": "2",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 5.127,
+        "Action": 8.6
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4411
+     },
+     {
+      "t": "Copper splash bigger than 4 mil is to be scrapped.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1016,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1016,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "4",
+       "Unit": "mil",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.703,
+        "Action": 4.817
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4237
+     },
+     {
+      "t": "Pinholes up to 0.05 mm are acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.05,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.05,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'more than / up to / exceed' but rule uses 'at least'"
+       ]
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "0.05",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "accept",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.57,
+        "Action": 6.068
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4213
+     },
+     {
+      "t": "Any damaged pad must be held for manual inspection.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing pad",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 3.997
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3824
+     },
+     {
+      "t": "Spacing reduction of 10% or more caused by spurs is rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention width loss",
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "width loss",
+       "Number as written": "10",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 0.733,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 5.618,
+        "Action": 6.679
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4229
+     },
+     {
+      "t": "The customer requires IPC Class 2 acceptability.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "2",
+       "_margins": {
+        "Defect": 7.431,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3547
+     },
+     {
+      "t": "Reject the board if any defect is 0.5 mm or larger.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "any defect",
+       "Measure": "size",
+       "Number as written": "0.5",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 3.093,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.962,
+        "Action": 6.469
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4323
+     },
+     {
+      "t": "Mouse bites deeper than 25% of the track width must be repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "25",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 7.751,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.316,
+        "Action": 6.663
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4275
+     },
+     {
+      "t": "Bridging between conductors is not allowed under any circumstances.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 1.147
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3679
+     },
+     {
+      "t": "Stray copper over 150 microns shall be removed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "150",
+       "Unit": "micron",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.195,
+        "Action": 6.681
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4396
+     },
+     {
+      "t": "Send every open for rework; opens are acceptable only once repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "always",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 2.117
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3781
+     },
+     {
+      "t": "A board with at least three spurs goes to review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "count",
+       "op": ">=",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "count",
+       "op": ">=",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "count",
+       "Number as written": "3",
+       "Unit": "none",
+       "Comparison": "at least",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.783,
+        "Action": 10.267
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4170
+     },
+     {
+      "t": "Treat this order as Class 1 (general electronics).",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 1
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 1
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "1",
+       "_margins": {
+        "Defect": 8.847,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3604
+     },
+     {
+      "t": "Residual copper of 0.2 mm or more must be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "0.2",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.02,
+        "Action": 5.835
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4467
+     },
+     {
+      "t": "Pin-holes exceeding 3 mil diameter are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.0762,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.0762,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "3",
+       "Unit": "mil",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.991,
+        "Action": 5.037
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4217
+     },
+     {
+      "t": "Nicks greater than 0.3 mm long require rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "size",
+       "Number as written": "0.3",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.103,
+        "Action": 6.926
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4391
+     },
+     {
+      "t": "Shorts of any size: scrap the board.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 3.911
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3727
+     },
+     {
+      "t": "Width reduction greater than 20% due to pin holes is non-conforming.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 10.758,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 9.392,
+        "Action": 4.075
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4270
+     },
+     {
+      "t": "Flag any spur for engineering review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 7.882
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3676
+     },
+     {
+      "t": "More than one open per board means scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">",
+       "value": 1.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">",
+       "value": 1.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "count",
+       "Number as written": "1",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.956,
+        "Action": 7.87
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4309
+     },
+     {
+      "t": "Spurious copper is acceptable if it does not reduce spacing by more than 30%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "spacing loss",
+       "Number as written": "30",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "accept",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 0.471,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.484,
+        "Action": 3.366
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5023
+     },
+     {
+      "t": "A protrusion that reduces clearance by 20% or more must be trimmed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention width loss",
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 5.658,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.087,
+        "Action": 5.907
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5044
+     },
+     {
+      "t": "Every board with a missing drill hole is rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing hole",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 6.739
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4276
+     },
+     {
+      "t": "Edge notches larger than 0.15 mm: rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "size",
+       "Number as written": "0.15",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.888,
+        "Action": 7.503
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4970
+     },
+     {
+      "t": "Defects of 1 mm or bigger of any type must be reviewed by QA.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 1.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 1.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention spurious copper"
+       ]
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "1",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "review",
+       "_margins": {
+        "Defect": 2.448,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.48,
+        "Action": 7.12
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5037
+     },
+     {
+      "t": "Pinholes of 2 mil or more are not permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.0508,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.0508,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "2",
+       "Unit": "mil",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.149,
+        "Action": 2.046
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4874
+     },
+     {
+      "t": "Conductor width must not be reduced by more than 10% by any defect.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "class number not stated in the clause"
+       ]
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "3",
+       "_margins": {
+        "Defect": 1.279,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4156
+     },
+     {
+      "t": "Short circuits are unacceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 3.865
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4174
+     },
+     {
+      "t": "If copper residue exceeds 0.4 mm, hold the board for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.4,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.4,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "0.4",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.624,
+        "Action": 4.928
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5010
+     },
+     {
+      "t": "Boards must meet Class 3 for this medical customer.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "3",
+       "_margins": {
+        "Defect": 6.156,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4116
+     },
+     {
+      "t": "Open traces may be repaired with a jumper wire; rework all opens.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "always",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 2.703
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4394
+     },
+     {
+      "t": "Spurs longer than 0.5 millimetres are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "size",
+       "Number as written": "0.5",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.319,
+        "Action": 5.877
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4839
+     },
+     {
+      "t": "Nicks reducing track width by 15 % or more are a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">=",
+       "value": 15.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 15.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "15",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 11.064,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 5.391,
+        "Action": 6.418
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4928
+     },
+     {
+      "t": "Up to two pinholes per board are allowed; more than two is a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "count",
+       "Number as written": "2",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.905,
+        "Action": 2.742
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4934
+     },
+     {
+      "t": "Missing pads must be sent for rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing pad",
+       "Measure": "always",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 0.331
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4290
+     },
+     {
+      "t": "Copper splash above 0.3 mm must be removed.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.3,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "0.3",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.441,
+        "Action": 1.889
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5010
+     },
+     {
+      "t": "Any bridge between pads is a scrap condition.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 4.908
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4319
+     },
+     {
+      "t": "Spacing loss above 25% from spurious copper requires engineering review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 25.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "spacing loss",
+       "Number as written": "25",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 0.873,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 5.082,
+        "Action": 8.505
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4892
+     },
+     {
+      "t": "Mouse bites up to 10% of conductor width are acceptable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">=",
+       "value": 10.0,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'more than / up to / exceed' but rule uses 'at least'"
+       ]
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "10",
+       "Unit": "percent",
+       "Comparison": "at least",
+       "Action": "accept",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 7.727,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.907,
+        "Action": 7.292
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4934
+     },
+     {
+      "t": "Pin holes larger than 100 \u00b5m require repair.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "100",
+       "Unit": "micron",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.188,
+        "Action": 7.852
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 5024
+     },
+     {
+      "t": "Use Class 2 criteria.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 2
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "2",
+       "_margins": {
+        "Defect": 7.654,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4009
+     },
+     {
+      "t": "The board is rejected if it has any open.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 7.434
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4339
+     },
+     {
+      "t": "Spurs that reduce spacing by at least 30% are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">=",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "width_loss_pct",
+       "op": ">=",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention width loss"
+       ]
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "width loss",
+       "Number as written": "30",
+       "Unit": "percent",
+       "Comparison": "at least",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 2.36,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.775,
+        "Action": 5.318
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4776
+     },
+     {
+      "t": "Any defect larger than 0.8 mm must be reworked.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.8,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.8,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "any defect",
+       "Measure": "size",
+       "Number as written": "0.8",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 0.723,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.513,
+        "Action": 6.502
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4357
+     },
+     {
+      "t": "Nicks: rework if over 0.25 mm.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.25,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "size",
+       "Number as written": "0.25",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 2.442,
+        "Action": 6.092
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4554
+     },
+     {
+      "t": "Pinholes which reduce conductor width by more than 20% shall be rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 5.728,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 7.225,
+        "Action": 7.693
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4596
+     },
+     {
+      "t": "Three or more spurious copper spots on one board: review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "count",
+       "op": ">=",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "count",
+       "op": ">",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "count",
+       "Number as written": "3",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 6.649,
+        "Unit": 99.0,
+        "Comparison": 1.106,
+        "Action": 8.494
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4274
+     },
+     {
+      "t": "Missing holes are to be reviewed by the process engineer.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_hole",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing hole",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 7.411
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3973
+     },
+     {
+      "t": "Shorts must be reworked by cutting the bridge.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 4.346
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3920
+     },
+     {
+      "t": "Opens longer than 0.1 mm are rejectable.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "size",
+       "Number as written": "0.1",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.765,
+        "Action": 4.702
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4506
+     },
+     {
+      "t": "Protrusions over 6 mil should be removed (rework).",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1524,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.1524,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "size",
+       "Number as written": "6",
+       "Unit": "mil",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 2.22,
+        "Action": 5.312
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4540
+     },
+     {
+      "t": "Accept spurs smaller than 0.1 mm; reject anything 0.1 mm or larger.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.1,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.1,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause action words suggest reject, rule says accept"
+       ]
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "size",
+       "Number as written": "0.1",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "accept",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 2.974,
+        "Action": 5.986
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4525
+     },
+     {
+      "t": "Width reduction exceeding 20% from mouse bites: scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 7.87,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 9.163,
+        "Action": 3.991
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4457
+     },
+     {
+      "t": "Spurious copper which reduces spacing by more than 10% is rejectable for Class 3.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 10.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "spacing loss",
+       "Number as written": "10",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 3.086,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.857,
+        "Action": 6.134
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4751
+     },
+     {
+      "t": "More than three nicks on a single board must go for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "count",
+       "op": ">",
+       "value": 3.0,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "count",
+       "Number as written": "3",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.816,
+        "Action": 10.131
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4531
+     },
+     {
+      "t": "A pinhole is acceptable as long as it is below 0.2 mm.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.2,
+       "action": "accept",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "0.2",
+       "Unit": "mm",
+       "Comparison": "at least",
+       "Action": "accept",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.003,
+        "Action": 6.183
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4550
+     },
+     {
+      "t": "Damaged pads are not permitted.",
+      "gold": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "missing_pad",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "missing pad",
+       "Measure": "always",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 3.063
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4092
+     },
+     {
+      "t": "Bridged conductors must be sent to MRB.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 6.413
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4041
+     },
+     {
+      "t": "Nicks reducing width by over 30% must be scrapped, regardless of class.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 30.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "30",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 9.982,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.794,
+        "Action": 4.641
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4685
+     },
+     {
+      "t": "Spurs: maximum allowed spacing reduction is 20%.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention width loss"
+       ]
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 0.588,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 2.537,
+        "Action": 0.538
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4637
+     },
+     {
+      "t": "Copper islands of 0.5 mm or more need rework.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">=",
+       "value": 0.5,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.5,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "size",
+       "Number as written": "0.5",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 0.251,
+        "Action": 7.745
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4683
+     },
+     {
+      "t": "Every open circuit shall be reviewed by an engineer before any decision.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 7.733
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3917
+     },
+     {
+      "t": "Pinholes larger than 0.15 mm are acceptable only for Class 1; for this job reject them.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.15,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": "0.15",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 2.119,
+        "Action": 6.695
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4714
+     },
+     {
+      "t": "Any short must be repaired.",
+      "gold": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "short",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "rework",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "short",
+       "Measure": "always",
+       "Action": "rework",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Action": 5.528
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4013
+     },
+     {
+      "t": "Spurs over 0.2 mm long: hold for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spur",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "spur",
+       "Measure": "size",
+       "Number as written": "0.2",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "review",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.319,
+        "Action": 9.018
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4604
+     },
+     {
+      "t": "No more than 20% reduction of conductor width is allowed for nicks.",
+      "gold": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "mouse_bite",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 20.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "mouse bite",
+       "Measure": "width loss",
+       "Number as written": "20",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 6.675,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 1.45,
+        "Action": 1.132
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4636
+     },
+     {
+      "t": "Customer drawing note: workmanship to IPC Class 3.",
+      "gold": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "rule": {
+       "kind": "class",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "reject",
+       "customer_class": 3
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "none",
+       "Class number": "3",
+       "_margins": {
+        "Defect": 6.178,
+        "Class number": 99.0
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 3883
+     },
+     {
+      "t": "Stray copper causing more than 50% loss of clearance is a reject.",
+      "gold": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "spacing_loss_pct",
+       "op": ">",
+       "value": 50.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "spurious_copper",
+       "measure": "width_loss_pct",
+       "op": ">",
+       "value": 50.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause does not mention width loss"
+       ]
+      },
+      "answers": {
+       "Defect": "spurious copper",
+       "Measure": "width loss",
+       "Number as written": "50",
+       "Unit": "percent",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 4.035,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 6.972,
+        "Action": 6.672
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4686
+     },
+     {
+      "t": "Boards with two or more opens are scrap.",
+      "gold": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">=",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "open",
+       "measure": "count",
+       "op": ">",
+       "value": 2.0,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "check",
+       "problems": [
+        "clause says 'at least / or more' but rule uses 'more than'"
+       ]
+      },
+      "answers": {
+       "Defect": "open",
+       "Measure": "count",
+       "Number as written": "2",
+       "Unit": "none",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 3.607,
+        "Action": 5.449
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4733
+     },
+     {
+      "t": "Any defect at all must be flagged for review.",
+      "gold": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "any",
+       "measure": "always",
+       "op": null,
+       "value": null,
+       "action": "review",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "any defect",
+       "Measure": "always",
+       "Action": "review",
+       "_margins": {
+        "Defect": 3.732,
+        "Measure": 99.0,
+        "Action": 5.956
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4223
+     },
+     {
+      "t": "Pin holes bigger than .2 mm are rejected.",
+      "gold": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "rule": {
+       "kind": "limit",
+       "defect": "pin_hole",
+       "measure": "size_mm",
+       "op": ">",
+       "value": 0.2,
+       "action": "reject",
+       "customer_class": null
+      },
+      "verify": {
+       "status": "verified",
+       "problems": []
+      },
+      "answers": {
+       "Defect": "pin hole",
+       "Measure": "size",
+       "Number as written": ".2",
+       "Unit": "mm",
+       "Comparison": "more than",
+       "Action": "reject",
+       "_margins": {
+        "Defect": 99.0,
+        "Measure": 99.0,
+        "Number as written": 99.0,
+        "Unit": 99.0,
+        "Comparison": 4.252,
+        "Action": 5.671
+       },
+       "_grounded": true
+      },
+      "error": null,
+      "ms": 4938
+     }
+    ]
+   }
+  }
+ },
+ "verifier_corruption_catch": {
+  "wrong_defect": 1.0,
+  "wrong_action": 0.7162162162162162,
+  "value_x10": 1.0,
+  "value_x0.1": 1.0,
+  "flip_comparison": 0.9130434782608695,
+  "mil_read_as_mm": 1.0
+ },
+ "verifier_corruption_n": {
+  "wrong_defect": 69,
+  "wrong_action": 74,
+  "value_x10": 46,
+  "value_x0.1": 46,
+  "flip_comparison": 46,
+  "mil_read_as_mm": 26
+ },
+ "verifier_flags_on_gold": {
+  "tuning": 0.0
+ },
+ "llm_load_ms": 9787.521052000102
+}

@@ -1,0 +1,283 @@
+{
+ "dataset": "defectdet",
+ "n_boards": 128,
+ "unmapped": {},
+ "models": {
+  "cam": {
+   "lambda": 0.25,
+   "scale": 1.0,
+   "mAP50_shared_classes": 0.31964108229664134,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.43969552329110057,
+    "spurious_copper": 0.38839246663903004,
+    "open": 0.045145506884313874,
+    "spur": 0.7249719146687623
+   },
+   "defect_recall_at_lambda": 0.428099173553719,
+   "recall_per_class": {
+    "missing_pad": 0.14018691588785046,
+    "short": 0.5546875,
+    "spurious_copper": 0.4793388429752066,
+    "open": 0.08661417322834646,
+    "spur": 0.8524590163934426
+   },
+   "false_calls_per_board": 10.53125,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "cam@x1.5": {
+   "lambda": 0.25,
+   "scale": 1.5,
+   "mAP50_shared_classes": 0.28053179739263534,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.5262274618767795,
+    "spurious_copper": 0.13350030753588563,
+    "open": 0.005945945106950336,
+    "spur": 0.7369852724435613
+   },
+   "defect_recall_at_lambda": 0.36198347107438017,
+   "recall_per_class": {
+    "missing_pad": 0.102803738317757,
+    "short": 0.5546875,
+    "spurious_copper": 0.23140495867768596,
+    "open": 0.06299212598425197,
+    "spur": 0.8278688524590164
+   },
+   "false_calls_per_board": 10.578125,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "cam@x2": {
+   "lambda": 0.25,
+   "scale": 2.0,
+   "mAP50_shared_classes": 0.17147522503169296,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.3671058775944298,
+    "spurious_copper": 0.009154419248463136,
+    "open": 0.0,
+    "spur": 0.4811158283155719
+   },
+   "defect_recall_at_lambda": 0.29421487603305785,
+   "recall_per_class": {
+    "missing_pad": 0.018691588785046728,
+    "short": 0.4765625,
+    "spurious_copper": 0.06611570247933884,
+    "open": 0.05511811023622047,
+    "spur": 0.819672131147541
+   },
+   "false_calls_per_board": 7.2734375,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "cam@x3": {
+   "lambda": 0.25,
+   "scale": 3.0,
+   "mAP50_shared_classes": 0.04267023652957043,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.06635225307100308,
+    "spurious_copper": 0.00017583963425356076,
+    "open": 0.0,
+    "spur": 0.1468230899425955
+   },
+   "defect_recall_at_lambda": 0.13884297520661157,
+   "recall_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.1484375,
+    "spurious_copper": 0.008264462809917356,
+    "open": 0.047244094488188976,
+    "spur": 0.47540983606557374
+   },
+   "false_calls_per_board": 2.7578125,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v2": {
+   "lambda": 0.25,
+   "scale": 1.0,
+   "mAP50_shared_classes": 0.3017434969848263,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.470751708493505,
+    "spurious_copper": 0.39919967527642247,
+    "open": 0.004710653051485447,
+    "spur": 0.6340554481027185
+   },
+   "defect_recall_at_lambda": 0.38181818181818183,
+   "recall_per_class": {
+    "missing_pad": 0.11214953271028037,
+    "short": 0.5234375,
+    "spurious_copper": 0.45454545454545453,
+    "open": 0.023622047244094488,
+    "spur": 0.7704918032786885
+   },
+   "false_calls_per_board": 10.3984375,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v2@x1.5": {
+   "lambda": 0.25,
+   "scale": 1.5,
+   "mAP50_shared_classes": 0.25990655469856005,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.4869073882729094,
+    "spurious_copper": 0.10734614279548703,
+    "open": 0.000281214848143982,
+    "spur": 0.70499802757626
+   },
+   "defect_recall_at_lambda": 0.30578512396694213,
+   "recall_per_class": {
+    "missing_pad": 0.07476635514018691,
+    "short": 0.5078125,
+    "spurious_copper": 0.1487603305785124,
+    "open": 0.007874015748031496,
+    "spur": 0.7622950819672131
+   },
+   "false_calls_per_board": 7.4140625,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v2@x2": {
+   "lambda": 0.25,
+   "scale": 2.0,
+   "mAP50_shared_classes": 0.16111939889890897,
+   "AP50_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.3063738783189295,
+    "spurious_copper": 0.02208606440581362,
+    "open": 0.0,
+    "spur": 0.47713705176980187
+   },
+   "defect_recall_at_lambda": 0.2512396694214876,
+   "recall_per_class": {
+    "missing_pad": 0.07476635514018691,
+    "short": 0.390625,
+    "spurious_copper": 0.03305785123966942,
+    "open": 0.015748031496062992,
+    "spur": 0.7213114754098361
+   },
+   "false_calls_per_board": 5.046875,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v2@x3": {
+   "lambda": 0.25,
+   "scale": 3.0,
+   "mAP50_shared_classes": 0.031170311629329105,
+   "AP50_per_class": {
+    "missing_pad": 0.0003461405330564209,
+    "short": 0.05985213570670331,
+    "spurious_copper": 0.0,
+    "open": 0.0,
+    "spur": 0.0956532819068858
+   },
+   "defect_recall_at_lambda": 0.12727272727272726,
+   "recall_per_class": {
+    "missing_pad": 0.009345794392523364,
+    "short": 0.140625,
+    "spurious_copper": 0.008264462809917356,
+    "open": 0.015748031496062992,
+    "spur": 0.45081967213114754
+   },
+   "false_calls_per_board": 2.2890625,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v3": {
+   "lambda": 0.25,
+   "scale": 1.0,
+   "mAP50_shared_classes": 0.8416694329390804,
+   "AP50_per_class": {
+    "missing_pad": 0.7703998966108501,
+    "short": 0.7928348476787751,
+    "spurious_copper": 0.8426449764566096,
+    "open": 0.9120879371334272,
+    "spur": 0.8903795068157396
+   },
+   "defect_recall_at_lambda": 0.9041322314049587,
+   "recall_per_class": {
+    "missing_pad": 0.8691588785046729,
+    "short": 0.84375,
+    "spurious_copper": 0.9669421487603306,
+    "open": 0.905511811023622,
+    "spur": 0.9344262295081968
+   },
+   "false_calls_per_board": 0.96875,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v3@x1.5": {
+   "lambda": 0.25,
+   "scale": 1.5,
+   "mAP50_shared_classes": 0.771744674347358,
+   "AP50_per_class": {
+    "missing_pad": 0.6813325108608763,
+    "short": 0.7548083036803357,
+    "spurious_copper": 0.7551285297191508,
+    "open": 0.7981973800148552,
+    "spur": 0.8692566474615723
+   },
+   "defect_recall_at_lambda": 0.856198347107438,
+   "recall_per_class": {
+    "missing_pad": 0.7476635514018691,
+    "short": 0.7890625,
+    "spurious_copper": 0.9586776859504132,
+    "open": 0.8503937007874016,
+    "spur": 0.9262295081967213
+   },
+   "false_calls_per_board": 1.3359375,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v3@x2": {
+   "lambda": 0.25,
+   "scale": 2.0,
+   "mAP50_shared_classes": 0.48821763443813404,
+   "AP50_per_class": {
+    "missing_pad": 0.21792671495053914,
+    "short": 0.5355247755301347,
+    "spurious_copper": 0.5159283633978567,
+    "open": 0.40147530742643106,
+    "spur": 0.7702330108857087
+   },
+   "defect_recall_at_lambda": 0.6181818181818182,
+   "recall_per_class": {
+    "missing_pad": 0.2897196261682243,
+    "short": 0.6015625,
+    "spurious_copper": 0.743801652892562,
+    "open": 0.5590551181102362,
+    "spur": 0.860655737704918
+   },
+   "false_calls_per_board": 2.1796875,
+   "n_boards": 128,
+   "n_defects": 605
+  },
+  "v3@x3": {
+   "lambda": 0.25,
+   "scale": 3.0,
+   "mAP50_shared_classes": 0.05500485069463866,
+   "AP50_per_class": {
+    "missing_pad": 0.00022251891410769912,
+    "short": 0.08153094486434305,
+    "spurious_copper": 0.012112286579626652,
+    "open": 0.0025717681362857213,
+    "spur": 0.17858673497883018
+   },
+   "defect_recall_at_lambda": 0.23305785123966943,
+   "recall_per_class": {
+    "missing_pad": 0.0,
+    "short": 0.21875,
+    "spurious_copper": 0.256198347107438,
+    "open": 0.08661417322834646,
+    "spur": 0.5819672131147541
+   },
+   "false_calls_per_board": 6.1015625,
+   "n_boards": 128,
+   "n_defects": 605
+  }
+ }
+}

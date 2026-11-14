@@ -1,0 +1,484 @@
+{
+ "backend": "executorch",
+ "tag": "v5s_et",
+ "det_all": {
+  "mAP50": 0.858048083788616,
+  "AP50_per_class": {
+   "missing_hole": 0.9994398805078415,
+   "mouse_bite": 0.7981292799637755,
+   "open": 0.9214450618364007,
+   "short": 0.839132060535333,
+   "spur": 0.8081640911543352,
+   "spurious_copper": 0.8287361402388607,
+   "pin_hole": 0.9683440842077625,
+   "missing_pad": 0.8835699740884293,
+   "hole_breakout": 0.9797240712994639,
+   "scratch": 0.6803371804933322,
+   "foreign_object": 0.7315070973492426
+  },
+  "n_boards": 1006,
+  "n_gt": {
+   "mouse_bite": 979,
+   "spur": 1432,
+   "pin_hole": 235,
+   "spurious_copper": 765,
+   "open": 926,
+   "short": 690,
+   "missing_hole": 103,
+   "missing_pad": 138,
+   "hole_breakout": 608,
+   "foreign_object": 769,
+   "scratch": 448
+  }
+ },
+ "det_deeppcb": {
+  "mAP50": 0.969350379484248,
+  "AP50_per_class": {
+   "mouse_bite": 0.9859230601205864,
+   "open": 0.9728417551711849,
+   "short": 0.9247352829625848,
+   "spur": 0.9784253935779508,
+   "spurious_copper": 0.9858232624510721,
+   "pin_hole": 0.9683535226221089
+  },
+  "n_boards": 500,
+  "n_gt": {
+   "mouse_bite": 290,
+   "spur": 247,
+   "pin_hole": 235,
+   "spurious_copper": 227,
+   "open": 323,
+   "short": 257,
+   "missing_hole": 0,
+   "missing_pad": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_defectdet": {
+  "mAP50": 0.8930036041554447,
+  "AP50_per_class": {
+   "open": 0.9462250182369092,
+   "short": 0.8784846970238742,
+   "spur": 0.9273995902257751,
+   "spurious_copper": 0.842171034888387,
+   "missing_pad": 0.8707376804022778
+  },
+  "n_boards": 128,
+  "n_gt": {
+   "missing_pad": 107,
+   "short": 128,
+   "spurious_copper": 121,
+   "open": 127,
+   "spur": 122,
+   "missing_hole": 0,
+   "mouse_bite": 0,
+   "pin_hole": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_dspcbsd": {
+  "mAP50": 0.7686181713487639,
+  "AP50_per_class": {
+   "mouse_bite": 0.6600014839927442,
+   "open": 0.8163040393646449,
+   "short": 0.8579272272572045,
+   "spur": 0.7352547384503777,
+   "spurious_copper": 0.6878895325831007,
+   "hole_breakout": 0.9797240712994639,
+   "scratch": 0.6803371804933322,
+   "foreign_object": 0.7315070973492426
+  },
+  "n_boards": 228,
+  "n_gt": {
+   "hole_breakout": 608,
+   "open": 338,
+   "mouse_bite": 546,
+   "foreign_object": 769,
+   "scratch": 448,
+   "spurious_copper": 285,
+   "spur": 929,
+   "short": 169,
+   "missing_hole": 0,
+   "pin_hole": 0,
+   "missing_pad": 0
+  }
+ },
+ "det_hripcb": {
+  "mAP50": 0.930830688558225,
+  "AP50_per_class": {
+   "missing_hole": 0.9994398805078415,
+   "mouse_bite": 0.9902152013267447,
+   "open": 0.9579451883879976,
+   "short": 0.7540840152133794,
+   "spur": 0.9271546907346804,
+   "spurious_copper": 0.9561451551787071
+  },
+  "n_boards": 123,
+  "n_gt": {
+   "missing_hole": 103,
+   "mouse_bite": 102,
+   "open": 100,
+   "short": 105,
+   "spur": 100,
+   "spurious_copper": 100,
+   "pin_hole": 0,
+   "missing_pad": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_mendeley": {
+  "mAP50": 0.805658195788329,
+  "AP50_per_class": {
+   "mouse_bite": 0.5783627439364473,
+   "open": 0.959614070140386,
+   "short": 0.9549731182795698,
+   "spur": 0.8540746511473482,
+   "spurious_copper": 0.548813812141018,
+   "missing_pad": 0.938110779085205
+  },
+  "n_boards": 27,
+  "n_gt": {
+   "missing_pad": 31,
+   "spurious_copper": 32,
+   "open": 38,
+   "short": 31,
+   "mouse_bite": 41,
+   "spur": 34,
+   "missing_hole": 0,
+   "pin_hole": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "gate": {
+  "deeppcb": {
+   "alpha_0.01": {
+    "alpha": 0.01,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.014647188635680361
+    ],
+    "false_reject_rate": 0.008,
+    "false_reject_rate_ci95": [
+     0.0009703097230388866,
+     0.028598347244961176
+    ],
+    "review_rate": 0.126,
+    "auto_decided_rate": 0.874,
+    "n_defective": 250,
+    "n_good": 250,
+    "lam": 0.285067617893219,
+    "tau": 0.831765115261078,
+    "supported_alpha": true,
+    "supported_beta": true,
+    "random_defect_miss": 0.017395238095238096,
+    "random_defect_miss_ci95": [
+     0.009268055555555557,
+     0.026794166666666668
+    ],
+    "defect_recall": 0.9816339455351488,
+    "defect_recall_ci95": [
+     0.973729109523093,
+     0.98766633158119
+    ],
+    "defect_recall_typed": 0.9765674477517416,
+    "n_defects": 1579,
+    "false_alarms_per_board": 0.41
+   },
+   "alpha_0.05": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.004,
+    "miss_rate_ci95": [
+     0.00010126610417905015,
+     0.022083865000633206
+    ],
+    "false_reject_rate": 0.008,
+    "false_reject_rate_ci95": [
+     0.0009703097230388866,
+     0.028598347244961176
+    ],
+    "review_rate": 0.072,
+    "auto_decided_rate": 0.928,
+    "n_defective": 250,
+    "n_good": 250,
+    "lam": 0.7367089986801147,
+    "tau": 0.831765115261078,
+    "supported_alpha": true,
+    "supported_beta": true,
+    "random_defect_miss": 0.08172893772893772,
+    "random_defect_miss_ci95": [
+     0.0654815873015873,
+     0.10073052503052503
+    ],
+    "defect_recall": 0.9145028499050032,
+    "defect_recall_ci95": [
+     0.8996110677722695,
+     0.9278308263871646
+    ],
+    "defect_recall_typed": 0.9126029132362254,
+    "n_defects": 1579,
+    "false_alarms_per_board": 0.088
+   },
+   "alpha_0.1": {
+    "alpha": 0.1,
+    "beta": 0.01,
+    "miss_rate": 0.004,
+    "miss_rate_ci95": [
+     0.00010126610417905015,
+     0.022083865000633206
+    ],
+    "false_reject_rate": 0.008,
+    "false_reject_rate_ci95": [
+     0.0009703097230388866,
+     0.028598347244961176
+    ],
+    "review_rate": 0.068,
+    "auto_decided_rate": 0.9319999999999999,
+    "n_defective": 250,
+    "n_good": 250,
+    "lam": 0.7541555166244507,
+    "tau": 0.831765115261078,
+    "supported_alpha": true,
+    "supported_beta": true,
+    "random_defect_miss": 0.11342710622710622,
+    "random_defect_miss_ci95": [
+     0.09545539987789989,
+     0.13326774420024418
+    ],
+    "defect_recall": 0.8815706143128562,
+    "defect_recall_ci95": [
+     0.8646033188333695,
+     0.8971039265444914
+    ],
+    "defect_recall_typed": 0.8796706776440786,
+    "n_defects": 1579,
+    "false_alarms_per_board": 0.078
+   }
+  },
+  "hripcb": {
+   "alpha_0.01": {
+    "alpha": 0.01,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.030026577222757825
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     0.841886116991581
+    ],
+    "review_rate": 0.991869918699187,
+    "auto_decided_rate": 0.008130081300813052,
+    "n_defective": 121,
+    "n_good": 2,
+    "lam": 0.5812397003173828,
+    "tau": Infinity,
+    "supported_alpha": true,
+    "supported_beta": false,
+    "random_defect_miss": 0.011294765840220385,
+    "random_defect_miss_ci95": [
+     0.003305785123966941,
+     0.022314049586776855
+    ],
+    "defect_recall": 0.9885245901639345,
+    "defect_recall_ci95": [
+     0.9764999153209135,
+     0.9953741857255451
+    ],
+    "defect_recall_typed": 0.9836065573770492,
+    "n_defects": 610,
+    "false_alarms_per_board": 0.7154471544715447
+   },
+   "alpha_0.05": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.030026577222757825
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     0.841886116991581
+    ],
+    "review_rate": 0.991869918699187,
+    "auto_decided_rate": 0.008130081300813052,
+    "n_defective": 121,
+    "n_good": 2,
+    "lam": 0.705146312713623,
+    "tau": Infinity,
+    "supported_alpha": true,
+    "supported_beta": false,
+    "random_defect_miss": 0.03774104683195592,
+    "random_defect_miss_ci95": [
+     0.021487603305785124,
+     0.056198347107438006
+    ],
+    "defect_recall": 0.9622950819672131,
+    "defect_recall_ci95": [
+     0.9439593621673351,
+     0.9759508891613159
+    ],
+    "defect_recall_typed": 0.9606557377049181,
+    "n_defects": 610,
+    "false_alarms_per_board": 0.5853658536585366
+   },
+   "alpha_0.1": {
+    "alpha": 0.1,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.030026577222757825
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     0.841886116991581
+    ],
+    "review_rate": 0.991869918699187,
+    "auto_decided_rate": 0.008130081300813052,
+    "n_defective": 121,
+    "n_good": 2,
+    "lam": 0.7292840480804443,
+    "tau": Infinity,
+    "supported_alpha": true,
+    "supported_beta": false,
+    "random_defect_miss": 0.06887052341597795,
+    "random_defect_miss_ci95": [
+     0.048753443526170816,
+     0.09063360881542698
+    ],
+    "defect_recall": 0.9311475409836065,
+    "defect_recall_ci95": [
+     0.9080681985979419,
+     0.949930031437995
+    ],
+    "defect_recall_typed": 0.9295081967213115,
+    "n_defects": 610,
+    "false_alarms_per_board": 0.5853658536585366
+   }
+  },
+  "mendeley": {
+   "alpha_0.01": {
+    "alpha": 0.01,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.12770286761543234
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     1.0
+    ],
+    "review_rate": 1.0,
+    "auto_decided_rate": 0.0,
+    "n_defective": 27,
+    "n_good": 0,
+    "lam": -Infinity,
+    "tau": Infinity,
+    "supported_alpha": false,
+    "supported_beta": false,
+    "random_defect_miss": 0.018738977072310405,
+    "random_defect_miss_ci95": [
+     0.0026455026455026445,
+     0.03813932980599647
+    ],
+    "defect_recall": 0.9806763285024155,
+    "defect_recall_ci95": [
+     0.9512653936078053,
+     0.9947104623933342
+    ],
+    "defect_recall_typed": 0.9806763285024155,
+    "n_defects": 207,
+    "false_alarms_per_board": 7.518518518518518
+   },
+   "alpha_0.05": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.12770286761543234
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     1.0
+    ],
+    "review_rate": 1.0,
+    "auto_decided_rate": 0.0,
+    "n_defective": 27,
+    "n_good": 0,
+    "lam": 0.13282552361488342,
+    "tau": Infinity,
+    "supported_alpha": true,
+    "supported_beta": false,
+    "random_defect_miss": 0.03290844957511624,
+    "random_defect_miss_ci95": [
+     0.012345679012345677,
+     0.055896264229597564
+    ],
+    "defect_recall": 0.966183574879227,
+    "defect_recall_ci95": [
+     0.9315692098752713,
+     0.98629794587811
+    ],
+    "defect_recall_typed": 0.966183574879227,
+    "n_defects": 207,
+    "false_alarms_per_board": 3.6666666666666665
+   },
+   "alpha_0.1": {
+    "alpha": 0.1,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.12770286761543234
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     1.0
+    ],
+    "review_rate": 1.0,
+    "auto_decided_rate": 0.0,
+    "n_defective": 27,
+    "n_good": 0,
+    "lam": 0.36393603682518005,
+    "tau": Infinity,
+    "supported_alpha": true,
+    "supported_beta": false,
+    "random_defect_miss": 0.0525292608625942,
+    "random_defect_miss_ci95": [
+     0.023809523809523808,
+     0.0831770081770082
+    ],
+    "defect_recall": 0.9468599033816425,
+    "defect_recall_ci95": [
+     0.906908543267564,
+     0.9731774695735385
+    ],
+    "defect_recall_typed": 0.9468599033816425,
+    "n_defects": 207,
+    "false_alarms_per_board": 2.0
+   }
+  }
+ },
+ "latency_per_tile_ms_median_this_machine": 80.95693823999682
+}

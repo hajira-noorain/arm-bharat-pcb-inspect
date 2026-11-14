@@ -1,0 +1,86 @@
++ G=/content/out3/models/gate
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ sleep 60
++ '[' -f /content/out3/models/gate/deeppcb_golden.json ']'
++ rm -rf /content/eyetest
++ unzip -q -o /content/eyetest.zip -d /content
++ ls /content/eyetest
++ head -3
+manifest.json
+sheet_00.png
+sheet_01.png
++ cd /content/pcb11
++ V3=/content/out2/runs/y26n_v3/weights/best.pt
++ R=/content/out3/results
++ python training/eyetest_sim.py --card /content/eyetest --weights /content/out2/runs/y26n_v3/weights/best.pt --gate /content/out3/models/gate/deeppcb.json --golden-gate /content/out3/models/gate/deeppcb_golden.json --out /content/out3/results/eyetest_sim_v3.json
+sheet 0: rectified, id read 0
+sheet 1: rectified, id read 1
+sheet 2: rectified, id read 2
+sheet 3: rectified, id read 3
+sheet 4: rectified, id read 4
+sheet 5: rectified, id read 5
+sheet 6: rectified, id read 6
+sheet 7: rectified, id read 7
+sheet 8: rectified, id read 8
+sheet 9: rectified, id read 9
+sheet 10: rectified, id read 10
+sheet 11: rectified, id read 11
+== detector (lambda 0.699), false calls per coupon 0.84
+    Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 1.00 mm, n=180).
+    Does NOT reach 90% detection of shorts across gaps at 95% confidence at any tested size (up to 0.50 mm, n=180).
+    Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 1.00 mm, n=180).
+    Does NOT reach 90% detection of spurious copper spots at 95% confidence at any tested size (up to 1.00 mm, n=180).
+    Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 1.00 mm, n=180).
+    Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 1.00 mm, n=180).
+== fused_golden (lambda 0.784), false calls per coupon 1.15
+    Finds opens from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
+    Finds shorts across gaps from 0.34 mm up to 0.50 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
+    Finds pin holes from 0.42 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
+    Finds spurious copper spots from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
+    Finds mouse bites from 0.50 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
+    Finds spurs from every tested size from 0.20 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=180 trials).
++ python training/pod_insilico.py --data /content/data/bare_yolo_v3 --weights /content/out2/runs/y26n_v3/weights/best.pt --gate /content/out3/models/gate/deeppcb.json --golden-gate /content/out3/models/gate/deeppcb_golden.json --per 40 --out /content/out3/results/pod_insilico_v3.json
+250 held-out clean boards; gate lambda@0.05 = 0.699
+drew 1734/1920 defects in 37s
+[clean] GOLDEN false calls/board 0.09: Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). | Finds pin holes from 0.30 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). | Finds spurious copper spots from 0.30 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). | Finds mouse bites from 0.45 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). | Finds spurs from 0.17 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials).
+[clean] DETECTOR false calls/board 0.12: Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds shorts across gaps only between 0.15 and 0.45 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds spurs only between 0.11 and 0.14 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=302 trials).
+[webcam] GOLDEN false calls/board 0.17: Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). | Finds pin holes from 0.19 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). | Finds spurious copper spots from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). | Finds mouse bites from 0.48 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). | Finds spurs from 0.14 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials).
+[webcam] DETECTOR false calls/board 0.22: Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds shorts across gaps only between 0.15 and 0.36 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Does NOT reach 90% detection of pin holes at 95% confidence at any tested size (up to 0.55 mm, n=310). | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 0.55 mm, n=302).
+[scale_0.5] GOLDEN false calls/board 0.21: Finds opens from every tested size from 0.06 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=305 trials). | Finds shorts across gaps from every tested size from 0.15 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=192 trials). | Finds pin holes from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=310 trials). | Finds spurious copper spots from 0.18 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=307 trials). | Finds mouse bites from 0.43 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=318 trials). | Finds spurs from 0.14 mm up to 0.55 mm (largest tested) with at least 90% probability at 95% confidence (n=302 trials).
+[scale_0.5] DETECTOR false calls/board 0.24: Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 0.55 mm, n=305). | Finds shorts across gaps only between 0.15 and 0.45 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=192 trials). | Finds pin holes only between 0.15 and 0.24 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=310 trials). | Finds spurious copper spots only between 0.14 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=307 trials). | Does NOT reach 90% detection of mouse bites at 95% confidence at any tested size (up to 0.55 mm, n=318). | Finds spurs only between 0.11 and 0.18 mm with at least 90% probability at 95% confidence; LARGER ones were missed significantly more often (n=302 trials).
++ echo SIM_DONE
+SIM_DONE

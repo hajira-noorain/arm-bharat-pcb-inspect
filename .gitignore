@@ -21,7 +21,11 @@ venv/
 *.zip
 data/
 runs/
-models/
+models/*
+# ...except the small files the station needs and that are not model weights:
+!models/gate/
+!models/anomaly/
+!models/MODELS.md
 *_ncnn_model/
 
 # runtime state

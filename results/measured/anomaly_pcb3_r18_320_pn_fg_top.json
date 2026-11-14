@@ -1,0 +1,75 @@
+{
+ "object": "pcb3",
+ "arch": "resnet18",
+ "input": 320,
+ "tag": "r18_320_pn_fg_top",
+ "fg_mask": true,
+ "posnorm": true,
+ "topk_frac": 0.01,
+ "fg_status": "disabled: flat image or coverage outside 20%-98%",
+ "enrol_seconds": 23.741647243499756,
+ "bank_size": 6400,
+ "full": {
+  "image_auroc": 0.9471287128712871,
+  "n_test": 201,
+  "n_anomalous": 100,
+  "pixel_auroc_featuregrid": 0.9662676588158694,
+  "n_train": 200
+ },
+ "gate": {
+  "alpha_0.05": {
+   "alpha": 0.05,
+   "beta": 0.01,
+   "miss_rate": 0.0,
+   "miss_rate_ci95": [
+    0.0,
+    0.07112173646419764
+   ],
+   "false_reject_rate": 0.0,
+   "false_reject_rate_ci95": [
+    0.0,
+    0.06977703074953864
+   ],
+   "review_rate": 0.6138613861386139,
+   "auto_decided_rate": 0.38613861386138615,
+   "n_defective": 50,
+   "n_good": 51,
+   "lam": 0.5169535376581371,
+   "tau": Infinity,
+   "supported_alpha": true
+  },
+  "alpha_0.1": {
+   "alpha": 0.1,
+   "beta": 0.01,
+   "miss_rate": 0.0,
+   "miss_rate_ci95": [
+    0.0,
+    0.07112173646419764
+   ],
+   "false_reject_rate": 0.0,
+   "false_reject_rate_ci95": [
+    0.0,
+    0.06977703074953864
+   ],
+   "review_rate": 0.6138613861386139,
+   "auto_decided_rate": 0.38613861386138615,
+   "n_defective": 50,
+   "n_good": 51,
+   "lam": 0.5297397021986424,
+   "tau": Infinity,
+   "supported_alpha": true
+  }
+ },
+ "fewshot": {
+  "10": {
+   "image_auroc_mean": 0.7944884488448846,
+   "image_auroc_min": 0.7662376237623763,
+   "reps": [
+    0.8252475247524753,
+    0.791980198019802,
+    0.7662376237623763
+   ]
+  }
+ },
+ "seconds_total": 60.55789494514465
+}

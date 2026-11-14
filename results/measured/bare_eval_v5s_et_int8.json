@@ -1,0 +1,160 @@
+{
+ "backend": "executorch",
+ "tag": "v5s_et_int8",
+ "det_all": {
+  "mAP50": 0.8570164396919473,
+  "AP50_per_class": {
+   "missing_hole": 0.9995332337565346,
+   "mouse_bite": 0.7947879980869318,
+   "open": 0.9218892860494123,
+   "short": 0.8335729809349054,
+   "spur": 0.8024639258378384,
+   "spurious_copper": 0.8256154252782646,
+   "pin_hole": 0.9779710440140782,
+   "missing_pad": 0.8842410504543493,
+   "hole_breakout": 0.9786035862992316,
+   "scratch": 0.6860718968656849,
+   "foreign_object": 0.7224304090341894
+  },
+  "n_boards": 1006,
+  "n_gt": {
+   "mouse_bite": 979,
+   "spur": 1432,
+   "pin_hole": 235,
+   "spurious_copper": 765,
+   "open": 926,
+   "short": 690,
+   "missing_hole": 103,
+   "missing_pad": 138,
+   "hole_breakout": 608,
+   "foreign_object": 769,
+   "scratch": 448
+  }
+ },
+ "det_deeppcb": {
+  "mAP50": 0.9706557708210063,
+  "AP50_per_class": {
+   "mouse_bite": 0.9858779737541643,
+   "open": 0.9701148340905759,
+   "short": 0.926943230998081,
+   "spur": 0.9780814487656803,
+   "spurious_copper": 0.9849460933034586,
+   "pin_hole": 0.9779710440140782
+  },
+  "n_boards": 500,
+  "n_gt": {
+   "mouse_bite": 290,
+   "spur": 247,
+   "pin_hole": 235,
+   "spurious_copper": 227,
+   "open": 323,
+   "short": 257,
+   "missing_hole": 0,
+   "missing_pad": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_defectdet": {
+  "mAP50": 0.8899493066805301,
+  "AP50_per_class": {
+   "open": 0.9475543630781017,
+   "short": 0.8776831213118274,
+   "spur": 0.9278039096356478,
+   "spurious_copper": 0.8247042921525742,
+   "missing_pad": 0.8720008472244991
+  },
+  "n_boards": 128,
+  "n_gt": {
+   "missing_pad": 107,
+   "short": 128,
+   "spurious_copper": 121,
+   "open": 127,
+   "spur": 122,
+   "missing_hole": 0,
+   "mouse_bite": 0,
+   "pin_hole": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_dspcbsd": {
+  "mAP50": 0.7672709811289504,
+  "AP50_per_class": {
+   "mouse_bite": 0.6492927507256916,
+   "open": 0.823288981853078,
+   "short": 0.8682583938365871,
+   "spur": 0.7232203259511886,
+   "spurious_copper": 0.6870015044659524,
+   "hole_breakout": 0.9786035862992316,
+   "scratch": 0.6860718968656849,
+   "foreign_object": 0.7224304090341894
+  },
+  "n_boards": 228,
+  "n_gt": {
+   "hole_breakout": 608,
+   "open": 338,
+   "mouse_bite": 546,
+   "foreign_object": 769,
+   "scratch": 448,
+   "spurious_copper": 285,
+   "spur": 929,
+   "short": 169,
+   "missing_hole": 0,
+   "pin_hole": 0,
+   "missing_pad": 0
+  }
+ },
+ "det_hripcb": {
+  "mAP50": 0.9252364621372423,
+  "AP50_per_class": {
+   "missing_hole": 0.9995332337565346,
+   "mouse_bite": 0.9903503116038209,
+   "open": 0.9503431652048677,
+   "short": 0.7231077563692944,
+   "spur": 0.9321835616995117,
+   "spurious_copper": 0.9559007441894242
+  },
+  "n_boards": 123,
+  "n_gt": {
+   "missing_hole": 103,
+   "mouse_bite": 102,
+   "open": 100,
+   "short": 105,
+   "spur": 100,
+   "spurious_copper": 100,
+   "pin_hole": 0,
+   "missing_pad": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ },
+ "det_mendeley": {
+  "mAP50": 0.7996027386020556,
+  "AP50_per_class": {
+   "mouse_bite": 0.570022724547657,
+   "open": 0.9606057747638693,
+   "short": 0.9552549427679499,
+   "spur": 0.84139433654118,
+   "spurious_copper": 0.5270215498366982,
+   "missing_pad": 0.9433171031549781
+  },
+  "n_boards": 27,
+  "n_gt": {
+   "missing_pad": 31,
+   "spurious_copper": 32,
+   "open": 38,
+   "short": 31,
+   "mouse_bite": 41,
+   "spur": 34,
+   "missing_hole": 0,
+   "pin_hole": 0,
+   "hole_breakout": 0,
+   "scratch": 0,
+   "foreign_object": 0
+  }
+ }
+}

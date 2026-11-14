@@ -365,7 +365,7 @@ What this shows, plainly:
 - **The summary must agree with the chosen causes.** Running the station showed a summary blaming handling for two defects whose chosen causes were imaging steps. The checker now also refuses a summary that blames handling where the chosen cause is a process step, or the reverse. When only the sentence is at fault, Llama's checked choices are kept and the sentence is replaced by the knowledge base's own summary, and the screen says so. Applied to the recorded runs, this replaces the sentence in 22 of 150 development records and 20 of 150 held-out records; the cause and action choices above are unchanged.
 - **What is not checked.** Beyond numbers, defect types and which kind of cause it names, the summary's wording is not verified. One development summary said two shorts were "one on each side", which the record does not say. The causes and actions the operator acts on are immune to this, because they are knowledge-base text.
 
-Median time per board in these runs was about 7 s on an x86 host used for development. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
+Median time per board in these runs was about 7 s (11.7 tokens/s while writing) on the x86 server CPU of the Colab machine used for evaluation; on a laptop CPU the station took 25 to 48 s. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
 
 **Shift questions.** The operator can type a question ("how many boards failed in the last 3 hours?"). Llama may only choose one of the station's fixed read-only database queries and its settings, by the same scored choice, and then words the rows it gets back with the same number limit. If its choice cannot be used, a keyword rule chooses instead.
 
@@ -401,11 +401,11 @@ Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 | Board power: idle, inspecting, Llama running | pending, 20-21 Nov |
 | Temperature and throttling over 30 minutes | pending, 20-21 Nov |
 
-What is known today is from an x86 development host and is labelled as such wherever it appears (for example about 7 s per board for Llama's advice). A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
+What is known today is from x86 development machines and is labelled as such wherever it appears (for example 7 s to 48 s per board for Llama's advice, depending on the machine). A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
 
 **Which detector size ships.** Three bare-board detectors are in the bundle: YOLO26n, and the retrained YOLO26s and YOLO26m, which find more on every held-out test set (section 3.1). Each comes with its own PASS/FAIL/CHECK thresholds, calibrated on its own scores; one setting (`detector_variant`) swaps a model and its thresholds together and refuses to mix them. YOLO26m ships if its measured time on the Pi keeps a board's verdict under about two seconds, otherwise YOLO26n; YOLO26s is not recommended (section 3.1).
 
-**Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
+**Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). `deploy/arm_check.py`, the first thing run on the Pi, loads every model and runs it once, including Llama advice requested from a worker thread the way the web server asks for it (an earlier build crashed there because the Llama loader resized ExecuTorch's shared thread pool; fixed, and now checked). `deploy/sim_check_detectors.py` runs all six bare-board detector files (n, s, m; FP32 and INT8) on the same board: all six loaded, and each size gave the same four findings in FP32 and INT8 (`results/measured/sim_check_detectors.json`). Emulated times are not Pi times and are not reported; speed numbers come only from the real board.
 
 ## 8. The operator's screen and the log
 

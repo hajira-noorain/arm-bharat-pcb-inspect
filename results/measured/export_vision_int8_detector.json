@@ -1,0 +1,20 @@
+{
+ "detector_fp32": {
+  "pte": "pcb_y26n_xnnpack.pte",
+  "bytes": 9790508,
+  "output_shape": [
+   1,
+   15,
+   8400
+  ]
+ },
+ "detector_int8": {
+  "pte": "pcb_y26n_xnnpack_int8.pte",
+  "bytes": 3168300,
+  "output_shape": [
+   1,
+   15,
+   8400
+  ]
+ }
+}

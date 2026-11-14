@@ -13,7 +13,7 @@ The licence for this repository's own code is being finalised (see the note on U
 | Component | Use | Licence |
 |---|---|---|
 | [ExecuTorch](https://github.com/pytorch/executorch) | Runs Llama and the vision models on the Arm CPU (XNNPACK / KleidiAI) | BSD-3-Clause |
-| [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) (YOLO26n) | Detector architecture, pretrained weights and training (laptop / Colab only; not installed on the Pi) | **AGPL-3.0**. Weights we train start from Ultralytics' pretrained YOLO26n. |
+| [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) (YOLO26n, s, m) | Detector architecture, pretrained weights and training (laptop / Colab only; not installed on the Pi) | **AGPL-3.0**. Weights we train start from Ultralytics' pretrained YOLO26n, YOLO26s and YOLO26m. |
 | [Arm Optimized-Runtimes](https://github.com/arm/Optimized-Runtimes), YOLO26 for Raspberry Pi 5 | Optional detector runtime, downloaded by `deploy/pi_setup.sh` | Apache-2.0 |
 | PyTorch / torchvision (ResNet-18, Wide-ResNet-50 ImageNet weights) | Anomaly feature backbone | BSD-3-Clause |
 | FAISS, OpenCV, NumPy, SciPy, scikit-learn, FastAPI, uvicorn, PyYAML, reportlab | Runtime and tooling | MIT / BSD / Apache-2.0 (per package) |
@@ -32,6 +32,7 @@ None of the datasets are redistributed in this repository; scripts download them
 | [DefectDet](https://data.mendeley.com/datasets/t9d9zs3bmb) (Azam et al., 2026) | Half of the physical boards for training, the other half held out as a cross-lab test | CC BY 4.0 |
 | [VisA](https://github.com/amazon-science/spot-diff) (pcb1–pcb4) | Assembled-board anomaly model and test | CC BY 4.0 |
 | [EPID](https://zenodo.org/records/16811808) | Assembled-board test | CC BY 4.0 |
+| [FPIC](https://physicaldb.ece.ufl.edu/index.php/fics-pcb-image-collection-fpic/) (FICS PCB Image Collection, University of Florida) | Parts check: one-class part detector and part-kind classifier, trained on 53 boards, 15 held out by physical board | As stated on the dataset page (research collection) |
 | [Real-IAD](https://huggingface.co/datasets/Real-IAD/Real-IAD) (`pcb` object) | **Evaluation only.** Never copied into this repository, never used to train any weights or memory bank that we publish | CC BY-NC-SA 4.0, research purposes |
 | Open-hardware KiCad board designs (list with per-board licence and commit in `training/kicad/sources.py`) | Design-level synthetic defect rendering | Permissive only (CERN-OHL-P, MIT, Apache-2.0, BSD, CC0, CC BY, ISC, Unlicense); ShareAlike designs excluded. CC BY designs require attribution: see the `manifest.json` written with every render. |
 

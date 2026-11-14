@@ -1,0 +1,35 @@
++ rm -rf /content/pcb10
++ mkdir -p /content/pcb10
++ unzip -q -o /content/pcb_code10.zip -d /content/pcb10
++ cd /content/pcb10
++ python training/build_visa_banks.py --visa /content/VisA --out /content/out5 --device cuda --arch resnet18 --fewshot-reps 3 --save
+== pcb1: resnet18@320, train 904 good, test 200
+   full (200 good): image AUROC 0.9596  pixel AUROC 0.9919
+   gate @5%: test miss 0.078, review 0.51, good failed 0.000
+   5-shot: image AUROC 0.9147 (min 0.8734)
+   10-shot: image AUROC 0.9126 (min 0.8895)
+   20-shot: image AUROC 0.9316 (min 0.9254)
+== pcb2: resnet18@320, train 901 good, test 200
+   full (200 good): image AUROC 0.9369  pixel AUROC 0.9723
+   gate @5%: test miss 0.039, review 0.71, good failed 0.000
+   5-shot: image AUROC 0.8687 (min 0.8591)
+   10-shot: image AUROC 0.8934 (min 0.8866)
+   20-shot: image AUROC 0.8987 (min 0.8867)
+== pcb3: resnet18@320, train 905 good, test 201
+   full (200 good): image AUROC 0.9299  pixel AUROC 0.9810
+   gate @5%: test miss 0.000, review 0.79, good failed 0.000
+   5-shot: image AUROC 0.8041 (min 0.7765)
+   10-shot: image AUROC 0.8325 (min 0.8188)
+   20-shot: image AUROC 0.8521 (min 0.8418)
+== pcb4: resnet18@320, train 904 good, test 201
+   full (200 good): image AUROC 0.9958  pixel AUROC 0.9702
+   gate @5%: test miss 0.060, review 0.48, good failed 0.000
+   5-shot: image AUROC 0.9888 (min 0.9831)
+   10-shot: image AUROC 0.9945 (min 0.9929)
+   20-shot: image AUROC 0.9952 (min 0.9933)
++ cd /content
++ zip -qr /content/out5.zip out5
++ ls -l /content/out5.zip
+-rw-r--r-- 1 root root 32695781 Nov 13 07:07 /content/out5.zip
++ echo FINAL_DONE
+FINAL_DONE

@@ -1,0 +1,1 @@
+{"design": "pcb4", "version": 1, "norm_scale": 1.80453360080719, "pixel_thr": 1.9704862833023071, "novelty_factor": 3.0, "input_size": 320, "arch": "resnet18", "history": [], "grid": [40, 40], "topk_frac": 0.01, "fg_status": "off", "has_fg_mask": false, "has_posnorm": false}

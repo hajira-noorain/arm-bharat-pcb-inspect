@@ -1,0 +1,145 @@
+{
+ "arch": "aarch64",
+ "board": "deeppcb_010.jpg",
+ "note": "emulated: times are not Pi times; findings and load success are what this checks",
+ "runs": {
+  "pcb_y26n_xnnpack.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "pin_hole",
+     0.88
+    ],
+    [
+     "spurious_copper",
+     0.87
+    ],
+    [
+     "open",
+     0.83
+    ],
+    [
+     "mouse_bite",
+     0.82
+    ]
+   ],
+   "load_s_emulated": 14.6,
+   "run_s_emulated": 3.6
+  },
+  "pcb_y26n_xnnpack_int8.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "pin_hole",
+     0.88
+    ],
+    [
+     "spurious_copper",
+     0.87
+    ],
+    [
+     "open",
+     0.83
+    ],
+    [
+     "mouse_bite",
+     0.82
+    ]
+   ],
+   "load_s_emulated": 0.2,
+   "run_s_emulated": 1.2
+  },
+  "pcb_y26s_xnnpack.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "spurious_copper",
+     0.85
+    ],
+    [
+     "pin_hole",
+     0.85
+    ],
+    [
+     "open",
+     0.83
+    ],
+    [
+     "mouse_bite",
+     0.8
+    ]
+   ],
+   "load_s_emulated": 0.4,
+   "run_s_emulated": 10.0
+  },
+  "pcb_y26s_xnnpack_int8.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "spurious_copper",
+     0.85
+    ],
+    [
+     "pin_hole",
+     0.85
+    ],
+    [
+     "open",
+     0.83
+    ],
+    [
+     "mouse_bite",
+     0.8
+    ]
+   ],
+   "load_s_emulated": 0.2,
+   "run_s_emulated": 2.7
+  },
+  "pcb_y26m_xnnpack.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "spurious_copper",
+     0.86
+    ],
+    [
+     "pin_hole",
+     0.86
+    ],
+    [
+     "open",
+     0.81
+    ],
+    [
+     "mouse_bite",
+     0.81
+    ]
+   ],
+   "load_s_emulated": 0.8,
+   "run_s_emulated": 33.8
+  },
+  "pcb_y26m_xnnpack_int8.pte": {
+   "loaded": true,
+   "findings": [
+    [
+     "spurious_copper",
+     0.86
+    ],
+    [
+     "pin_hole",
+     0.86
+    ],
+    [
+     "open",
+     0.81
+    ],
+    [
+     "mouse_bite",
+     0.81
+    ]
+   ],
+   "load_s_emulated": 0.5,
+   "run_s_emulated": 7.7
+  }
+ }
+}

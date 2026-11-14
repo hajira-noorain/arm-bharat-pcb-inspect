@@ -1,0 +1,843 @@
+{
+ "note": "real photos (VisA); station's own code with the rule chosen on good training photos; taught from 8 good photos",
+ "designs": {
+  "pcb1": {
+   "taught": {
+    "parts": 8,
+    "by_kind": {
+     "part": 7,
+     "transistor": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 1
+   },
+   "scale_chosen": 1.5,
+   "ignore_zones": 8,
+   "likeness_across_good_boards_min": 0.522232174873352,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 10,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 10
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 1,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 1,
+     "finding_on_the_labelled_area": 0,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 54,
+     "lined_up": 54,
+     "any_parts_finding": 12,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 12,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 4
+    },
+    "scratch": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 5,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 5,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 3
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 2,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 2,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 12,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 12
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 3,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 0,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 54,
+     "lined_up": 54,
+     "any_parts_finding": 22,
+     "missing_calls": 24,
+     "changed_calls": 0,
+     "unexpected_calls": 12,
+     "finding_on_the_labelled_area": 6,
+     "missing_on_the_labelled_area": 2,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 4
+    },
+    "scratch": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 7,
+     "missing_calls": 3,
+     "changed_calls": 0,
+     "unexpected_calls": 5,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 3
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 3,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 2,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   }
+  },
+  "pcb2": {
+   "taught": {
+    "parts": 26,
+    "by_kind": {
+     "capacitor": 9,
+     "part": 6,
+     "resistor": 6,
+     "ic": 4,
+     "connector": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 4
+   },
+   "scale_chosen": 1.5,
+   "ignore_zones": 6,
+   "likeness_across_good_boards_min": 0.47028616070747375,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 0,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 0
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 1,
+     "missing_calls": 0,
+     "changed_calls": 2,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 1,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 55,
+     "lined_up": 55,
+     "any_parts_finding": 8,
+     "missing_calls": 16,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 7,
+     "missing_on_the_labelled_area": 7,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 20,
+     "lined_up": 20,
+     "any_parts_finding": 3,
+     "missing_calls": 7,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "missing": {
+     "images": 19,
+     "lined_up": 19,
+     "any_parts_finding": 12,
+     "missing_calls": 37,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 12,
+     "missing_on_the_labelled_area": 12,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 14,
+     "missing_calls": 17,
+     "changed_calls": 0,
+     "unexpected_calls": 0
+    },
+    "bent": {
+     "images": 15,
+     "lined_up": 15,
+     "any_parts_finding": 0,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 0,
+     "missing_on_the_labelled_area": 0,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 55,
+     "lined_up": 55,
+     "any_parts_finding": 15,
+     "missing_calls": 30,
+     "changed_calls": 0,
+     "unexpected_calls": 1,
+     "finding_on_the_labelled_area": 9,
+     "missing_on_the_labelled_area": 9,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 20,
+     "lined_up": 20,
+     "any_parts_finding": 6,
+     "missing_calls": 11,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 3,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "missing": {
+     "images": 19,
+     "lined_up": 19,
+     "any_parts_finding": 13,
+     "missing_calls": 44,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 13,
+     "missing_on_the_labelled_area": 13,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    }
+   }
+  },
+  "pcb3": {
+   "taught": {
+    "parts": 19,
+    "by_kind": {
+     "resistor": 7,
+     "part": 6,
+     "diode": 2,
+     "ic": 1,
+     "transistor": 1,
+     "capacitor": 1,
+     "connector": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 0
+   },
+   "scale_chosen": 2.0,
+   "ignore_zones": 12,
+   "likeness_across_good_boards_min": 0.14520330727100372,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 5,
+     "missing_calls": 2,
+     "changed_calls": 4,
+     "unexpected_calls": 0
+    },
+    "bent": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 8,
+     "missing_calls": 13,
+     "changed_calls": 3,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 8,
+     "missing_on_the_labelled_area": 6,
+     "changed_on_the_labelled_area": 2,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 43,
+     "lined_up": 43,
+     "any_parts_finding": 10,
+     "missing_calls": 8,
+     "changed_calls": 7,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 5,
+     "missing_on_the_labelled_area": 4,
+     "changed_on_the_labelled_area": 2,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 25,
+     "lined_up": 25,
+     "any_parts_finding": 3,
+     "missing_calls": 5,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 2,
+     "missing_on_the_labelled_area": 2,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 20,
+     "any_parts_finding": 11,
+     "missing_calls": 13,
+     "changed_calls": 7,
+     "unexpected_calls": 1,
+     "finding_on_the_labelled_area": 9,
+     "missing_on_the_labelled_area": 7,
+     "changed_on_the_labelled_area": 2,
+     "unexpected_on_the_labelled_area": 1
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 21,
+     "missing_calls": 34,
+     "changed_calls": 0,
+     "unexpected_calls": 0
+    },
+    "bent": {
+     "images": 20,
+     "lined_up": 19,
+     "any_parts_finding": 9,
+     "missing_calls": 25,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 8,
+     "missing_on_the_labelled_area": 8,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "melt": {
+     "images": 43,
+     "lined_up": 43,
+     "any_parts_finding": 18,
+     "missing_calls": 31,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 8,
+     "missing_on_the_labelled_area": 8,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 25,
+     "lined_up": 25,
+     "any_parts_finding": 7,
+     "missing_calls": 15,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 2,
+     "missing_on_the_labelled_area": 2,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "missing": {
+     "images": 20,
+     "lined_up": 20,
+     "any_parts_finding": 10,
+     "missing_calls": 24,
+     "changed_calls": 0,
+     "unexpected_calls": 1,
+     "finding_on_the_labelled_area": 8,
+     "missing_on_the_labelled_area": 7,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 1
+    }
+   }
+  },
+  "pcb4": {
+   "taught": {
+    "parts": 10,
+    "by_kind": {
+     "resistor": 5,
+     "connector": 2,
+     "capacitor": 2,
+     "ic": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 2
+   },
+   "scale_chosen": 1.0,
+   "ignore_zones": 1,
+   "likeness_across_good_boards_min": 0.6246992349624634,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 0,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 0
+    },
+    "burnt": {
+     "images": 8,
+     "lined_up": 8,
+     "any_parts_finding": 1,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 1,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 17,
+     "lined_up": 17,
+     "any_parts_finding": 7,
+     "missing_calls": 9,
+     "changed_calls": 2,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 5,
+     "missing_on_the_labelled_area": 4,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "dirt": {
+     "images": 42,
+     "lined_up": 42,
+     "any_parts_finding": 23,
+     "missing_calls": 15,
+     "changed_calls": 8,
+     "unexpected_calls": 6,
+     "finding_on_the_labelled_area": 21,
+     "missing_on_the_labelled_area": 10,
+     "changed_on_the_labelled_area": 7,
+     "unexpected_on_the_labelled_area": 5
+    },
+    "damage": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 8,
+     "missing_calls": 10,
+     "changed_calls": 2,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 6,
+     "missing_on_the_labelled_area": 5,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "extra": {
+     "images": 30,
+     "lined_up": 30,
+     "any_parts_finding": 11,
+     "missing_calls": 1,
+     "changed_calls": 2,
+     "unexpected_calls": 9,
+     "finding_on_the_labelled_area": 10,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 8
+    },
+    "missing": {
+     "images": 33,
+     "lined_up": 33,
+     "any_parts_finding": 33,
+     "missing_calls": 60,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 33,
+     "missing_on_the_labelled_area": 33,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "wrong place": {
+     "images": 13,
+     "lined_up": 13,
+     "any_parts_finding": 11,
+     "missing_calls": 3,
+     "changed_calls": 7,
+     "unexpected_calls": 3,
+     "finding_on_the_labelled_area": 11,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 7,
+     "unexpected_on_the_labelled_area": 2
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 5,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 5
+    },
+    "burnt": {
+     "images": 8,
+     "lined_up": 8,
+     "any_parts_finding": 1,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 1,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 17,
+     "lined_up": 17,
+     "any_parts_finding": 5,
+     "missing_calls": 11,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 4,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "dirt": {
+     "images": 42,
+     "lined_up": 42,
+     "any_parts_finding": 18,
+     "missing_calls": 21,
+     "changed_calls": 0,
+     "unexpected_calls": 6,
+     "finding_on_the_labelled_area": 16,
+     "missing_on_the_labelled_area": 11,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 5
+    },
+    "damage": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 8,
+     "missing_calls": 14,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 7,
+     "missing_on_the_labelled_area": 7,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "extra": {
+     "images": 30,
+     "lined_up": 30,
+     "any_parts_finding": 10,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 10,
+     "finding_on_the_labelled_area": 9,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 8
+    },
+    "missing": {
+     "images": 33,
+     "lined_up": 33,
+     "any_parts_finding": 33,
+     "missing_calls": 81,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 33,
+     "missing_on_the_labelled_area": 33,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "wrong place": {
+     "images": 13,
+     "lined_up": 13,
+     "any_parts_finding": 6,
+     "missing_calls": 4,
+     "changed_calls": 0,
+     "unexpected_calls": 3,
+     "finding_on_the_labelled_area": 5,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   }
+  }
+ },
+ "all_designs": {
+  "good": {
+   "images": 320,
+   "lined_up": 320,
+   "any_parts_finding": 15,
+   "missing_calls": 2,
+   "changed_calls": 4,
+   "unexpected_calls": 10
+  },
+  "bent": {
+   "images": 50,
+   "lined_up": 49,
+   "any_parts_finding": 10,
+   "missing_calls": 13,
+   "changed_calls": 5,
+   "unexpected_calls": 1,
+   "finding_on_the_labelled_area": 9,
+   "missing_on_the_labelled_area": 6,
+   "changed_on_the_labelled_area": 3,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "melt": {
+   "images": 152,
+   "lined_up": 152,
+   "any_parts_finding": 30,
+   "missing_calls": 24,
+   "changed_calls": 7,
+   "unexpected_calls": 12,
+   "finding_on_the_labelled_area": 16,
+   "missing_on_the_labelled_area": 11,
+   "changed_on_the_labelled_area": 2,
+   "unexpected_on_the_labelled_area": 4
+  },
+  "scratch": {
+   "images": 83,
+   "lined_up": 83,
+   "any_parts_finding": 18,
+   "missing_calls": 21,
+   "changed_calls": 2,
+   "unexpected_calls": 5,
+   "finding_on_the_labelled_area": 13,
+   "missing_on_the_labelled_area": 9,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "missing": {
+   "images": 92,
+   "lined_up": 91,
+   "any_parts_finding": 58,
+   "missing_calls": 110,
+   "changed_calls": 7,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 56,
+   "missing_on_the_labelled_area": 52,
+   "changed_on_the_labelled_area": 2,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "burnt": {
+   "images": 8,
+   "lined_up": 8,
+   "any_parts_finding": 1,
+   "missing_calls": 2,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 1,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "dirt": {
+   "images": 42,
+   "lined_up": 42,
+   "any_parts_finding": 23,
+   "missing_calls": 15,
+   "changed_calls": 8,
+   "unexpected_calls": 6,
+   "finding_on_the_labelled_area": 21,
+   "missing_on_the_labelled_area": 10,
+   "changed_on_the_labelled_area": 7,
+   "unexpected_on_the_labelled_area": 5
+  },
+  "damage": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 8,
+   "missing_calls": 10,
+   "changed_calls": 2,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 6,
+   "missing_on_the_labelled_area": 5,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "extra": {
+   "images": 30,
+   "lined_up": 30,
+   "any_parts_finding": 11,
+   "missing_calls": 1,
+   "changed_calls": 2,
+   "unexpected_calls": 9,
+   "finding_on_the_labelled_area": 10,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 8
+  },
+  "wrong place": {
+   "images": 13,
+   "lined_up": 13,
+   "any_parts_finding": 11,
+   "missing_calls": 3,
+   "changed_calls": 7,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 11,
+   "missing_on_the_labelled_area": 3,
+   "changed_on_the_labelled_area": 7,
+   "unexpected_on_the_labelled_area": 2
+  }
+ },
+ "all_designs_detector_only": {
+  "good": {
+   "images": 320,
+   "lined_up": 320,
+   "any_parts_finding": 52,
+   "missing_calls": 52,
+   "changed_calls": 0,
+   "unexpected_calls": 17
+  },
+  "bent": {
+   "images": 50,
+   "lined_up": 49,
+   "any_parts_finding": 12,
+   "missing_calls": 27,
+   "changed_calls": 0,
+   "unexpected_calls": 2,
+   "finding_on_the_labelled_area": 8,
+   "missing_on_the_labelled_area": 8,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "melt": {
+   "images": 152,
+   "lined_up": 152,
+   "any_parts_finding": 55,
+   "missing_calls": 85,
+   "changed_calls": 0,
+   "unexpected_calls": 13,
+   "finding_on_the_labelled_area": 23,
+   "missing_on_the_labelled_area": 19,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 4
+  },
+  "scratch": {
+   "images": 83,
+   "lined_up": 83,
+   "any_parts_finding": 25,
+   "missing_calls": 40,
+   "changed_calls": 0,
+   "unexpected_calls": 5,
+   "finding_on_the_labelled_area": 13,
+   "missing_on_the_labelled_area": 10,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "missing": {
+   "images": 92,
+   "lined_up": 91,
+   "any_parts_finding": 59,
+   "missing_calls": 150,
+   "changed_calls": 0,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 57,
+   "missing_on_the_labelled_area": 54,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 3
+  },
+  "burnt": {
+   "images": 8,
+   "lined_up": 8,
+   "any_parts_finding": 1,
+   "missing_calls": 2,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 1,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "dirt": {
+   "images": 42,
+   "lined_up": 42,
+   "any_parts_finding": 18,
+   "missing_calls": 21,
+   "changed_calls": 0,
+   "unexpected_calls": 6,
+   "finding_on_the_labelled_area": 16,
+   "missing_on_the_labelled_area": 11,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 5
+  },
+  "damage": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 8,
+   "missing_calls": 14,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 7,
+   "missing_on_the_labelled_area": 7,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "extra": {
+   "images": 30,
+   "lined_up": 30,
+   "any_parts_finding": 10,
+   "missing_calls": 1,
+   "changed_calls": 0,
+   "unexpected_calls": 10,
+   "finding_on_the_labelled_area": 9,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 8
+  },
+  "wrong place": {
+   "images": 13,
+   "lined_up": 13,
+   "any_parts_finding": 6,
+   "missing_calls": 4,
+   "changed_calls": 0,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 5,
+   "missing_on_the_labelled_area": 3,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 2
+  }
+ }
+}

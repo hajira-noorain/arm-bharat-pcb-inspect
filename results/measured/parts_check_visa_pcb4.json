@@ -1,0 +1,397 @@
+{
+ "note": "real photos (VisA); the part detector was trained on FPIC only",
+ "designs": {
+  "pcb4": {
+   "taught": {
+    "parts": 10,
+    "by_kind": {
+     "resistor": 5,
+     "connector": 2,
+     "capacitor": 2,
+     "ic": 1
+    },
+    "good_pictures": 8,
+    "left_off_as_unreliable": 2
+   },
+   "scale_chosen": 1.0,
+   "ignore_zones": 1,
+   "likeness_across_good_boards_min": 0.6246992349624634,
+   "by_type": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 0,
+     "missing_calls": 0,
+     "changed_calls": 0,
+     "unexpected_calls": 0
+    },
+    "burnt": {
+     "images": 8,
+     "lined_up": 8,
+     "any_parts_finding": 1,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 1,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 17,
+     "lined_up": 17,
+     "any_parts_finding": 7,
+     "missing_calls": 9,
+     "changed_calls": 2,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 5,
+     "missing_on_the_labelled_area": 4,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "dirt": {
+     "images": 42,
+     "lined_up": 42,
+     "any_parts_finding": 23,
+     "missing_calls": 15,
+     "changed_calls": 8,
+     "unexpected_calls": 6,
+     "finding_on_the_labelled_area": 21,
+     "missing_on_the_labelled_area": 10,
+     "changed_on_the_labelled_area": 7,
+     "unexpected_on_the_labelled_area": 5
+    },
+    "damage": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 8,
+     "missing_calls": 10,
+     "changed_calls": 2,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 6,
+     "missing_on_the_labelled_area": 5,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "extra": {
+     "images": 30,
+     "lined_up": 30,
+     "any_parts_finding": 11,
+     "missing_calls": 1,
+     "changed_calls": 2,
+     "unexpected_calls": 9,
+     "finding_on_the_labelled_area": 10,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 1,
+     "unexpected_on_the_labelled_area": 8
+    },
+    "missing": {
+     "images": 33,
+     "lined_up": 33,
+     "any_parts_finding": 33,
+     "missing_calls": 60,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 33,
+     "missing_on_the_labelled_area": 33,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "wrong place": {
+     "images": 13,
+     "lined_up": 13,
+     "any_parts_finding": 11,
+     "missing_calls": 3,
+     "changed_calls": 7,
+     "unexpected_calls": 3,
+     "finding_on_the_labelled_area": 11,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 7,
+     "unexpected_on_the_labelled_area": 2
+    }
+   },
+   "by_type_detector_only": {
+    "good": {
+     "images": 80,
+     "lined_up": 80,
+     "any_parts_finding": 5,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 5
+    },
+    "burnt": {
+     "images": 8,
+     "lined_up": 8,
+     "any_parts_finding": 1,
+     "missing_calls": 2,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 1,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "scratch": {
+     "images": 17,
+     "lined_up": 17,
+     "any_parts_finding": 5,
+     "missing_calls": 11,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 4,
+     "missing_on_the_labelled_area": 4,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "dirt": {
+     "images": 42,
+     "lined_up": 42,
+     "any_parts_finding": 18,
+     "missing_calls": 21,
+     "changed_calls": 0,
+     "unexpected_calls": 6,
+     "finding_on_the_labelled_area": 16,
+     "missing_on_the_labelled_area": 11,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 5
+    },
+    "damage": {
+     "images": 21,
+     "lined_up": 21,
+     "any_parts_finding": 8,
+     "missing_calls": 14,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 7,
+     "missing_on_the_labelled_area": 7,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "extra": {
+     "images": 30,
+     "lined_up": 30,
+     "any_parts_finding": 10,
+     "missing_calls": 1,
+     "changed_calls": 0,
+     "unexpected_calls": 10,
+     "finding_on_the_labelled_area": 9,
+     "missing_on_the_labelled_area": 1,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 8
+    },
+    "missing": {
+     "images": 33,
+     "lined_up": 33,
+     "any_parts_finding": 33,
+     "missing_calls": 81,
+     "changed_calls": 0,
+     "unexpected_calls": 0,
+     "finding_on_the_labelled_area": 33,
+     "missing_on_the_labelled_area": 33,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 0
+    },
+    "wrong place": {
+     "images": 13,
+     "lined_up": 13,
+     "any_parts_finding": 6,
+     "missing_calls": 4,
+     "changed_calls": 0,
+     "unexpected_calls": 3,
+     "finding_on_the_labelled_area": 5,
+     "missing_on_the_labelled_area": 3,
+     "changed_on_the_labelled_area": 0,
+     "unexpected_on_the_labelled_area": 2
+    }
+   }
+  }
+ },
+ "all_designs": {
+  "good": {
+   "images": 80,
+   "lined_up": 80,
+   "any_parts_finding": 0,
+   "missing_calls": 0,
+   "changed_calls": 0,
+   "unexpected_calls": 0
+  },
+  "burnt": {
+   "images": 8,
+   "lined_up": 8,
+   "any_parts_finding": 1,
+   "missing_calls": 2,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 1,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "scratch": {
+   "images": 17,
+   "lined_up": 17,
+   "any_parts_finding": 7,
+   "missing_calls": 9,
+   "changed_calls": 2,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 5,
+   "missing_on_the_labelled_area": 4,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "dirt": {
+   "images": 42,
+   "lined_up": 42,
+   "any_parts_finding": 23,
+   "missing_calls": 15,
+   "changed_calls": 8,
+   "unexpected_calls": 6,
+   "finding_on_the_labelled_area": 21,
+   "missing_on_the_labelled_area": 10,
+   "changed_on_the_labelled_area": 7,
+   "unexpected_on_the_labelled_area": 5
+  },
+  "damage": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 8,
+   "missing_calls": 10,
+   "changed_calls": 2,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 6,
+   "missing_on_the_labelled_area": 5,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "extra": {
+   "images": 30,
+   "lined_up": 30,
+   "any_parts_finding": 11,
+   "missing_calls": 1,
+   "changed_calls": 2,
+   "unexpected_calls": 9,
+   "finding_on_the_labelled_area": 10,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 1,
+   "unexpected_on_the_labelled_area": 8
+  },
+  "missing": {
+   "images": 33,
+   "lined_up": 33,
+   "any_parts_finding": 33,
+   "missing_calls": 60,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 33,
+   "missing_on_the_labelled_area": 33,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "wrong place": {
+   "images": 13,
+   "lined_up": 13,
+   "any_parts_finding": 11,
+   "missing_calls": 3,
+   "changed_calls": 7,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 11,
+   "missing_on_the_labelled_area": 3,
+   "changed_on_the_labelled_area": 7,
+   "unexpected_on_the_labelled_area": 2
+  }
+ },
+ "all_designs_detector_only": {
+  "good": {
+   "images": 80,
+   "lined_up": 80,
+   "any_parts_finding": 5,
+   "missing_calls": 1,
+   "changed_calls": 0,
+   "unexpected_calls": 5
+  },
+  "burnt": {
+   "images": 8,
+   "lined_up": 8,
+   "any_parts_finding": 1,
+   "missing_calls": 2,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 1,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "scratch": {
+   "images": 17,
+   "lined_up": 17,
+   "any_parts_finding": 5,
+   "missing_calls": 11,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 4,
+   "missing_on_the_labelled_area": 4,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "dirt": {
+   "images": 42,
+   "lined_up": 42,
+   "any_parts_finding": 18,
+   "missing_calls": 21,
+   "changed_calls": 0,
+   "unexpected_calls": 6,
+   "finding_on_the_labelled_area": 16,
+   "missing_on_the_labelled_area": 11,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 5
+  },
+  "damage": {
+   "images": 21,
+   "lined_up": 21,
+   "any_parts_finding": 8,
+   "missing_calls": 14,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 7,
+   "missing_on_the_labelled_area": 7,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "extra": {
+   "images": 30,
+   "lined_up": 30,
+   "any_parts_finding": 10,
+   "missing_calls": 1,
+   "changed_calls": 0,
+   "unexpected_calls": 10,
+   "finding_on_the_labelled_area": 9,
+   "missing_on_the_labelled_area": 1,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 8
+  },
+  "missing": {
+   "images": 33,
+   "lined_up": 33,
+   "any_parts_finding": 33,
+   "missing_calls": 81,
+   "changed_calls": 0,
+   "unexpected_calls": 0,
+   "finding_on_the_labelled_area": 33,
+   "missing_on_the_labelled_area": 33,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 0
+  },
+  "wrong place": {
+   "images": 13,
+   "lined_up": 13,
+   "any_parts_finding": 6,
+   "missing_calls": 4,
+   "changed_calls": 0,
+   "unexpected_calls": 3,
+   "finding_on_the_labelled_area": 5,
+   "missing_on_the_labelled_area": 3,
+   "changed_on_the_labelled_area": 0,
+   "unexpected_on_the_labelled_area": 2
+  }
+ }
+}

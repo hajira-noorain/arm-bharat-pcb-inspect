@@ -1,0 +1,151 @@
+{
+ "detector": {
+  "pte": "parts_y26n_xnnpack.pte",
+  "bytes": 9796100,
+  "parts_found_torch_vs_pte_on_test_tiles": [
+   [
+    7,
+    7
+   ],
+   [
+    8,
+    8
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    47,
+    47
+   ],
+   [
+    36,
+    36
+   ],
+   [
+    8,
+    8
+   ],
+   [
+    28,
+    28
+   ],
+   [
+    21,
+    21
+   ],
+   [
+    73,
+    73
+   ],
+   [
+    22,
+    22
+   ],
+   [
+    70,
+    70
+   ],
+   [
+    26,
+    26
+   ],
+   [
+    20,
+    20
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    18,
+    18
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    40,
+    40
+   ],
+   [
+    2,
+    2
+   ],
+   [
+    37,
+    37
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    95,
+    95
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    24,
+    24
+   ]
+  ],
+  "total_torch": 649,
+  "total_pte": 649
+ },
+ "classifier": {
+  "pte": "parts_kind_xnnpack.pte",
+  "bytes": 6210344,
+  "names": [
+   "capacitor",
+   "connector",
+   "crystal",
+   "diode",
+   "ic",
+   "inductor",
+   "other",
+   "resistor",
+   "switch",
+   "transistor"
+  ],
+  "crops": 400,
+  "same_answer_as_torch": 1.0,
+  "max_confidence_difference": 0.0039122700691223145,
+  "top1_pte": 0.85,
+  "top1_torch": 0.85
+ }
+}

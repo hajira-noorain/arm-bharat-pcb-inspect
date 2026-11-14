@@ -1,0 +1,174 @@
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ sleep 60
++ grep -q V3_DONE /content/run_v3.log
++ cd /content/pcb11
++ V3=/content/out2/runs/y26n_v3/weights/best.pt
++ O=/content/out3
++ python training/eval_bare.py --work /content/out3 --data /content/data/bare_yolo_v3 --weights /content/out2/runs/y26n_v3/weights/best.pt --tag v3
+all mAP50=0.8332445314471414
+deeppcb mAP50=0.9632073567938709
+defectdet mAP50=0.8416694329390803
+dspcbsd mAP50=0.7382811737072832
+hripcb mAP50=0.9576161263556916
+mendeley mAP50=0.8113586997689786
+gate deeppcb: cal 250d/250g  test miss@5%=0.004 CI(0.0, 0.022) review=0.20
+gate hripcb: cal 120d/2g  test miss@5%=0.000 CI(0.0, 0.03) review=1.00
+gate mendeley: cal 38d/0g  test miss@5%=0.000 CI(0.0, 0.128) review=1.00
++ python training/eval_golden.py --work /content/out3 --tag v3 --design deeppcb
+cal 250 boards
+test 250 boards
+detector     @5%: lam=0.699 defect miss=0.066 CI(0.054,0.079) false/board=0.12 typed=0.99
+golden_diff  @5%: lam=0.561 defect miss=0.050 CI(0.040,0.062) false/board=1.02 typed=0.81
+fused        @5%: lam=0.784 defect miss=0.042 CI(0.033,0.054) false/board=0.66 typed=0.99
++ P=/content/etv/bin/python
++ '[' -x /content/etv/bin/python ']'
++ /content/etv/bin/python -c 'import executorch'
+++ python -c 'import ultralytics; print(ultralytics.__version__)'
++ UV=8.4.211
++ uv pip install -q --python /content/etv/bin/python ultralytics==8.4.211 scipy
++ E=/content/out6
++ mkdir -p /content/out6/data
++ ln -sfn /content/data/bare_yolo_v3 /content/out6/data/bare_yolo
++ /content/etv/bin/python training/export_vision.py --work /content/out6 --yolo /content/out2/runs/y26n_v3/weights/best.pt --calib-glob '/content/VisA/pcb*/Data/Images/Normal/*.JPG'
+backbone {'fp32_pte': 'resnet18_patch_xnnpack.pte', 'fp32_bytes': 11137920, 'fp32_max_rel_err_vs_torch': 1.1997340152447578e-06, 'int8_pte': 'resnet18_patch_xnnpack_int8.pte', 'int8_bytes': 2829696, 'int8_mean_rel_err_vs_torch': 0.04519973276183009}
+Ultralytics 8.4.211 🚀 Python-3.12.3 torch-2.15.0+cu132 CPU (Intel Xeon CPU @ 2.20GHz)
+💡 ProTip: Export to OpenVINO format for best performance on Intel hardware. Learn more at https://docs.ultralytics.com/integrations/openvino
+YOLO26n summary (fused): 121 layers, 2,392,165 parameters, 0 gradients, 5.4 GFLOPs
+
+[34m[1mPyTorch:[0m starting from '/content/out6/models/vision/pcb_y26n.pt' with input shape (1, 3, 640, 640) BCHW and output shape(s) (1, 15, 8400) (5.2 MB)
+
+[34m[1mExecuTorch:[0m starting export with ExecuTorch 1.6.0+cu132...
+WARNING:executorch.exir.passes.convert_constant_dim_order_pass:Constant tensor 'model.23.anchors' has strides (1, 2), which are neither contiguous nor channels-last. to_edge stores it contiguous, so partitioners and delegates see the contiguous layout, not the strides in the model. Make it contiguous where it is created to avoid this change.
+[34m[1mExecuTorch:[0m export success ✅ 40.6s, saved as '/content/out6/models/vision/pcb_y26n_executorch_model' (9.3 MB)
+
+Export complete (42.1s)
+Results saved to [1m/content/out6/models/vision/pcb_y26n_executorch_model[0m
+Predict:         yolo predict task=detect model=/content/out6/models/vision/pcb_y26n_executorch_model imgsz=640 
+Validate:        yolo val task=detect model=/content/out6/models/vision/pcb_y26n_executorch_model imgsz=640 data=/content/data/bare_yolo_v3_aug/data.yaml 
+Visualize:       https://netron.app
+detector False {'pte': 'pcb_y26n_xnnpack.pte', 'bytes': 9790508, 'output_shape': [1, 15, 8400]}
+WARNING ⚠️ 'int8' is deprecated and will be removed in the future. Use 'quantize' instead.
+Ultralytics 8.4.211 🚀 Python-3.12.3 torch-2.15.0+cu132 CPU (Intel Xeon CPU @ 2.20GHz)
+YOLO26n summary (fused): 121 layers, 2,392,165 parameters, 0 gradients, 5.4 GFLOPs
+
+[34m[1mPyTorch:[0m starting from '/content/out6/models/vision/pcb_y26n.pt' with input shape (1, 3, 640, 640) BCHW and output shape(s) (1, 15, 8400) (5.2 MB)
+[34m[1mExecuTorch:[0m collecting INT8 calibration images from 'data=/content/out6/data/bare_yolo/data_container.yaml'
+ERROR ❌ [34m[1mExecuTorch:[0m export failure 0.5s: Key backend: 'module://matplotlib_inline.backend_inline' is not a valid value for backend; supported values are ['gtk3agg', 'gtk3cairo', 'gtk4agg', 'gtk4cairo', 'macosx', 'nbagg', 'notebook', 'qtagg', 'qtcairo', 'qt5agg', 'qt5cairo', 'tkagg', 'tkcairo', 'webagg', 'wx', 'wxagg', 'wxcairo', 'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template']
+Export to ExecuTorch in the cloud with Ultralytics Platform: https://platform.ultralytics.com
+detector export failed True ValueError("Key backend: 'module://matplotlib_inline.backend_inline' is not a valid value for backend; supported values are ['gtk3agg', 'gtk3cairo', 'gtk4agg', 'gtk4cairo', 'macosx', 'nbagg', 'notebook', 'qtagg', 'qtcairo', 'qt5agg', 'qt5cairo', 'tkagg', 'tkcairo', 'webagg', 'wx', 'wxagg', 'wxcairo', 'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template']")
++ cat /content/out6/results/export_vision.json
+{
+ "backbone": {
+  "fp32_pte": "resnet18_patch_xnnpack.pte",
+  "fp32_bytes": 11137920,
+  "fp32_max_rel_err_vs_torch": 1.1997340152447578e-06,
+  "int8_pte": "resnet18_patch_xnnpack_int8.pte",
+  "int8_bytes": 2829696,
+  "int8_mean_rel_err_vs_torch": 0.04519973276183009
+ },
+ "detector_fp32": {
+  "pte": "pcb_y26n_xnnpack.pte",
+  "bytes": 9790508,
+  "output_shape": [
+   1,
+   15,
+   8400
+  ]
+ },
+ "detector_int8": {
+  "error": "ValueError(\"Key backend: 'module://matplotlib_inline.backend_inline' is not a valid value for backend; supported values are ['gtk3agg', 'gtk3cairo', 'gtk4agg', 'gtk4cairo', 'macosx', 'nbagg', 'notebook', 'qtagg', 'qtcairo', 'qt5agg', 'qt5cairo', 'tkagg', 'tkcairo', 'webagg', 'wx', 'wxagg', 'wxcairo', 'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template']\")"
+ }
+}+ ls -la /content/out6/models/vision
+total 28556
+drwxr-xr-x 3 root root     4096 Nov 13 07:39 .
+drwxr-xr-x 3 root root     4096 Nov 13 07:37 ..
+drwxr-xr-x 2 root root     4096 Nov 13 07:39 pcb_y26n_executorch_model
+-rw-r--r-- 1 root root  5462277 Nov 13 07:39 pcb_y26n.pt
+-rw-r--r-- 1 root root  9790508 Nov 13 07:39 pcb_y26n_xnnpack.pte
+-rw-r--r-- 1 root root  2829696 Nov 13 07:38 resnet18_patch_xnnpack_int8.pte
+-rw-r--r-- 1 root root 11137920 Nov 13 07:38 resnet18_patch_xnnpack.pte
++ /content/etv/bin/python training/eval_bare.py --work /content/out6 --backend executorch --weights /content/out6/models/vision/pcb_y26n_xnnpack.pte --data /content/data/bare_yolo_v3 --tag v3_et --no-gate
+  0/744  0s
+  50/744  5s
+  100/744  9s
+  150/744  14s
+  200/744  17s
+  250/744  20s
+  300/744  24s
+  350/744  28s
+  400/744  33s
+  450/744  37s
+  500/744  44s
+  550/744  143s
+  600/744  236s
+  650/744  346s
+  700/744  378s
+  0/1006  0s
+  50/1006  4s
+  100/1006  8s
+  150/1006  12s
+  200/1006  16s
+  250/1006  20s
+  300/1006  24s
+  350/1006  28s
+  400/1006  32s
+  450/1006  35s
+  500/1006  42s
+  550/1006  156s
+  600/1006  327s
+  650/1006  537s
+  700/1006  652s
+  750/1006  773s
+  800/1006  838s
+  850/1006  846s
+  900/1006  852s
+  950/1006  859s
+  1000/1006  864s
+all mAP50=0.833138208232878
+deeppcb mAP50=0.9632483799347668
+defectdet mAP50=0.8416091080958255
+dspcbsd mAP50=0.7379005615008343
+hripcb mAP50=0.9576106484301663
+mendeley mAP50=0.8119335788392131
++ cd /content
++ zip -qr /content/final_v3.zip out3/results out3/models out6/results out6/models out5 out4/results out2/runs/y26n_v3/weights/best.pt out2/runs/y26n_v3/results.csv
++ ls -l /content/final_v3.zip
+-rw-r--r-- 1 root root 95337309 Nov 13 08:01 /content/final_v3.zip
++ echo FINALV3_DONE
+FINALV3_DONE

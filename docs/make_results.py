@@ -1,6 +1,6 @@
 """Generate docs/RESULTS.md from the measured results/*.json files. Never type a number by hand.
 
-python docs/make_results.py --results C:\\Users\\sulai\\pcb_work\\results [--device results_from_pi_dir]
+python docs/make_results.py [--results results/measured] [--gates models/gate] [--device results_from_pi_dir]
 """
 from __future__ import annotations
 
@@ -760,8 +760,9 @@ def spec_section(r: Path) -> list[str]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--results", default=r"C:\Users\sulai\pcb_work\results")
-    ap.add_argument("--gates", default=r"C:\Users\sulai\pcb_work\models\gate", help="calibrated gate files")
+    root = Path(__file__).resolve().parent.parent
+    ap.add_argument("--results", default=str(root / "results" / "measured"))
+    ap.add_argument("--gates", default=str(root / "models" / "gate"), help="calibrated gate files")
     ap.add_argument("--device", default=None, help="directory with device_bench.json / soak json from the Pi")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent / "RESULTS.md"))
     a = ap.parse_args()

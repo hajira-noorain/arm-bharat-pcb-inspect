@@ -1,0 +1,93 @@
+{
+ "object": "pcb1",
+ "arch": "resnet18",
+ "input": 320,
+ "tag": "",
+ "fg_mask": false,
+ "posnorm": false,
+ "topk_frac": 0.01,
+ "fg_status": "off",
+ "enrol_seconds": 20.691494703292847,
+ "bank_size": 6400,
+ "full": {
+  "image_auroc": 0.9596,
+  "n_test": 200,
+  "n_anomalous": 100,
+  "pixel_auroc_featuregrid": 0.9919397850580491,
+  "n_train": 200
+ },
+ "gate": {
+  "alpha_0.05": {
+   "alpha": 0.05,
+   "beta": 0.01,
+   "miss_rate": 0.0784313725490196,
+   "miss_rate_ci95": [
+    0.02178356205626899,
+    0.1888060069425382
+   ],
+   "false_reject_rate": 0.0,
+   "false_reject_rate_ci95": [
+    0.0,
+    0.07251926366427738
+   ],
+   "review_rate": 0.51,
+   "auto_decided_rate": 0.49,
+   "n_defective": 51,
+   "n_good": 49,
+   "lam": 0.5197605152365881,
+   "tau": Infinity,
+   "supported_alpha": true
+  },
+  "alpha_0.1": {
+   "alpha": 0.1,
+   "beta": 0.01,
+   "miss_rate": 0.13725490196078433,
+   "miss_rate_ci95": [
+    0.05701181346336882,
+    0.262551543304546
+   ],
+   "false_reject_rate": 0.0,
+   "false_reject_rate_ci95": [
+    0.0,
+    0.07251926366427738
+   ],
+   "review_rate": 0.47,
+   "auto_decided_rate": 0.53,
+   "n_defective": 51,
+   "n_good": 49,
+   "lam": 0.528163676511559,
+   "tau": Infinity,
+   "supported_alpha": true
+  }
+ },
+ "fewshot": {
+  "5": {
+   "image_auroc_mean": 0.9147,
+   "image_auroc_min": 0.8734,
+   "reps": [
+    0.8734,
+    0.9329000000000001,
+    0.9378
+   ]
+  },
+  "10": {
+   "image_auroc_mean": 0.9125666666666667,
+   "image_auroc_min": 0.8895,
+   "reps": [
+    0.9107000000000001,
+    0.9375,
+    0.8895
+   ]
+  },
+  "20": {
+   "image_auroc_mean": 0.9316333333333334,
+   "image_auroc_min": 0.9254,
+   "reps": [
+    0.9254,
+    0.9286,
+    0.9409
+   ]
+  }
+ },
+ "seconds_total": 361.127423286438
+}

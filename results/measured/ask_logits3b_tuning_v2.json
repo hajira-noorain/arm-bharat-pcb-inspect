@@ -1,0 +1,434 @@
+{
+ "backend": "logits",
+ "model": "llama3_2_3b_spinquant.pte",
+ "sets": {
+  "tuning": {
+   "score": {
+    "n": 30,
+    "route_accuracy": 0.9,
+    "routed_by_llama": 1.0,
+    "keyword_route_accuracy": 0.8333333333333334,
+    "wrong_by_query": {
+     "defect_counts -> open_alerts": 1,
+     "defect_counts -> yield": 1,
+     "open_alerts -> yield": 1
+    },
+    "summary_by_llama": 1.0,
+    "summary_rejected": {},
+    "latency_ms_median": 2348.174466999808
+   },
+   "rows": [
+    {
+     "q": "How many shorts did we get in the last 8 hours?",
+     "gold": "defect_counts",
+     "query": "defect_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "We got 9 shorts in the last 2 hours.",
+     "n_rows": 5
+    },
+    {
+     "q": "What defect types came up today?",
+     "gold": "defect_counts",
+     "query": "defect_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 24
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "28 defects of type \"short\" and 24 defects of type \"mouse_bite\".",
+     "n_rows": 5
+    },
+    {
+     "q": "Which defect is the most common this shift?",
+     "gold": "defect_counts",
+     "query": "defect_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The most common defect this shift is \"mouse_bite\" with 6 occurrences.",
+     "n_rows": 5
+    },
+    {
+     "q": "Count of each defect over the past 4 hours please",
+     "gold": "defect_counts",
+     "query": "defect_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 4
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There are 5 mouse bites, 5 shorts, 3 pin holes, 2 opens, and 1 spur.",
+     "n_rows": 5
+    },
+    {
+     "q": "What kept going wrong on the boards this week?",
+     "gold": "defect_counts",
+     "query": "defect_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 168
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The defects that kept going wrong on the boards this week were \"mouse_bite\" and \"pin_hole\", with 32 and 30 occurrences respectively.",
+     "n_rows": 5
+    },
+    {
+     "q": "Are we seeing more opens or more mouse bites?",
+     "gold": "defect_counts",
+     "query": "open_alerts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {},
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "20, 7",
+     "n_rows": 1
+    },
+    {
+     "q": "Breakdown of what was found on the boards in the last 2 hours",
+     "gold": "defect_counts",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 2
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There were 8 boards with 3 passed and 3 failed, and 2 were reviewed.",
+     "n_rows": 1
+    },
+    {
+     "q": "How many boards did we inspect this shift?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "We inspected 26 boards this shift.",
+     "n_rows": 1
+    },
+    {
+     "q": "What is the pass rate today?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 24
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "30 out of 96 passed.",
+     "n_rows": 1
+    },
+    {
+     "q": "How many boards failed in the last 3 hours?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 3
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "5 boards failed.",
+     "n_rows": 1
+    },
+    {
+     "q": "How many boards went to a person for checking today?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 24
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "96 boards were sent for checking today.",
+     "n_rows": 1
+    },
+    {
+     "q": "Give me the yield for the past 12 hours",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 12
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "12 hours of yield",
+     "n_rows": 1
+    },
+    {
+     "q": "Passed versus failed boards this week?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "yield",
+     "params": {
+      "hours": 168
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "36 passed, 56 failed.",
+     "n_rows": 1
+    },
+    {
+     "q": "How busy has the station been in the last hour?",
+     "gold": "yield",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The station has boarded 26 items and passed 8 items in the last hour.",
+     "n_rows": 1
+    },
+    {
+     "q": "Show me the history of board B00042",
+     "gold": "board_history",
+     "query": "board_history",
+     "route": "llama",
+     "keyword_query": "board_history",
+     "params": {
+      "board_id": "B00042"
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "Board B00042 had 3 defects and was found to be a FAIL.",
+     "n_rows": 1
+    },
+    {
+     "q": "What happened with serial B00017?",
+     "gold": "board_history",
+     "query": "board_history",
+     "route": "llama",
+     "keyword_query": "board_history",
+     "params": {
+      "board_id": "B00017"
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "Serial B00017 was inspected and found to have 3 defects.",
+     "n_rows": 1
+    },
+    {
+     "q": "Was board B00101 inspected more than once?",
+     "gold": "board_history",
+     "query": "board_history",
+     "route": "llama",
+     "keyword_query": "board_history",
+     "params": {
+      "board_id": "B00101"
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "No, inspection B00101 was inspected only once.",
+     "n_rows": 1
+    },
+    {
+     "q": "Look up board id B00007 for me",
+     "gold": "board_history",
+     "query": "board_history",
+     "route": "llama",
+     "keyword_query": "board_history",
+     "params": {
+      "board_id": "B00007"
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "Here is a summary of the board id B00007 in one sentence:",
+     "n_rows": 2
+    },
+    {
+     "q": "When was board B00063 checked and what was the result?",
+     "gold": "board_history",
+     "query": "board_history",
+     "route": "llama",
+     "keyword_query": "board_history",
+     "params": {
+      "board_id": "B00063"
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The board B00063 was checked on 2026-11-12 and failed with 1 defect.",
+     "n_rows": 1
+    },
+    {
+     "q": "How many critical defects in the last 8 hours?",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "severity_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There are 13 critical defects.",
+     "n_rows": 3
+    },
+    {
+     "q": "Split the defects from today into critical, major and minor",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "severity_counts",
+     "params": {
+      "hours": 24
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "Here are the summaries:",
+     "n_rows": 3
+    },
+    {
+     "q": "Were most of the problems this shift serious or small?",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "11 problems were major, 6 were minor.",
+     "n_rows": 3
+    },
+    {
+     "q": "How severe were the defects over the past 6 hours?",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 6
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There were 8 critical defects and 6 major defects over the past 6 hours.",
+     "n_rows": 3
+    },
+    {
+     "q": "Number of minor findings this week",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "severity_counts",
+     "params": {
+      "hours": 168
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "43 minor findings this week.",
+     "n_rows": 3
+    },
+    {
+     "q": "Any major defects in the last 2 hours?",
+     "gold": "severity_counts",
+     "query": "severity_counts",
+     "route": "llama",
+     "keyword_query": "severity_counts",
+     "params": {
+      "hours": 2
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There is 1 major defect.",
+     "n_rows": 3
+    },
+    {
+     "q": "Are there any open alerts?",
+     "gold": "open_alerts",
+     "query": "open_alerts",
+     "route": "llama",
+     "keyword_query": "open_alerts",
+     "params": {},
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There is 1.open alert.",
+     "n_rows": 1
+    },
+    {
+     "q": "Is the process drifting?",
+     "gold": "open_alerts",
+     "query": "open_alerts",
+     "route": "llama",
+     "keyword_query": "open_alerts",
+     "params": {},
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The process is drifting. 7 boards out of 20.",
+     "n_rows": 1
+    },
+    {
+     "q": "Any warnings I have not acknowledged yet?",
+     "gold": "open_alerts",
+     "query": "open_alerts",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {},
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "There is 1warning.",
+     "n_rows": 1
+    },
+    {
+     "q": "Show the drift alerts",
+     "gold": "open_alerts",
+     "query": "open_alerts",
+     "route": "llama",
+     "keyword_query": "open_alerts",
+     "params": {},
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "20 boards",
+     "n_rows": 1
+    },
+    {
+     "q": "Did the station raise anything about the line that still needs attention?",
+     "gold": "open_alerts",
+     "query": "yield",
+     "route": "llama",
+     "keyword_query": "defect_counts",
+     "params": {
+      "hours": 8
+     },
+     "summary_by": "llama",
+     "rejected": null,
+     "answer": "The station raised 7 issues.",
+     "n_rows": 1
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,46 @@
++ rm -rf /content/code10
++ mkdir -p /content/code10
++ unzip -q -o /content/code10.zip -d /content/code10
++ cd /content/code10
++ mkdir -p /content/wadv
++ TOK=/content/llama1b/tokenizer.model
++ PTE=/content/llm/llama3_2_3b_spinquant.pte
++ /content/etv/bin/python llm/eval_advice.py --pte /content/llm/llama3_2_3b_spinquant.pte --tok /content/llama1b/tokenizer.model --backend logits --cause-mode pointwise --seed 1 --n 150 --out /content/wadv/advice_point_3b_seed1_v2.json
++ grep -vE '^[0-9]+/150|Warning|stats.h|PyTorchObserver|^\s*$'
+{
+ "model": "llama3_2_3b_spinquant.pte",
+ "fewshot": false,
+ "n": 150,
+ "load_ms": 9753.889531000823,
+ "backend": "logits",
+ "score_norm": "sum",
+ "cause_mode": "pointwise",
+ "seed": 1,
+ "accepted_rate": 1.0,
+ "rejection_reasons": {},
+ "choices_parsed": 280,
+ "cause_position1_share": 0.375,
+ "cause_position1_chance": 0.39077380952380947,
+ "repeating_defect_process_cause": {
+  "n": 37,
+  "rate": 0.8918918918918919,
+  "chance": 0.5180180180180183
+ },
+ "one_off_defect_handling_cause": {
+  "n": 114,
+  "rate": 0.9035087719298246,
+  "chance": 0.4773391812865496
+ },
+ "prompt_tokens_median": 277.0,
+ "latency_ms_median": 7484.556530000191,
+ "prefill_tps_median": 170.34544484244856,
+ "decode_tps_median": 12.053025648146452,
+ "note": "step order (most severe first) and coverage (every defect gets a step) are by construction"
+}
++ echo ADVP2_DONE_dev
+ADVP2_DONE_dev
++ /content/etv/bin/python llm/eval_ask.py --pte /content/llm/llama3_2_3b_spinquant.pte --tok /content/llama1b/tokenizer.model --backend logits --sets tuning --out /content/wadv/ask_logits3b_tuning_v2.json
++ grep -vE 'Warning|stats.h|PyTorchObserver|^\s*$'
+tuning {"n": 30, "route_accuracy": 0.9, "routed_by_llama": 1.0, "keyword_route_accuracy": 0.8333333333333334, "wrong_by_query": {"defect_counts -> open_alerts": 1, "defect_counts -> yield": 1, "open_alerts -> yield": 1}, "summary_by_llama": 1.0, "summary_rejected": {}, "latency_ms_median": 2348.174466999808}
++ echo ASK2_DONE_dev
+ASK2_DONE_dev

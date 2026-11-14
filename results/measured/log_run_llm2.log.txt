@@ -1,0 +1,400 @@
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 487, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":6.62252,"decode_token_per_sec":4.14938,"prompt_tokens":2,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555510164,"inference_end_ms":1794555510948,"model_execution_start_ms":1794555510696,"model_execution_end_ms":1794555510947,"prompt_eval_end_ms":1794555510466,"first_token_ms":1794555510466,"aggregate_sampling_time_ms":5,"aggregate_model_execution_time_ms":9998,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ reject[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.572000 (seconds)		 Rate: 	1.748252 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.328000 (seconds)		 Rate: 	9.146341 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.244000 (seconds)		 Rate: 	4.098361 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.328000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.006000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 465, num_prompt_tokens 465, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":9.14634,"decode_token_per_sec":4.09836,"prompt_tokens":3,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555510948,"inference_end_ms":1794555511520,"model_execution_start_ms":1794555511276,"model_execution_end_ms":1794555511519,"prompt_eval_end_ms":1794555511276,"first_token_ms":1794555511276,"aggregate_sampling_time_ms":6,"aggregate_model_execution_time_ms":10568,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ any[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+ defect[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 465    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		8.303000 (seconds)		 Rate: 	0.120438 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	8.067000 (seconds)		 Rate: 	57.642246 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.236000 (seconds)		 Rate: 	4.237288 (tokens/second)
+[stats.h:219] 	Time to first generated token:	8.067000 (seconds)
+[stats.h:225] 	Sampling time over 466 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 469, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":57.6422,"decode_token_per_sec":4.23729,"prompt_tokens":465,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555511521,"inference_end_ms":1794555519824,"model_execution_start_ms":1794555519588,"model_execution_end_ms":1794555519824,"prompt_eval_end_ms":1794555519588,"first_token_ms":1794555519588,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":8301,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ count[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.419000 (seconds)		 Rate: 	2.386635 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.242000 (seconds)		 Rate: 	12.396694 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.177000 (seconds)		 Rate: 	5.649718 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.242000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 474, num_prompt_tokens 4, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":12.3967,"decode_token_per_sec":5.64972,"prompt_tokens":3,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555519824,"inference_end_ms":1794555520243,"model_execution_start_ms":1794555520066,"model_execution_end_ms":1794555520243,"prompt_eval_end_ms":1794555520066,"first_token_ms":1794555520066,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":8719,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+6
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 4    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.738000 (seconds)		 Rate: 	2.710027 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.306000 (seconds)		 Rate: 	13.071895 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.432000 (seconds)		 Rate: 	4.629630 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.306000 (seconds)
+[stats.h:225] 	Sampling time over 6 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 478, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":13.0719,"decode_token_per_sec":4.62963,"prompt_tokens":4,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555520244,"inference_end_ms":1794555520982,"model_execution_start_ms":1794555520764,"model_execution_end_ms":1794555520981,"prompt_eval_end_ms":1794555520550,"first_token_ms":1794555520550,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":9455,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.430000 (seconds)		 Rate: 	2.325581 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.265000 (seconds)		 Rate: 	7.547170 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.165000 (seconds)		 Rate: 	6.060606 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.265000 (seconds)
+[stats.h:225] 	Sampling time over 3 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 481, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":7.54717,"decode_token_per_sec":6.06061,"prompt_tokens":2,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555520982,"inference_end_ms":1794555521412,"model_execution_start_ms":1794555521247,"model_execution_end_ms":1794555521411,"prompt_eval_end_ms":1794555521247,"first_token_ms":1794555521247,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":9884,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ at[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+ leastAction[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.540000 (seconds)		 Rate: 	3.703704 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.182000 (seconds)		 Rate: 	10.989011 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.358000 (seconds)		 Rate: 	5.586592 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.182000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.004000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 486, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":10.989,"decode_token_per_sec":5.58659,"prompt_tokens":2,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555521412,"inference_end_ms":1794555521952,"model_execution_start_ms":1794555521758,"model_execution_end_ms":1794555521951,"prompt_eval_end_ms":1794555521594,"first_token_ms":1794555521594,"aggregate_sampling_time_ms":4,"aggregate_model_execution_time_ms":10421,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ review[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.418000 (seconds)		 Rate: 	2.392344 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.253000 (seconds)		 Rate: 	11.857708 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.165000 (seconds)		 Rate: 	6.060606 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.253000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.005000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 462, num_prompt_tokens 462, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":11.8577,"decode_token_per_sec":6.06061,"prompt_tokens":3,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555521952,"inference_end_ms":1794555522370,"model_execution_start_ms":1794555522205,"model_execution_end_ms":1794555522369,"prompt_eval_end_ms":1794555522205,"first_token_ms":1794555522205,"aggregate_sampling_time_ms":5,"aggregate_model_execution_time_ms":10838,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ visible[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+ defect[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 462    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		7.320000 (seconds)		 Rate: 	0.136612 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	7.134000 (seconds)		 Rate: 	64.760303 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.186000 (seconds)		 Rate: 	5.376344 (tokens/second)
+[stats.h:219] 	Time to first generated token:	7.134000 (seconds)
+[stats.h:225] 	Sampling time over 463 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 466, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":64.7603,"decode_token_per_sec":5.37634,"prompt_tokens":462,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555522370,"inference_end_ms":1794555529690,"model_execution_start_ms":1794555529504,"model_execution_end_ms":1794555529689,"prompt_eval_end_ms":1794555529504,"first_token_ms":1794555529504,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":7315,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ always[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.456000 (seconds)		 Rate: 	2.192982 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.286000 (seconds)		 Rate: 	10.489510 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.170000 (seconds)		 Rate: 	5.882353 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.286000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 469, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":10.4895,"decode_token_per_sec":5.88235,"prompt_tokens":3,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555529690,"inference_end_ms":1794555530146,"model_execution_start_ms":1794555529977,"model_execution_end_ms":1794555530145,"prompt_eval_end_ms":1794555529976,"first_token_ms":1794555529976,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":7769,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ re[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+work<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.527000 (seconds)		 Rate: 	3.795066 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.241000 (seconds)		 Rate: 	8.298755 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.286000 (seconds)		 Rate: 	6.993007 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.241000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.003000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 469, num_prompt_tokens 469, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":8.29876,"decode_token_per_sec":6.99301,"prompt_tokens":2,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555530146,"inference_end_ms":1794555530673,"model_execution_start_ms":1794555530532,"model_execution_end_ms":1794555530672,"prompt_eval_end_ms":1794555530387,"first_token_ms":1794555530387,"aggregate_sampling_time_ms":3,"aggregate_model_execution_time_ms":8294,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ open[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 469    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		7.108000 (seconds)		 Rate: 	0.140687 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	6.885000 (seconds)		 Rate: 	68.119099 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.223000 (seconds)		 Rate: 	4.484305 (tokens/second)
+[stats.h:219] 	Time to first generated token:	6.885000 (seconds)
+[stats.h:225] 	Sampling time over 470 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 472, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":68.1191,"decode_token_per_sec":4.4843,"prompt_tokens":469,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555530674,"inference_end_ms":1794555537782,"model_execution_start_ms":1794555537559,"model_execution_end_ms":1794555537781,"prompt_eval_end_ms":1794555537559,"first_token_ms":1794555537559,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":7105,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ count[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+Unit[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.372000 (seconds)		 Rate: 	2.688172 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.197000 (seconds)		 Rate: 	10.152284 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.175000 (seconds)		 Rate: 	5.714286 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.197000 (seconds)
+[stats.h:225] 	Sampling time over 3 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 478, num_prompt_tokens 5, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":10.1523,"decode_token_per_sec":5.71429,"prompt_tokens":2,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555537782,"inference_end_ms":1794555538154,"model_execution_start_ms":1794555537979,"model_execution_end_ms":1794555538154,"prompt_eval_end_ms":1794555537979,"first_token_ms":1794555537979,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":7476,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+2
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 5    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.648000 (seconds)		 Rate: 	3.086420 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.292000 (seconds)		 Rate: 	17.123288 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.356000 (seconds)		 Rate: 	5.617978 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.292000 (seconds)
+[stats.h:225] 	Sampling time over 7 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 482, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":17.1233,"decode_token_per_sec":5.61798,"prompt_tokens":5,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555538154,"inference_end_ms":1794555538802,"model_execution_start_ms":1794555538627,"model_execution_end_ms":1794555538801,"prompt_eval_end_ms":1794555538446,"first_token_ms":1794555538446,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":8122,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.452000 (seconds)		 Rate: 	2.212389 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.262000 (seconds)		 Rate: 	7.633588 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.190000 (seconds)		 Rate: 	5.263158 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.262000 (seconds)
+[stats.h:225] 	Sampling time over 3 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 485, num_prompt_tokens 2, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":7.63359,"decode_token_per_sec":5.26316,"prompt_tokens":2,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555538802,"inference_end_ms":1794555539254,"model_execution_start_ms":1794555539064,"model_execution_end_ms":1794555539254,"prompt_eval_end_ms":1794555539064,"first_token_ms":1794555539064,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":8573,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ more[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+ thanAction[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 2    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.629000 (seconds)		 Rate: 	3.179650 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.226000 (seconds)		 Rate: 	8.849558 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.403000 (seconds)		 Rate: 	4.962779 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.226000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 490, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":8.84956,"decode_token_per_sec":4.96278,"prompt_tokens":2,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555539255,"inference_end_ms":1794555539884,"model_execution_start_ms":1794555539686,"model_execution_end_ms":1794555539884,"prompt_eval_end_ms":1794555539481,"first_token_ms":1794555539481,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":9201,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ hold[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.373000 (seconds)		 Rate: 	2.680965 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.181000 (seconds)		 Rate: 	16.574586 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.192000 (seconds)		 Rate: 	5.208333 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.181000 (seconds)
+[stats.h:225] 	Sampling time over 4 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 465, num_prompt_tokens 465, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":16.5746,"decode_token_per_sec":5.20833,"prompt_tokens":3,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555539884,"inference_end_ms":1794555540257,"model_execution_start_ms":1794555540065,"model_execution_end_ms":1794555540257,"prompt_eval_end_ms":1794555540065,"first_token_ms":1794555540065,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":9573,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 465    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		6.645000 (seconds)		 Rate: 	0.150489 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	6.558000 (seconds)		 Rate: 	70.905764 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.087000 (seconds)		 Rate: 	11.494253 (tokens/second)
+[stats.h:219] 	Time to first generated token:	6.558000 (seconds)
+[stats.h:225] 	Sampling time over 466 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 469, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":70.9058,"decode_token_per_sec":11.4943,"prompt_tokens":465,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555540259,"inference_end_ms":1794555546904,"model_execution_start_ms":1794555546817,"model_execution_end_ms":1794555546904,"prompt_eval_end_ms":1794555546817,"first_token_ms":1794555546817,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":6640,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+2Measure[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.293000 (seconds)		 Rate: 	6.825939 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.121000 (seconds)		 Rate: 	24.793388 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.172000 (seconds)		 Rate: 	11.627907 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.121000 (seconds)
+[stats.h:225] 	Sampling time over 5 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 464, num_prompt_tokens 464, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":24.7934,"decode_token_per_sec":11.6279,"prompt_tokens":3,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555546904,"inference_end_ms":1794555547197,"model_execution_start_ms":1794555547111,"model_execution_end_ms":1794555547196,"prompt_eval_end_ms":1794555547025,"first_token_ms":1794555547025,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":6931,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 464    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		4.257000 (seconds)		 Rate: 	0.234907 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	4.155000 (seconds)		 Rate: 	111.672684 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.102000 (seconds)		 Rate: 	9.803922 (tokens/second)
+[stats.h:219] 	Time to first generated token:	4.155000 (seconds)
+[stats.h:225] 	Sampling time over 465 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 468, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":111.673,"decode_token_per_sec":9.80392,"prompt_tokens":464,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555547197,"inference_end_ms":1794555551454,"model_execution_start_ms":1794555551353,"model_execution_end_ms":1794555551454,"prompt_eval_end_ms":1794555551352,"first_token_ms":1794555551352,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":4254,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+3<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.278000 (seconds)		 Rate: 	7.194245 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.120000 (seconds)		 Rate: 	25.000000 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.158000 (seconds)		 Rate: 	12.658228 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.120000 (seconds)
+[stats.h:225] 	Sampling time over 5 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 459, num_prompt_tokens 459, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":25,"decode_token_per_sec":12.6582,"prompt_tokens":3,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555551454,"inference_end_ms":1794555551732,"model_execution_start_ms":1794555551655,"model_execution_end_ms":1794555551732,"prompt_eval_end_ms":1794555551574,"first_token_ms":1794555551574,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":4529,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 459    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		6.227000 (seconds)		 Rate: 	0.160591 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	6.067000 (seconds)		 Rate: 	75.655184 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.160000 (seconds)		 Rate: 	6.250000 (tokens/second)
+[stats.h:219] 	Time to first generated token:	6.067000 (seconds)
+[stats.h:225] 	Sampling time over 460 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 463, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":75.6552,"decode_token_per_sec":6.25,"prompt_tokens":459,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555551733,"inference_end_ms":1794555557960,"model_execution_start_ms":1794555557800,"model_execution_end_ms":1794555557959,"prompt_eval_end_ms":1794555557800,"first_token_ms":1794555557800,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":6225,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+1<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.503000 (seconds)		 Rate: 	3.976143 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.180000 (seconds)		 Rate: 	16.666667 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.323000 (seconds)		 Rate: 	6.191950 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.180000 (seconds)
+[stats.h:225] 	Sampling time over 5 tokens:	0.002000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 462, num_prompt_tokens 462, max_context_len 2048
+
+
+PyTorchObserver {"prefill_token_per_sec":16.6667,"decode_token_per_sec":6.19195,"prompt_tokens":3,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555557960,"inference_end_ms":1794555558463,"model_execution_start_ms":1794555558295,"model_execution_end_ms":1794555558462,"prompt_eval_end_ms":1794555558140,"first_token_ms":1794555558140,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":6726,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 462    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		7.310000 (seconds)		 Rate: 	0.136799 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	7.149000 (seconds)		 Rate: 	64.624423 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.161000 (seconds)		 Rate: 	6.211180 (tokens/second)
+[stats.h:219] 	Time to first generated token:	7.149000 (seconds)
+[stats.h:225] 	Sampling time over 463 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 466, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":64.6244,"decode_token_per_sec":6.21118,"prompt_tokens":462,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555558463,"inference_end_ms":1794555565773,"model_execution_start_ms":1794555565612,"model_execution_end_ms":1794555565772,"prompt_eval_end_ms":1794555565612,"first_token_ms":1794555565612,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":7305,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+2Measure[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.648000 (seconds)		 Rate: 	3.086420 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.256000 (seconds)		 Rate: 	11.718750 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.392000 (seconds)		 Rate: 	5.102041 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.256000 (seconds)
+[stats.h:225] 	Sampling time over 5 tokens:	0.000000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 462, num_prompt_tokens 462, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":11.7188,"decode_token_per_sec":5.10204,"prompt_tokens":3,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555565773,"inference_end_ms":1794555566421,"model_execution_start_ms":1794555566228,"model_execution_end_ms":1794555566421,"prompt_eval_end_ms":1794555566029,"first_token_ms":1794555566029,"aggregate_sampling_time_ms":0,"aggregate_model_execution_time_ms":7953,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ none[text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 462    Generated Tokens: 1
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		7.630000 (seconds)		 Rate: 	0.131062 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	7.482000 (seconds)		 Rate: 	61.748196 (tokens/second)
+[stats.h:207] 		Generated 1 tokens:	0.148000 (seconds)		 Rate: 	6.756757 (tokens/second)
+[stats.h:219] 	Time to first generated token:	7.482000 (seconds)
+[stats.h:225] 	Sampling time over 463 tokens:	0.001000 (seconds)
+[text_llm_runner.cpp:89] RSS after loading model: 3666.882812 MiB (0 if unsupported)
+[text_prefiller.cpp:121] Prefill token result numel(): 128256
+[text_llm_runner.cpp:201] Max new tokens resolved: 8, given pos_ 466, num_prompt_tokens 3, max_context_len 2048
+
+PyTorchObserver {"prefill_token_per_sec":61.7482,"decode_token_per_sec":6.75676,"prompt_tokens":462,"generated_tokens":1,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555566422,"inference_end_ms":1794555574052,"model_execution_start_ms":1794555573904,"model_execution_end_ms":1794555574051,"prompt_eval_end_ms":1794555573904,"first_token_ms":1794555573904,"aggregate_sampling_time_ms":1,"aggregate_model_execution_time_ms":7626,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
+ [text_llm_runner.cpp:228] RSS after prompt prefill: 3666.882812 MiB (0 if unsupported)
+3<|eot_id|>[text_token_generator.h:181] 
+Reached to the end of generation
+[text_llm_runner.cpp:258] RSS after finishing text generation: 3666.882812 MiB (0 if unsupported)
+[stats.h:175] 	Prompt Tokens: 3    Generated Tokens: 2
+[stats.h:181] 	Model Load Time:		9.842000 (seconds)
+[stats.h:188] 	Total inference time:		0.542000 (seconds)		 Rate: 	3.690037 (tokens/second)
+[stats.h:197] 		Prompt evaluation:	0.240000 (seconds)		 Rate: 	12.500000 (tokens/second)
+[stats.h:207] 		Generated 2 tokens:	0.302000 (seconds)		 Rate: 	6.622517 (tokens/second)
+[stats.h:219] 	Time to first generated token:	0.240000 (seconds)
+[stats.h:225] 	Sampling time over 5 tokens:	0.002000 (seconds)
+llama3_2_3b_spinquant        heldout  exact=0.475 exec_eq=0.475 auto_correct=0.325 SILENT_WRONG=0.050 to_operator=0.525 failed=0.100 lat=8171ms fields={'defect': 0.75, 'measure': 0.96, 'action': 0.93, 'op': 0.78, 'value': 1.0}
+
+
+PyTorchObserver {"prefill_token_per_sec":12.5,"decode_token_per_sec":6.62252,"prompt_tokens":3,"generated_tokens":2,"model_load_start_ms":1794554909496,"model_load_end_ms":1794554919338,"inference_start_ms":1794555574052,"inference_end_ms":1794555574594,"model_execution_start_ms":1794555574449,"model_execution_end_ms":1794555574594,"prompt_eval_end_ms":1794555574292,"first_token_ms":1794555574292,"aggregate_sampling_time_ms":2,"aggregate_model_execution_time_ms":8166,"SCALING_FACTOR_UNITS_PER_SECOND":1000}
++ echo LLM_DONE
+LLM_DONE

@@ -1,0 +1,254 @@
+{
+ "deeppcb": {
+  "n_feedback_boards": 250,
+  "n_calibration_boards": 250,
+  "n_test_boards": 500,
+  "labels_available": 748,
+  "before": {
+   "shown": {
+    "false_alarms_per_board": 0.178,
+    "shown_recall": 0.9487017099430018,
+    "false_alarms": 89,
+    "true_shown": 1498,
+    "n_gt": 1579,
+    "boards": 500
+   },
+   "gate": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.014647188635680361
+    ],
+    "false_reject_rate": 0.008,
+    "false_reject_rate_ci95": [
+     0.0009703097230388872,
+     0.028598347244961176
+    ],
+    "review_rate": 0.204,
+    "auto_decided_rate": 0.796,
+    "n_defective": 250,
+    "n_good": 250
+   }
+  },
+  "curve": [
+   {
+    "labels": 200,
+    "confirmed": 184,
+    "false_alarms_labelled": 16,
+    "false_alarms_per_board": 0.172,
+    "shown_recall": 0.9493350221659278,
+    "false_alarms": 86,
+    "true_shown": 1499,
+    "n_gt": 1579,
+    "boards": 500,
+    "gate": {
+     "alpha": 0.05,
+     "beta": 0.01,
+     "miss_rate": 0.0,
+     "miss_rate_ci95": [
+      0.0,
+      0.014647188635680361
+     ],
+     "false_reject_rate": 0.004,
+     "false_reject_rate_ci95": [
+      0.00010126610417905015,
+      0.022083865000633206
+     ],
+     "review_rate": 0.072,
+     "auto_decided_rate": 0.928,
+     "n_defective": 250,
+     "n_good": 250
+    }
+   },
+   {
+    "labels": 400,
+    "confirmed": 372,
+    "false_alarms_labelled": 28,
+    "false_alarms_per_board": 0.162,
+    "shown_recall": 0.9499683343888538,
+    "false_alarms": 81,
+    "true_shown": 1500,
+    "n_gt": 1579,
+    "boards": 500,
+    "gate": {
+     "alpha": 0.05,
+     "beta": 0.01,
+     "miss_rate": 0.0,
+     "miss_rate_ci95": [
+      0.0,
+      0.014647188635680361
+     ],
+     "false_reject_rate": 0.004,
+     "false_reject_rate_ci95": [
+      0.00010126610417905015,
+      0.022083865000633206
+     ],
+     "review_rate": 0.046,
+     "auto_decided_rate": 0.954,
+     "n_defective": 250,
+     "n_good": 250
+    }
+   },
+   {
+    "labels": 748,
+    "confirmed": 696,
+    "false_alarms_labelled": 52,
+    "false_alarms_per_board": 0.148,
+    "shown_recall": 0.9531348955034832,
+    "false_alarms": 74,
+    "true_shown": 1505,
+    "n_gt": 1579,
+    "boards": 500,
+    "gate": {
+     "alpha": 0.05,
+     "beta": 0.01,
+     "miss_rate": 0.0,
+     "miss_rate_ci95": [
+      0.0,
+      0.014647188635680361
+     ],
+     "false_reject_rate": 0.004,
+     "false_reject_rate_ci95": [
+      0.00010126610417905015,
+      0.022083865000633206
+     ],
+     "review_rate": 0.036,
+     "auto_decided_rate": 0.964,
+     "n_defective": 250,
+     "n_good": 250
+    }
+   }
+  ]
+ },
+ "mendeley": {
+  "n_feedback_boards": 19,
+  "n_calibration_boards": 19,
+  "n_test_boards": 27,
+  "labels_available": 157,
+  "before": {
+   "shown": {
+    "false_alarms_per_board": 2.2962962962962963,
+    "shown_recall": 0.9130434782608695,
+    "false_alarms": 62,
+    "true_shown": 189,
+    "n_gt": 207,
+    "boards": 27
+   },
+   "gate": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.12770286761543234
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     1.0
+    ],
+    "review_rate": 1.0,
+    "auto_decided_rate": 0.0,
+    "n_defective": 27,
+    "n_good": 0
+   }
+  },
+  "curve": [
+   {
+    "labels": 100,
+    "confirmed": 81,
+    "false_alarms_labelled": 19,
+    "false_alarms_per_board": 2.3703703703703702,
+    "shown_recall": 0.9178743961352657,
+    "false_alarms": 64,
+    "true_shown": 190,
+    "n_gt": 207,
+    "boards": 27,
+    "gate": {
+     "alpha": 0.05,
+     "beta": 0.01,
+     "miss_rate": 0.0,
+     "miss_rate_ci95": [
+      0.0,
+      0.12770286761543234
+     ],
+     "false_reject_rate": 0.0,
+     "false_reject_rate_ci95": [
+      0.0,
+      1.0
+     ],
+     "review_rate": 1.0,
+     "auto_decided_rate": 0.0,
+     "n_defective": 27,
+     "n_good": 0
+    }
+   },
+   {
+    "labels": 157,
+    "confirmed": 121,
+    "false_alarms_labelled": 36,
+    "false_alarms_per_board": 2.3703703703703702,
+    "shown_recall": 0.9178743961352657,
+    "false_alarms": 64,
+    "true_shown": 190,
+    "n_gt": 207,
+    "boards": 27,
+    "gate": {
+     "alpha": 0.05,
+     "beta": 0.01,
+     "miss_rate": 0.0,
+     "miss_rate_ci95": [
+      0.0,
+      0.12770286761543234
+     ],
+     "false_reject_rate": 0.0,
+     "false_reject_rate_ci95": [
+      0.0,
+      1.0
+     ],
+     "review_rate": 1.0,
+     "auto_decided_rate": 0.0,
+     "n_defective": 27,
+     "n_good": 0
+    }
+   }
+  ]
+ },
+ "hripcb": {
+  "n_feedback_boards": 61,
+  "n_calibration_boards": 61,
+  "n_test_boards": 123,
+  "labels_available": 311,
+  "before": {
+   "shown": {
+    "false_alarms_per_board": 1.2845528455284554,
+    "shown_recall": 0.9573770491803278,
+    "false_alarms": 158,
+    "true_shown": 584,
+    "n_gt": 610,
+    "boards": 123
+   },
+   "gate": {
+    "alpha": 0.05,
+    "beta": 0.01,
+    "miss_rate": 0.0,
+    "miss_rate_ci95": [
+     0.0,
+     0.030026577222757825
+    ],
+    "false_reject_rate": 0.0,
+    "false_reject_rate_ci95": [
+     0.0,
+     0.841886116991581
+    ],
+    "review_rate": 1.0,
+    "auto_decided_rate": 0.0,
+    "n_defective": 121,
+    "n_good": 2
+   }
+  },
+  "curve": []
+ }
+}

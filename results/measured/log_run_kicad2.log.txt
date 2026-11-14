@@ -1,0 +1,82 @@
++ pkill -f render_colab.sh
++ pkill -f kicad/render.py
++ sleep 3
++ rm -rf /content/pcb11
++ mkdir -p /content/pcb11
++ unzip -q -o /content/pcb_code11.zip -d /content/pcb11
++ cd /content/pcb11
++ export PYTHONPATH=/content/pcb11
++ PYTHONPATH=/content/pcb11
++ python training/kicad/render.py --out /content/kicad_out --work /content/kicad_work --retry-failed
+[1/66] swiftrax/Koalafications kept from the previous run
+[2/66] fordp2002/ZX21 kept from the previous run
+[3/66] jpconstantineau/ErgoTravel kept from the previous run
+[4/66] jpconstantineau/ErgoTravel kept from the previous run
+[5/66] aeonSolutions/AeonLabs-pcb-template-esp32-s3 skip tiles=0 mapping calibration weak (corr 0.00) (11s)
+[6/66] newdigate/teensy-eurorack kept from the previous run
+[7/66] mwrnd/QSFP_Breakout ok tiles=19  (33s)
+[8/66] JordanAceto/Phasor_II ok tiles=26  (78s)
+[9/66] mattvenn/basic-ecp5-pcb kept from the previous run
+[10/66] JordanAceto/micro_ox ok tiles=28  (131s)
+[11/66] wangyeee/OpenHardware kept from the previous run
+[12/66] wangyeee/OpenHardware kept from the previous run
+[13/66] shinyblink/ledstream kept from the previous run
+[14/66] shinyblink/ledstream kept from the previous run
+[15/66] SG-O/MiniFeedMaster kept from the previous run
+[16/66] openeew/openeew-sensor kept from the previous run
+[17/66] sourcebox/74hc165-breakout kept from the previous run
+[18/66] epchain/df-pill kept from the previous run
+[19/66] yaqwsx/Pinion ok tiles=26  (160s)
+[20/66] JordanAceto/josh_Ox_ribbon_synth ok tiles=31  (233s)
+[21/66] JordanAceto/josh_Ox_ribbon_synth ok tiles=30  (276s)
+[22/66] SG-O/MiniFeedPCB kept from the previous run
+[23/66] vul-os/sirboard kept from the previous run
+[24/66] vul-os/sirboard kept from the previous run
+[25/66] mbouyer/battery_monitor kept from the previous run
+[26/66] atoomnetmarc/IoT12 ok tiles=32  (314s)
+[27/66] botanicfields/kicad kept from the previous run
+[28/66] galopago/din-rail-circuits ok tiles=23  (336s)
+[29/66] galopago/din-rail-circuits ok tiles=15  (352s)
+[30/66] k0swe/mountaineer ok tiles=30  (380s)
+[31/66] mattdibi/redox-keyboard skip tiles=0 mapping calibration weak (corr 0.41) (401s)
+[32/66] hazels-garage/satpad ok tiles=25  (439s)
+[33/66] mbouyer/weatherstation ok tiles=30  (492s)
+[34/66] mbouyer/weatherstation ok tiles=22  (534s)
+[35/66] Qeteshpony/FP2800A-Tester ok tiles=25  (562s)
+[36/66] ArrestedLightning/mini-4ch-mixer kept from the previous run
+[37/66] Gekkio/misc-hardware kept from the previous run
+[38/66] Qeteshpony/AC-Controller ok tiles=28  (590s)
+[39/66] Gekkio/gb-hardware ok tiles=31  (632s)
+[40/66] siderakb/rp-micro ok tiles=11  (641s)
+[41/66] botanicfields/PCB-MBUS-AquesTalk-pico-LSI kept from the previous run
+[42/66] botanicfields/PCB-MBUS-AquesTalk-pico-LSI kept from the previous run
+[43/66] ChengminLi/AI-PCB-layout ok tiles=26  (687s)
+[44/66] mbouyer/canbus_autopilot ok tiles=26  (714s)
+[45/66] mbouyer/canbus_autopilot ok tiles=18  (731s)
+[46/66] PickledDog/rc-fabgl kept from the previous run
+[47/66] angelnu/esphome ok tiles=22  (751s)
+[48/66] carlosedp/PMOD1 skip tiles=0 clean render failed: unbalanced '(' (752s)
+[49/66] carlosedp/PMOD1 skip tiles=0 clean render failed: unbalanced '(' (753s)
+[50/66] aeonSolutions/AeonLabs-LDAD-Essentials-For-I2C-Sensors skip tiles=0 mapping calibration weak (corr 0.00) (761s)
+[51/66] k0swe/cm108b-eval kept from the previous run
+[52/66] k0swe/hs100b-eval kept from the previous run
+[53/66] stack-chan/stack-chan ok tiles=22  (782s)
+[54/66] rniwase/tsuraraGB ok tiles=12  (793s)
+[55/66] leomanangka/esp32-4-channel-relays ok tiles=26  (831s)
+[56/66] galopago/rak811-lora-adaptable-node kept from the previous run
+[57/66] Tectu/dc-load-simple ok tiles=21  (879s)
+[58/66] yu2924/XPS ok tiles=26  (919s)
+[59/66] yu2924/XPS ok tiles=26  (947s)
+[60/66] Qeteshpony/USB-C-Cable-Tester ok tiles=20  (967s)
+[61/66] mohamedyanis/STM32L0-ESP32-Breakout-Board ok tiles=18  (987s)
+[62/66] h7ga40/rp2040_trackball_mouse_pcb ok tiles=23  (1030s)
+[63/66] galopago/rak4200-lora-adaptable-node kept from the previous run
+[64/66] Qeteshpony/LED-Bar-Controller ok tiles=15  (1056s)
+[65/66] mbouyer/led_ceiling_light ok tiles=25  (1098s)
+[66/66] jvedder/Biploar-power-supply-KiCAD ok tiles=9  (1143s)
+done: 1428 tiles from 61/66 boards -> /content/kicad_out
++ tar czf /content/kicad_out.tgz -C /content kicad_out
++ ls -l /content/kicad_out.tgz
+-rw-r--r-- 1 root root 347495285 Nov 13 07:31 /content/kicad_out.tgz
++ echo KICAD_DONE
+KICAD_DONE

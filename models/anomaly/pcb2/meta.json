@@ -1,0 +1,1 @@
+{"design": "pcb2", "version": 1, "norm_scale": 1.818609595298767, "pixel_thr": 1.9265918731689453, "novelty_factor": 3.0, "input_size": 320, "arch": "resnet18", "history": [], "grid": [40, 40], "topk_frac": 0.01, "fg_status": "off", "has_fg_mask": false, "has_posnorm": false}

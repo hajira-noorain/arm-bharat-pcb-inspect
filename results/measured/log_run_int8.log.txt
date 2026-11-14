@@ -1,0 +1,72 @@
++ export MPLBACKEND=Agg
++ MPLBACKEND=Agg
++ E=/content/out6b
++ mkdir -p /content/out6b/data
++ ln -sfn /content/data/bare_yolo_v3 /content/out6b/data/bare_yolo
++ cd /content/pcb13
++ /content/etv/bin/python training/export_vision.py --work /content/out6b --yolo /content/out2/runs/y26n_v3/weights/best.pt --only detector
+Ultralytics 8.4.211 🚀 Python-3.12.3 torch-2.15.0+cu132 CPU (Intel Xeon CPU @ 2.20GHz)
+YOLO26n summary (fused): 121 layers, 2,392,165 parameters, 0 gradients, 5.4 GFLOPs
+
+[34m[1mPyTorch:[0m starting from '/content/out6b/models/vision/pcb_y26n.pt' with input shape (1, 3, 640, 640) BCHW and output shape(s) (1, 15, 8400) (5.2 MB)
+
+[34m[1mExecuTorch:[0m starting export with ExecuTorch 1.6.0+cu132...
+WARNING:executorch.exir.passes.convert_constant_dim_order_pass:Constant tensor 'model.23.anchors' has strides (1, 2), which are neither contiguous nor channels-last. to_edge stores it contiguous, so partitioners and delegates see the contiguous layout, not the strides in the model. Make it contiguous where it is created to avoid this change.
+[34m[1mExecuTorch:[0m export success ✅ 55.1s, saved as '/content/out6b/models/vision/pcb_y26n_executorch_model' (9.3 MB)
+
+Export complete (59.1s)
+Results saved to [1m/content/out6b/models/vision/pcb_y26n_executorch_model[0m
+Predict:         yolo predict task=detect model=/content/out6b/models/vision/pcb_y26n_executorch_model imgsz=640 
+Validate:        yolo val task=detect model=/content/out6b/models/vision/pcb_y26n_executorch_model imgsz=640 data=/content/data/bare_yolo_v3_aug/data.yaml 
+Visualize:       https://netron.app
+detector False {'pte': 'pcb_y26n_xnnpack.pte', 'bytes': 9790508, 'output_shape': [1, 15, 8400]}
+WARNING ⚠️ 'int8' is deprecated and will be removed in the future. Use 'quantize' instead.
+Ultralytics 8.4.211 🚀 Python-3.12.3 torch-2.15.0+cu132 CPU (Intel Xeon CPU @ 2.20GHz)
+YOLO26n summary (fused): 121 layers, 2,392,165 parameters, 0 gradients, 5.4 GFLOPs
+
+[34m[1mPyTorch:[0m starting from '/content/out6b/models/vision/pcb_y26n.pt' with input shape (1, 3, 640, 640) BCHW and output shape(s) (1, 15, 8400) (5.2 MB)
+[34m[1mExecuTorch:[0m collecting INT8 calibration images from 'data=/content/out6b/data/bare_yolo/data_container.yaml'
+[34m[1mval: [0mFast image access ✅ (ping: 0.0±0.0 ms, read: 1306.6±359.5 MB/s, size: 89.7 KB)
+[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 32 images, 0 backgrounds, 0 corrupt: 2% ──────────── 32/1214 87.9it/s 0.1s<13.4s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 128 images, 0 backgrounds, 0 corrupt: 10% ━─────────── 128/1214 340.2it/s 0.2s<3.2s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 221 images, 0 backgrounds, 0 corrupt: 18% ━━────────── 221/1214 517.2it/s 0.3s<1.9s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 355 images, 28 backgrounds, 0 corrupt: 29% ━━━╸──────── 355/1214 734.5it/s 0.4s<1.2s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 426 images, 28 backgrounds, 0 corrupt: 35% ━━━━──────── 426/1214 719.1it/s 0.5s<1.1s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 577 images, 59 backgrounds, 0 corrupt: 47% ━━━━━╸────── 577/1214 913.9it/s 0.6s<0.7s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 735 images, 102 backgrounds, 0 corrupt: 60% ━━━━━━━───── 735/1214 1.1Kit/s 0.7s<0.5s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 863 images, 144 backgrounds, 0 corrupt: 71% ━━━━━━━━╸─── 863/1214 1.1Kit/s 0.8s<0.3s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 988 images, 195 backgrounds, 0 corrupt: 81% ━━━━━━━━━╸── 988/1214 1.2Kit/s 0.9s<0.2s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 1096 images, 224 backgrounds, 0 corrupt: 90% ━━━━━━━━━━╸─ 1096/1214 1.1Kit/s 1.1s<0.1s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 1192 images, 253 backgrounds, 0 corrupt: 98% ━━━━━━━━━━━╸ 1192/1214 1.1Kit/s 1.2s<0.0s[K[34m[1mval: [0mScanning /content/data/bare_yolo_v3/labels/val... 1214 images, 265 backgrounds, 0 corrupt: 100% ━━━━━━━━━━━━ 1214/1214 1.0Kit/s 1.2s
+[34m[1mval: [0mNew cache created: /content/data/bare_yolo_v3/labels/val.cache
+
+[34m[1mExecuTorch:[0m starting export with ExecuTorch 1.6.0+cu132...
+WARNING:executorch.exir.passes.convert_constant_dim_order_pass:Buffer 'model.23.anchors' has strides (1, 2), which are neither contiguous nor channels-last. to_edge stores it contiguous, so partitioners and delegates see the contiguous layout, not the strides in the model. Make it contiguous where it is created to avoid this change.
+[34m[1mExecuTorch:[0m export success ✅ 1344.6s, saved as '/content/out6b/models/vision/pcb_y26n_executorch_model' (3.0 MB)
+
+Export complete (1352.6s)
+Results saved to [1m/content/out6b/models/vision/pcb_y26n_executorch_model[0m
+Predict:         yolo predict task=detect model=/content/out6b/models/vision/pcb_y26n_executorch_model imgsz=640 
+Validate:        yolo val task=detect model=/content/out6b/models/vision/pcb_y26n_executorch_model imgsz=640 data=/content/data/bare_yolo_v3_aug/data.yaml 
+Visualize:       https://netron.app
+detector True {'pte': 'pcb_y26n_xnnpack_int8.pte', 'bytes': 3168300, 'output_shape': [1, 15, 8400]}
++ cat /content/out6b/results/export_vision.json
+{
+ "detector_fp32": {
+  "pte": "pcb_y26n_xnnpack.pte",
+  "bytes": 9790508,
+  "output_shape": [
+   1,
+   15,
+   8400
+  ]
+ },
+ "detector_int8": {
+  "pte": "pcb_y26n_xnnpack_int8.pte",
+  "bytes": 3168300,
+  "output_shape": [
+   1,
+   15,
+   8400
+  ]
+ }
+}+ ls -la /content/out6b/models/vision
+total 18008
+drwxr-xr-x 3 root root    4096 Nov 13 08:11 .
+drwxr-xr-x 3 root root    4096 Nov 13 07:47 ..
+drwxr-xr-x 2 root root    4096 Nov 13 08:11 pcb_y26n_executorch_model
+-rw-r--r-- 1 root root 5462277 Nov 13 07:47 pcb_y26n.pt
+-rw-r--r-- 1 root root 3168300 Nov 13 08:11 pcb_y26n_xnnpack_int8.pte
+-rw-r--r-- 1 root root 9790508 Nov 13 07:48 pcb_y26n_xnnpack.pte
++ echo INT8_DONE
+INT8_DONE
