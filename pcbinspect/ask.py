@@ -12,6 +12,8 @@ import time
 
 from .grounding import NUM_RE, extract_json
 
+DIGITS_RE = re.compile(r"\d+(?:\.\d+)?")
+
 QUERIES = {
     "defect_counts": {
         "desc": "how many of each defect type were found in the last N hours",
@@ -162,6 +164,7 @@ def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
                   f"Question: {question}\nRows: {json.dumps(rows, default=str)}", "")
         try:
             allowed = {round(float(x), 2) for x in NUM_RE.findall(json.dumps(rows, default=str))}
+            seen = {round(float(x), 2) for x in DIGITS_RE.findall(json.dumps(rows, default=str))}
             if scored:      # a number that is not in the rows cannot be written at all
                 from .grounding import number_filter_values
                 backend.reset()
@@ -169,7 +172,8 @@ def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
                 text = backend.write(max_new_tokens, stop=("\n\n",), allow=number_filter_values(allowed)).strip()
             else:
                 text = backend.generate(p, max_new_tokens).text.strip().split("<|eot_id|>")[0].strip()
-            bad = [m for m in NUM_RE.findall(text) if round(float(m), 2) not in allowed]
+            # every run of digits counts, also one glued to a word ("2boards"); a board ID from the rows may stay
+            bad = [m for m in DIGITS_RE.findall(text) if round(float(m), 2) not in allowed | seen]
             if text and not bad:
                 out["answer"], out["summary_by"] = text, "llama"
             else:

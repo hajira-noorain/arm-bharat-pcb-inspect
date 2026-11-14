@@ -85,3 +85,22 @@ def test_llama_summary_with_invented_numbers_is_rejected(tmp_path):
     out = ask.answer("yield?", s.conn, backend=LyingBackend())
     assert out["route"] == "llama" and out["summary_by"] == "template"
     assert "57" in out["summary_rejected"]
+
+
+class GluedNumberBackend(LyingBackend):
+    """Seen on the station: the constrained decoder let '2' start the allowed '24', then ended the number with
+    'boards'. '2boards' has no word boundary, so a word-bounded number check never saw the 2."""
+    def generate(self, prompt, n):
+        from pcbinspect.advisor import GenResult
+        self.calls += 1
+        if self.calls == 1:
+            return GenResult('yield", "params": {"hours": 2}}', 1)
+        return GenResult("2boards failed today.", 1)
+
+
+def test_a_number_glued_to_a_word_is_still_checked(tmp_path):
+    s = Store(tmp_path)
+    s.log_inspection(Inspection("B-1", "deeppcb", "", [], 0.0, "PASS", 0.05, None), None)
+    out = ask.answer("how many boards failed today?", s.conn, backend=GluedNumberBackend())
+    assert out["summary_by"] == "template" and "2" in out["summary_rejected"]
+    assert "2boards" not in out["answer"]
