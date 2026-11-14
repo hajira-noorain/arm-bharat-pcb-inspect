@@ -30,6 +30,7 @@ The same station also checks assembled boards, as a second and simpler path: it 
 | Plain-English rules compiled by Llama and checked | Section 5.3 |
 | Llama advice that cannot invent instructions | Section 6 |
 | Everything on the Arm CPU, offline | Section 7 |
+| The operator's screen, decisions and the log Llama writes | Section 8 |
 | Learns new boards and from operator feedback | Section 9 |
 | Every number measured, none projected (speed, memory and power on the Pi are marked pending until measured there) | `docs/RESULTS.md` |
 
