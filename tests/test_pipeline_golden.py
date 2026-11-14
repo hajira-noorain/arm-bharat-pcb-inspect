@@ -169,3 +169,20 @@ def test_golden_first_runs_the_detector_only_where_the_golden_board_differs(tmp_
     ins.designs["t"].detector_tiles = "all"
     ins.inspect(shot(g, 7), "t", log=False, golden=g)
     assert ins.detector.calls[-1] == n_all
+
+
+def test_pieces_of_one_defect_from_the_golden_comparison_are_shown_as_one_finding():
+    from pcbinspect.pipeline import Candidate, merge_fragments
+    det = Candidate("short", "detector", (100, 100, 130, 130), 0.95, 0.95)
+    chain = [Candidate("short", "golden", (128, 105, 134, 112), 0.99, 0.99),       # touching the detection
+             Candidate("short", "golden", (300, 300, 306, 306), 0.99, 0.99),       # a separate place
+             Candidate("short", "golden", (310, 302, 316, 309), 0.98, 0.98),       # a piece of that one
+             Candidate("open", "golden", (305, 300, 311, 306), 0.97, 0.97),        # another type: kept
+             Candidate("unknown_anomaly", "anomaly", (101, 101, 120, 120), 0.6, 0.6)]
+    out = merge_fragments([det] + chain, mm_per_px=0.02)                           # 0.5 mm = 25 px
+    assert [(c.cls, c.source) for c in out] == [("short", "detector"), ("unknown_anomaly", "anomaly"),
+                                                ("short", "golden"), ("open", "golden")]
+    merged = next(c for c in out if c.cls == "short" and c.source == "golden")
+    assert merged.bbox == (300, 300, 316, 309)
+    far = Candidate("short", "golden", (500, 500, 506, 506), 0.9, 0.9)
+    assert len(merge_fragments([det, far], mm_per_px=0.02)) == 2

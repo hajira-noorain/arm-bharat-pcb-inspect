@@ -44,7 +44,8 @@ def channels(b, rng):
     """Candidate lists [(bbox, score, cls)] per channel for one board."""
     det = [(tuple(d["bbox"]), d["conf"], d["cls"]) for d in b["dets"]]
     test = cv2.imread(b["path"])
-    golden = recapture(cv2.imread(b["template"]), rng)
+    # a good DeepPCB board IS its own template: its golden is a re-capture of the same pattern
+    golden = recapture(cv2.imread(b.get("template") or b["path"]), rng)
     dc, info = diff_candidates(test, golden)
     diff = [(c.bbox, c.score, c.cls) for c in dc]
     fused = [(c["bbox"], c["conf"], c["cls"]) for c in fuse(
@@ -64,7 +65,9 @@ def main():
     splits = {}
     for sp in ("cal", "test"):
         boards = [b for b in json.loads((res / f"bare_dets_{sp}_{a.tag}.json").read_text())
-                  if b["source"] == a.design and b.get("template")]
+                  if b["source"] == a.design and (b.get("template") or b["good"])]
+        # good boards must be in: without them the FAIL threshold has nothing to be calibrated on and comes out
+        # infinite, so in golden mode no board would ever be failed automatically
         out = []
         for b in boards:
             ch, info = channels(b, rng)
@@ -115,6 +118,13 @@ def main():
                 "typed_correct_share_of_found": typed / max(found, 1),
                 "false_calls_per_board": fa / max(len(test), 1),
                 "good_boards_flagged": (float(np.mean([bscore(b) >= th.lam for b in goods])) if goods else None),
+                "tau": th.tau if np.isfinite(th.tau) else None,
+                "verdicts": {
+                    "defective_passed": float(np.mean([th.verdict(bscore(b)) == "PASS" for b in test if not b["good"]])),
+                    "defective_failed": float(np.mean([th.verdict(bscore(b)) == "FAIL" for b in test if not b["good"]])),
+                    "good_failed": float(np.mean([th.verdict(bscore(b)) == "FAIL" for b in goods])) if goods else None,
+                    "good_passed": float(np.mean([th.verdict(bscore(b)) == "PASS" for b in goods])) if goods else None,
+                    "sent_to_person": float(np.mean([th.verdict(bscore(b)) == "REVIEW" for b in test]))},
                 "n_defects": total, "n_boards": len(test)}
         report["channels"][name] = rows
         r = rows["alpha_0.05"]

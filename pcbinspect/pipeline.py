@@ -99,6 +99,33 @@ def _overlaps(a, b) -> bool:
     return not (a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1])
 
 
+FRAGMENT_GAP_MM = 0.5     # golden-comparison pieces of one defect closer than this are shown as one finding
+
+
+def merge_fragments(cands: list, mm_per_px: float | None) -> list:
+    """One defect often reaches the golden comparison as several pieces (a bridge between two thin traces
+    breaks into a chain of small regions). For DISPLAY only, golden-only pieces of the same type that touch or
+    lie within FRAGMENT_GAP_MM of each other, or of a detection of the same type, become one finding: the
+    strongest one, with a box around all of them. The verdict and the board score were decided before this and
+    are not changed."""
+    gap = FRAGMENT_GAP_MM / mm_per_px if mm_per_px else 12.0
+
+    def near(a, b):
+        return not (a[2] + gap < b[0] or b[2] + gap < a[0] or a[3] + gap < b[1] or b[3] + gap < a[1])
+    out: list = []
+    for c in sorted(cands, key=lambda c: (c.source == "golden", -c.conf)):   # detections first, strongest first
+        if c.source == "golden":
+            host = next((o for o in out if o.cls == c.cls and o.source in ("golden", "detector")
+                         and near(o.bbox, c.bbox)), None)
+            if host is not None:
+                if host.source == "golden":     # grow a golden finding's box to cover its pieces
+                    host.bbox = (min(host.bbox[0], c.bbox[0]), min(host.bbox[1], c.bbox[1]),
+                                 max(host.bbox[2], c.bbox[2]), max(host.bbox[3], c.bbox[3]))
+                continue
+        out.append(c)
+    return out
+
+
 class Inspector:
     def __init__(self, root: Path, designs: dict[str, Design], detector: BareDetector | None,
                  feature_fn: FeatureFn | None, store=None, light=None,
@@ -345,6 +372,7 @@ class Inspector:
             c for c in a.candidates if c.conf >= show_thr and c.source != "anomaly-image"]
         if verdict != "PASS":
             shown += a.parts_only
+        shown = merge_fragments(shown, a.mm_per_px)
 
         t = time.perf_counter()
         h, w = bgr.shape[:2]
