@@ -9,6 +9,7 @@ dependencies = [
     "opencv-python-headless",
     "pyyaml",
     "fastapi",
+    "python-multipart",
     "uvicorn",
     "scikit-learn",
 ]

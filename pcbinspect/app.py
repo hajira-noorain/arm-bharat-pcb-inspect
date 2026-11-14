@@ -12,6 +12,7 @@ import re
 import logging
 import math
 import queue
+import secrets
 import threading
 import time
 from collections import OrderedDict
@@ -20,7 +21,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import BaseModel
 
@@ -28,7 +30,7 @@ from . import ask as ask_mod
 from .advisor import Advisor
 from .anomaly import enrol
 from .camera import ReplayCamera, open_camera
-from .demo import load_samples, match_known
+from .demo import MAX_UPLOAD_BYTES, UploadError, decode_upload, load_samples, match_known
 from .gpio import StackLight
 from .kb import default_kb
 from .learning import FeedbackBuffer, crop_embedding
@@ -39,6 +41,7 @@ from .spec import Rule, capability, keyword_compile, render as render_rule, same
 from .store import Store
 
 log = logging.getLogger("pcbinspect")
+UPLOADS_KEPT = 32     # demo uploads kept in memory (never written to the log), oldest dropped first
 CACHE_FRAMES = 6      # full frames kept for feedback/overlay (a 12 MP frame is ~36 MB; Llama needs the RAM)
 STATIC = Path(__file__).resolve().parent / "static"
 DISCLOSURE = ("Demo on test boards. Online copy runs on a shared cloud CPU, not the Raspberry Pi; "
@@ -77,6 +80,7 @@ class Station:
         self.lock = threading.Lock()                           # one inspection at a time
         self.waiting = 0                                       # inspections waiting for or holding the lock
         self.demo = bool(cfg.get("demo"))
+        self.uploads: OrderedDict[str, dict] = OrderedDict()  # demo uploads: token -> result, memory only
         self.llm_lock = threading.Lock()                       # one Llama generation at a time
         self.spec_compiler = None                              # loaded on first use (setup-time task)
         self._load_customer_rules()
@@ -178,6 +182,9 @@ class Station:
     def _advice_worker(self):
         while True:
             iid, record, design = self.jobs.get()
+            if isinstance(iid, str):            # a demo upload: advice goes into memory, never into the log
+                self._advise_upload(iid, record, design)
+                continue
             try:
                 with self.llm_lock:
                     t0 = time.perf_counter()
@@ -239,6 +246,23 @@ class Station:
             if isinstance(self.camera, ReplayCamera):
                 self.camera.next()
 
+    def _advise_upload(self, token: str, record: dict, design: str):
+        try:
+            with self.llm_lock:
+                t0 = time.perf_counter()
+                adv = self.advisor.advise(record, None)
+                ms = (time.perf_counter() - t0) * 1e3
+        except Exception as exc:    # noqa: BLE001
+            log.exception("advice failed for upload")
+            adv, ms = self.advisor._template(record, [f"Llama could not answer ({type(exc).__name__})"]), 0.0
+        g = adv.gen
+        r = self.uploads.get(token)
+        if r is not None:
+            r["advice"] = [{"advice": adv.to_json(), "backend": adv.backend, "model": adv.model, "latency_ms": ms,
+                            "decode_tps": g.decode_tps if g else None, "grounded": adv.grounded,
+                            "rejected_reason": "; ".join(adv.rejected_reasons) or None}]
+            r["advice_pending"] = False
+
     # ---------------- demo mode: held-out test boards ----------------
     def samples(self) -> dict:
         """The test boards a visitor can pick, by file name. Only these names are ever opened."""
@@ -271,6 +295,52 @@ class Station:
         else:
             r["known"] = {"good": s.good, "verdict_agrees": (r["verdict"] == "PASS") == s.good}
         return r
+
+    def inspect_upload(self, data: bytes, alpha: float | None) -> dict:
+        """A visitor's own photo: judged by one design's detector only (there is no reference board for it), so
+        it is never passed automatically, sizes are in pixels, and nothing is written to the log."""
+        if not self.demo:
+            raise HTTPException(404)
+        design = self.cfg.get("upload_design", "deeppcb")
+        if design not in self.designs:
+            raise HTTPException(503, f"uploads need the design {design}")
+        try:
+            bgr = decode_upload(data)
+        except UploadError as e:
+            raise HTTPException(e.status, e.message) from None
+        self.waiting += 1
+        try:
+            with self.lock:
+                insp, _, _ = self.inspector.inspect(bgr, design, "upload", alpha, log=False, golden=None,
+                                                    force_review="not calibrated for this board", use_golden=False)
+        finally:
+            self.waiting -= 1
+        token = secrets.token_urlsafe(16)
+        defects = []
+        for i, d in enumerate(insp.defects):
+            x1, y1, x2, y2 = (int(v) for v in d.bbox)
+            defects.append({"id": i + 1, "defect_key": d.id, "cls": d.cls, "name": self.kb.display_name(d.cls),
+                            "x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": d.confidence,
+                            "size_px": max(x2 - x1, y2 - y1), "size_mm": None, "width_mm": None,
+                            "location": d.location, "severity": d.severity, "ipc": d.ipc,
+                            "severity_reason": d.severity_reason})
+        self.uploads[token] = {
+            "upload": True, "token": token, "uncalibrated": True, "board_id": "your photo", "design": design,
+            "verdict": "REVIEW", "defects": defects, "advice": [], "advice_pending": bool(defects),
+            "latency": insp.latency_ms, "gate": None, "check_reason": "not calibrated for this board",
+            "evidence": insp.model_versions.get("evidence"),
+            "jpg": cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, 88])[1].tobytes()}
+        while len(self.uploads) > UPLOADS_KEPT:
+            self.uploads.popitem(last=False)
+        if defects:
+            self.jobs.put((token, insp.to_llm_record(), design))
+        return self.upload_json(token)
+
+    def upload_json(self, token: str) -> dict:
+        r = self.uploads.get(token)
+        if r is None:
+            raise HTTPException(404, "this result has expired")
+        return {k: v for k, v in r.items() if k != "jpg"}
 
     def sample_thumb(self, file: str) -> bytes:
         s = self.samples().get(file)
@@ -888,6 +958,28 @@ def create_app(cfg: dict) -> FastAPI:
         if req.sample is not None:
             return st.inspect_sample(req.sample, req.alpha)
         return st.inspect(req.design, req.alpha, req.board_id)
+
+    @app.post("/api/inspect/upload")
+    async def inspect_upload(request: Request):
+        if not st.demo:
+            raise HTTPException(404)
+        form = await request.form()
+        f = form.get("file")
+        if f is None or not hasattr(f, "read"):
+            raise HTTPException(400, "send the photo as the form field 'file'")
+        data = await f.read(MAX_UPLOAD_BYTES + 1)
+        return await run_in_threadpool(st.inspect_upload, data, None)
+
+    @app.get("/api/upload/{token}.jpg")
+    def upload_image(token: str):
+        r = st.uploads.get(token)
+        if r is None:
+            raise HTTPException(404)
+        return Response(r["jpg"], media_type="image/jpeg")
+
+    @app.get("/api/upload/{token}")
+    def upload_result(token: str):
+        return st.upload_json(token)
 
     @app.get("/api/samples")
     def samples():

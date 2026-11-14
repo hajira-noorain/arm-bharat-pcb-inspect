@@ -39,7 +39,8 @@ def taught_client(tmp_path_factory):
                             recapture(cut, rng)]):
         cv2.imwrite(str(boards / f"b{i}.png"), im)
     (root / "designs").mkdir()
-    c = _client({**BASE_CFG, "root": str(root), "teach_windows": 30, "teach_good": 20, "demo": True})
+    c = _client({**BASE_CFG, "root": str(root), "teach_windows": 30, "teach_good": 20, "demo": True,
+                 "upload_design": "demo-board"})
     for _ in range(3):
         assert c.post("/api/teach/capture", json={"name": "demo-board"}).json()["ok"]
     assert c.post("/api/teach/finish", json={"name": "demo-board", "mm_per_px": 0.025}).json()["running"]
@@ -114,3 +115,59 @@ def test_a_new_inspection_does_not_wait_for_the_previous_advice(taught_client, m
     took = time.perf_counter() - t0
     gate.set()
     assert took < 4.0
+
+
+def _jpeg(im):
+    return cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 90])[1].tobytes()
+
+
+def _upload(client, data, name="board.jpg", ctype="image/jpeg"):
+    return client.post("/api/inspect/upload", files={"file": (name, data, ctype)})
+
+
+def test_upload_is_inspected_and_never_logged(taught_client):
+    st = taught_client.app.state.station
+    n_before = st.store.conn.execute("SELECT COUNT(*) FROM inspections").fetchone()[0]
+    files_before = sorted((st.data / "images").rglob("*"))
+    r = _upload(taught_client, _jpeg(photo(size=800)))
+    assert r.status_code == 200, r.text
+    p = r.json()
+    assert p["verdict"] == "REVIEW" and p["uncalibrated"] is True and p["upload"] is True and p["token"]
+    assert all(d["size_mm"] is None and d["size_px"] > 0 for d in p["defects"])
+    assert st.store.conn.execute("SELECT COUNT(*) FROM inspections").fetchone()[0] == n_before
+    assert sorted((st.data / "images").rglob("*")) == files_before
+    img = taught_client.get(f"/api/upload/{p['token']}.jpg")
+    assert img.status_code == 200 and img.headers["content-type"] == "image/jpeg"
+
+
+def test_upload_rejects_non_images_and_oversize(taught_client):
+    assert _upload(taught_client, b"just text", "a.txt", "text/plain").status_code == 400
+    assert _upload(taught_client, b"\xff\xd8\xff" + b"0" * 10_000_000).status_code == 413
+    gif = b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+    assert _upload(taught_client, gif, "a.gif", "image/gif").status_code == 400
+
+
+def test_unknown_upload_token_is_404(taught_client, plain_client):
+    assert taught_client.get("/api/upload/abc").status_code == 404
+    assert taught_client.get("/api/upload/abc.jpg").status_code == 404
+    assert _upload(plain_client, _jpeg(photo(size=400))).status_code == 404
+
+
+def test_upload_advice_arrives_in_memory(taught_client):
+    """Advice for an upload is written into the in-memory result, never into the log. (The test station has no
+    detector, so the advice job is fed a real defect record for the upload's token.)"""
+    st = taught_client.app.state.station
+    n_advice = st.store.conn.execute("SELECT COUNT(*) FROM advice").fetchone()[0]
+    p = _upload(taught_client, _jpeg(photo(size=600))).json()
+    record = {"board_id": "upload", "design": "demo-board", "verdict": "REVIEW", "defects": [
+        {"id": "D1", "type": "open", "severity": "critical", "confidence": 0.9, "size_mm": None,
+         "location": "centre", "ipc": {}}]}
+    st.uploads[p["token"]]["advice_pending"] = True
+    st.jobs.put((p["token"], record, "demo-board"))
+    for _ in range(60):
+        p = taught_client.get(f"/api/upload/{p['token']}").json()
+        if p["advice"]:
+            break
+        time.sleep(0.5)
+    assert p["advice"] and p["advice"][0]["advice"]["steps"] and p["advice_pending"] is False
+    assert st.store.conn.execute("SELECT COUNT(*) FROM advice").fetchone()[0] == n_advice

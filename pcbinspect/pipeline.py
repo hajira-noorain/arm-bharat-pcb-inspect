@@ -337,13 +337,15 @@ class Inspector:
     def inspect(self, bgr: np.ndarray, design: str, board_id: str | None = None,
                 alpha: float | None = None, log: bool = True,
                 golden: np.ndarray | None = None, force_review: str | None = None,
-                capture_info: dict | None = None) -> tuple[Inspection, Analysis, int | None]:
+                capture_info: dict | None = None,
+                use_golden: bool = True) -> tuple[Inspection, Analysis, int | None]:
         """force_review: a reason why this capture cannot be trusted (blur, glare, a lighting shift
         outside the calibrated envelope). A board that would PASS goes to a person instead: the
         miss-rate guarantee only holds for captures like the calibration ones."""
         t_all = time.perf_counter()
         d = self.designs[design]
-        golden = golden if golden is not None else self.golden_for(design)
+        if golden is None and use_golden:     # use_golden=False: a photo of some other board (demo upload)
+            golden = self.golden_for(design)
         a = self.analyse(bgr, design, golden=golden)
         if golden is not None and not a.golden_used and design in self.gates_golden:
             # This design is judged WITH its golden board. If the comparison was refused (board shifted,

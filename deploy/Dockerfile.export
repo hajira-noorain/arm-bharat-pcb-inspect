@@ -15,6 +15,6 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
     hydra-core omegaconf numpy opencv-python-headless pyyaml
 
 # station runtime deps too, so the same image can host the app on x86 for development
-RUN pip install --no-cache-dir fastapi uvicorn psutil scikit-learn faiss-cpu scipy reportlab
+RUN pip install --no-cache-dir fastapi python-multipart uvicorn psutil scikit-learn faiss-cpu scipy reportlab
 
 WORKDIR /repo

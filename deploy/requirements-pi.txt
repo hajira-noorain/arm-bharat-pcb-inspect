@@ -6,6 +6,7 @@ scipy
 opencv-python-headless
 pyyaml
 fastapi
+python-multipart          # photo upload in demo mode
 uvicorn
 scikit-learn
 faiss-cpu
