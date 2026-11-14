@@ -181,6 +181,8 @@ textarea { font: inherit; border: 1px solid #AFC0B9; border-radius: 8px; padding
   .inspect-dock { left: 12px; right: 12px; bottom: 12px; }
   #inspect { width: 100%; }
 }
+  tr.open-row { cursor: pointer; }
+  tr.open-row:hover, tr.open-row:focus-visible { background: rgba(0, 0, 0, 0.05); outline: none; }
 </style>
 </head>
 <body>
@@ -779,8 +781,21 @@ $("#rule-list").addEventListener("click", async (ev) => {
 
 async function loadLog() {
   await loadState();
-  $("#log-body").innerHTML = state.recent.map((r) => `<tr><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? `${r.final_verdict === "PASS" ? "passed" : "failed"}${r.decided_by ? ` by ${esc(r.decided_by)}` : ""}${r.decision_reason ? `: ${esc(r.decision_reason)}` : ""}` : ""}</td></tr>`).join("");
+  $("#log-body").innerHTML = state.recent.map((r) => `<tr class="open-row" tabindex="0" data-id="${r.id}" title="Open this board"><td>${r.id}</td><td>${new Date(r.ts * 1000).toLocaleString()}</td><td>${esc(r.board_id)}</td><td>${esc(r.design)}</td><td class="v-${r.verdict}">${r.verdict === "REVIEW" ? "CHECK" : r.verdict}</td><td>${r.final_verdict ? `${r.final_verdict === "PASS" ? "passed" : "failed"}${r.decided_by ? ` by ${esc(r.decided_by)}` : ""}${r.decision_reason ? `: ${esc(r.decision_reason)}` : ""}` : ""}</td></tr>`).join("");
 }
+
+// a row in the log reopens that board on the Inspect screen (picture, findings, advice, decision)
+async function openLogged(id) {
+  const r = await api(`/api/inspection/${id}`).catch((e) => { toast(e.message); return null; });
+  if (!r) return;
+  document.querySelector('[data-tab="inspect"]').click();
+  current = r; showInspection(r, false);
+}
+$("#log-body").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr) openLogged(tr.dataset.id); });
+$("#log-body").addEventListener("keydown", (e) => {
+  const tr = e.target.closest("tr[data-id]");
+  if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openLogged(tr.dataset.id); }
+});
 
 loadState().catch((e) => toast(`Station not reachable: ${e.message}`));
 setInterval(() => loadState().catch(() => {}), 15000);

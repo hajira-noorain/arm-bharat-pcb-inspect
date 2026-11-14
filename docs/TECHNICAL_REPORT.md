@@ -406,9 +406,33 @@ What is known today is from an x86 development host and is labelled as such wher
 
 **Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
 
-## 8. Logging and traceability
+## 8. The operator's screen and the log
 
-SQLite in WAL mode holds inspections, defects with their measurements and IPC results, operator decisions, every piece of advice (model, grounding result, rejection reason, speed), feedback events (undoable), model versions, eye-test results, customer rules and drift alerts. Images are stored by content hash. Each inspection and its defects are written in one transaction *before* the stack light changes, so a power cut cannot lose a verdict an operator has seen. CSV export is one click.
+The dashboard is a web page served by the Pi; a phone or laptop on the Pi's own hotspot opens it, with no internet. The operator sees three things, in this order: the verdict, what is wrong, and what to do.
+
+![A board the station is not sure about: CHECK, four findings, Llama's advice](img/dashboard_check.png)
+
+*Captured from the station running from the Pi bundle (`deploy/make_bundle.py`) with its own models on a held-out DeepPCB board, in replay mode on a laptop. The verdict took 251 ms; the advice, written afterwards by Llama 3.2 3B on ExecuTorch, took 24.9 s on the laptop's CPU (Pi timings are measured separately, section 7).*
+
+- **The verdict** fills the top of the screen: PASS (green), FAIL (red) or CHECK (amber, "look at this board yourself, then press Pass or Fail"), with the board number, and the same colour on the stack light. The line under it says how long the verdict took and what the thresholds were calibrated on.
+- **What is wrong**: one card per finding with its name, size in millimetres, place on the board, confidence, the result for IPC Class 1, 2 and 3, and the measurement behind it ("0.167 mm nick in a 1.91 mm conductor: 9% of the width lost"). Confirm defect and False alarm feed the learning loop (section 9).
+- **What to do**: Llama's summary, then for each defect the action and likely cause in the knowledge base's own words, with their IDs and the process step. The footer says who wrote it and how long it took, or that Llama's answer was refused and why. The operator can mark the advice useful or not.
+- **Deciding a CHECK board**: Pass board or Fail board, with an optional reason; the operator's name (top bar) is required and stored with the decision.
+
+![A good board: PASS](img/dashboard_pass.png)
+
+**The log.** Every inspection is written to SQLite (WAL mode) in one transaction *before* the stack light changes, so a power cut cannot lose a verdict an operator has seen. It holds the defects with their measurements and IPC results, operator decisions with name and reason, every piece of advice (model, grounding result, rejection reason, speed), feedback events (undoable), model versions, eye-test results, customer rules and drift alerts. Images are stored by content hash. The Log tab lists recent boards; clicking one reopens it with its picture, findings and advice.
+
+![The Log tab](img/dashboard_log.png)
+
+**The log entry Llama writes.** "Download all as CSV" gives one row per defect, and each row carries Llama's summary for that board and who wrote it. The rows for the board above:
+
+| Board | Verdict | Defect | Type | Severity | Size (mm) | Place | Log note | Note by |
+|---|---|---|---|---|---|---|---|---|
+| B00011 | CHECK | D1 | open | critical | 2.50 | middle-left | D1 and D2 defects are likely related to phototool cleanliness, while D3 and D4 defects are related to resist and etching processes. | llama-executorch |
+| B00011 | CHECK | D2 | pin hole | minor | 0.90 | top-left | (same note) | llama-executorch |
+
+When the summary was refused (section 6), the note is the knowledge base's standard sentence and "note by" says so.
 
 ## 9. Learning during use, safely
 
