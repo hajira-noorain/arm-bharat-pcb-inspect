@@ -142,6 +142,36 @@ def _normalise_id(value, allowed: set[str], ordered: list[str] | None = None):
     return value
 
 
+CLAUSE_RE = re.compile(r"[.;]|,?\s+(?:while|whereas|but)\s+|,\s+and\s+(?=D\d)", re.I)
+HANDLING_RE = re.compile(r"\bhandling\b", re.I)
+PROCESS_RE = re.compile(r"\bprocess(?:-related| related| issues?| causes?| faults?| problems?)\b", re.I)
+
+
+def attribution_conflicts(summary: str, steps: list[dict], kb: KnowledgeBase) -> list[str]:
+    """The summary must not blame handling where the chosen cause is a process step, or the process where the
+    chosen cause is handling: 'D2 and D3 may be related to handling' when both causes are imaging steps is
+    exactly the kind of sentence an operator would act on. Checked clause by clause, per defect id."""
+    step_of = {s["defect"]: kb.by_id.get(s["cause"], {}).get("step", "") for s in steps}
+    out = []
+    for clause in CLAUSE_RE.split(summary):
+        if not clause:
+            continue
+        ids = [i for i in re.findall(r"\bD\d+\b", clause) if i in step_of]
+        says_handling, says_process = bool(HANDLING_RE.search(clause)), bool(PROCESS_RE.search(clause))
+        if says_handling == says_process:            # neither, or both in one clause: nothing to test
+            continue
+        targets = ids or list(step_of)               # no id named: the clause speaks for the whole board
+        for i in targets:
+            is_handling = step_of[i] == "handling"
+            if says_handling and not is_handling and (ids or not any(v == "handling" for v in step_of.values())):
+                out.append(f"summary blames handling for {i}, but the chosen cause is a {step_of[i]} step")
+                break
+            if says_process and is_handling and (ids or all(v == "handling" for v in step_of.values())):
+                out.append(f"summary blames the process for {i}, but the chosen cause is handling")
+                break
+    return out
+
+
 def check(raw_text: str, record: dict, kb: KnowledgeBase,
           extra_numbers: list[float] | None = None) -> GroundingResult:
     """extra_numbers: other facts given to the model in the prompt (e.g. history counts)."""
@@ -212,6 +242,8 @@ def check(raw_text: str, record: dict, kb: KnowledgeBase,
                     continue
                 reasons.append(f"summary mentions '{w}' but no {cls} was found")
                 break
+
+    reasons += attribution_conflicts(summary, clean_steps, kb)
 
     if reasons:
         return GroundingResult(False, None, reasons)

@@ -259,3 +259,27 @@ def test_prompt_contains_only_present_defect_options(kb):
 def test_template_orders_by_severity(kb):
     t = template_advice({**RECORD, "defects": RECORD["defects"][::-1]}, kb)
     assert t["steps"][0]["defect"] == "D1"
+
+
+def test_the_summary_may_not_blame_handling_where_the_chosen_cause_is_a_process_step(kb):
+    from pcbinspect.grounding import attribution_conflicts
+    steps = [{"defect": "D1", "cause": "OPEN-C2", "action": "OPEN-A1"},        # imaging
+             {"defect": "D2", "cause": "OPEN-C4", "action": "OPEN-A1"}]        # handling
+    seen = "D1 is likely process-related, while D2 and D1 may be related to handling or local accidents."
+    assert attribution_conflicts(seen, steps, kb)                              # D1 is not handling
+    ok = "D1 is likely process-related, while D2 is likely a handling scratch."
+    assert attribution_conflicts(ok, steps, kb) == []
+    assert attribution_conflicts("D2 is likely process-related.", steps, kb)  # D2's cause is handling
+    assert attribution_conflicts("Both look like etching problems; check the line.", steps, kb) == []
+    only_process = [{"defect": "D1", "cause": "OPEN-C2", "action": "OPEN-A1"}]
+    assert attribution_conflicts("Likely damage from handling the panel.", only_process, kb)
+    assert attribution_conflicts("Likely damage from handling the panel.", steps, kb) == []   # one is handling
+
+
+def test_a_contradicting_summary_falls_back_to_knowledge_base_text(kb):
+    record = {"board_id": "B-1", "design": "deeppcb", "verdict": "FAIL", "defects": [
+        {"id": "D1", "type": "open", "severity": "critical", "confidence": 0.9, "size_mm": 0.2, "location": "centre", "ipc": {}}]}
+    bad = json.dumps({"steps": [{"defect": "D1", "cause": "OPEN-C2", "action": "OPEN-A1"}],
+                      "summary": "D1 was probably damaged in handling."})
+    r = check(bad, record, kb)
+    assert not r.ok and any("handling" in x for x in r.reasons)

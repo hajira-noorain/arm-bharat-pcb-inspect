@@ -464,7 +464,8 @@ function renderAdvice(r) {
   if (!a) { el.innerHTML = `<div class="advice"><p class="pending">${r.advice_timed_out ? "Advice did not arrive. The verdict above is not affected: follow your standard procedure for this defect." : "Llama is writing advice"}</p></div>`; return; }
   const adv = a.advice;
   const llama = a.backend === "llama-executorch";
-  const source = llama ? `Written by ${esc(a.model)} on this device in ${(a.latency_ms / 1000).toFixed(1)} s${a.decode_tps ? `, ${a.decode_tps.toFixed(1)} tokens/s` : ""}. Every cause and action is checked against the defect knowledge base.`
+  const swapped = llama && adv.summary_by === "template";
+  const source = llama ? `${swapped ? "Causes and actions chosen" : "Written"} by ${esc(a.model)} on this device in ${(a.latency_ms / 1000).toFixed(1)} s${a.decode_tps ? `, ${a.decode_tps.toFixed(1)} tokens/s` : ""}. Every cause and action is checked against the defect knowledge base.${swapped ? ` Llama's summary sentence was replaced by the standard one${a.rejected_reason ? ` (${esc(a.rejected_reason)})` : ""}.` : ""}`
     : `Standard advice from the knowledge base${a.rejected_reason ? `. Llama's answer was rejected: ${esc(a.rejected_reason)}` : ""}.`;
   const rate = a.operator_rating == null ? `<button class="btn" data-rate="1" data-a="${a.id}" aria-label="Advice was useful">Useful</button><button class="btn" data-rate="-1" data-a="${a.id}" aria-label="Advice was not useful">Not useful</button>` : `<span>Thanks, rated ${a.operator_rating > 0 ? "useful" : "not useful"}.</span>`;
   el.innerHTML = `<h2>What to do</h2><div class="advice"><p class="summary">${esc(adv.summary)}</p><ol>${adv.steps.map((s) =>

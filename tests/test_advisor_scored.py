@@ -79,7 +79,9 @@ def test_the_checker_still_rejects_what_decoding_cannot_prevent():
     be = Scripted(prefer=("under-etching", "over-etching", "continuity"),
                   summary_pieces=[["A mouse bite was found."]])            # a defect type that is not on the board
     a = Advisor(be, kb, option_order="kb").advise(RECORD, None)
-    assert a.backend == "template" and a.rejected_reasons and len(a.choices) == 2
+    # the sentence is refused and replaced; Llama's checked choices stay (they were not the problem)
+    assert a.summary_by == "template" and any("mouse bite" in r for r in a.rejected_reasons) and len(a.choices) == 2
+    assert "mouse bite" not in a.summary.lower()
     be2 = Scripted(prefer=("under-etching",), summary_pieces=[])
     assert Advisor(be2, kb, option_order="kb").advise(RECORD, None).rejected_reasons == ["empty summary"]
 
@@ -106,3 +108,18 @@ def test_pointwise_mode_judges_each_cause_alone_and_keeps_the_list_out_of_the_pr
     assert len(be.questions) == 3 + 4 and all("Candidate cause:" in q for q in be.questions)
     assert "causes:" not in be.fed[0] and "actions:" in be.fed[0]        # no cause list to copy from
     assert a.backend == LLAMA_BACKEND
+
+
+
+def test_a_summary_that_contradicts_the_chosen_causes_is_replaced_but_the_choices_are_kept():
+    kb = default_kb()
+    # prefers etching causes (process), then says the damage came from handling
+    be = Scripted(prefer=("under-etching", "dust or hair", "continuity"),
+                  summary_pieces=[["Both defects were probably caused by handling the panel."]])
+    a = Advisor(be, kb, option_order="kb").advise(RECORD, {"short": 5})
+    assert a.backend == LLAMA_BACKEND and a.summary_by == "template"
+    assert any("handling" in r for r in a.rejected_reasons)
+    assert "Llama" not in a.summary and a.summary.endswith(".")
+    by = {s["defect"]: s for s in a.steps}
+    assert by["D1"]["cause_id"] == "SHORT-C1"                           # Llama's choice survives
+    assert a.to_json()["summary_by"] == "template"

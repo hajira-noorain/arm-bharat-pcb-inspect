@@ -68,10 +68,12 @@ class Advice:
     raw_output: str | None = None
     gen: GenResult | None = None
     choices: list[dict] = field(default_factory=list)   # per defect: shown positions chosen (eval)
+    summary_by: str = "llama"     # 'llama', or 'template' when only Llama's sentence failed a check
 
     def to_json(self) -> dict:
         return {"summary": self.summary, "steps": self.steps, "backend": self.backend,
-                "model": self.model, "filled_from_template": self.filled_from_template}
+                "model": self.model, "filled_from_template": self.filled_from_template,
+                "summary_by": self.summary_by}
 
 
 def _sorted_defects(record: dict) -> list[dict]:
@@ -381,15 +383,24 @@ class Advisor:
             return adv
         res: GroundingResult = check(json.dumps({"steps": steps, "summary": summary}), record, kb,
                                      extra_numbers=history_numbers(history))
+        summary_by = "llama"
         if not res.ok:
-            adv = self._template(record, res.reasons, be.model, raw, total)
-            adv.choices = choices
-            return adv
+            # If only the sentence is at fault (a number, a defect type or a cause it gets wrong), Llama's
+            # checked choices are kept and the sentence is replaced by the knowledge base's own summary.
+            res2 = check(json.dumps({"steps": steps, "summary": template_advice(record, kb)["summary"]}), record, kb,
+                         extra_numbers=history_numbers(history))
+            if not res2.ok:
+                adv = self._template(record, res.reasons, be.model, raw, total)
+                adv.choices = choices
+                return adv
+            rejected, res, summary_by = res.reasons, res2, "template"
+        else:
+            rejected = []
         covered = {s["defect"] for s in res.advice["steps"]}
         extra = [s for s in template_advice(record, kb)["steps"] if s["defect"] not in covered]
         res.advice["steps"].extend(extra)
         return Advice(LLAMA_BACKEND, be.model, res.advice["summary"], render(res.advice, record, kb), True,
-                      [], [s["defect"] for s in extra], raw, total, choices)
+                      rejected, [s["defect"] for s in extra], raw, total, choices, summary_by)
 
     # ---------------------------------------------------------------- step-wise (default)
     def _advise_stepwise(self, record: dict, history: dict[str, int] | None) -> Advice:
