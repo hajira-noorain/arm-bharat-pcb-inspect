@@ -112,3 +112,30 @@ def test_a_database_made_before_decisions_had_names_is_upgraded(tmp_path):
     iid = s2.log_inspection(make_insp(verdict="REVIEW", n=1), None)
     s2.set_final_verdict(iid, "FAIL", operator="Ravi")
     assert s2.inspection(iid)["decided_by"] == "Ravi"
+
+
+def test_stats_counts_and_medians(tmp_path):
+    s = Store(tmp_path)
+    for v, ms in [("PASS", 100.0), ("REVIEW", 300.0), ("FAIL", 200.0), ("PASS", 400.0)]:
+        insp = make_insp(v)
+        insp.latency_ms = {"total_to_verdict": ms}
+        iid = s.log_inspection(insp, None)
+        s.log_advice(iid, "template", None, {"summary": "x", "steps": []}, True, None, 5000.0, None, None)
+    st = s.stats(0.0)
+    assert (st["boards"], st["passed"], st["review"], st["failed"]) == (4, 2, 1, 1)
+    assert st["verdict_ms_median"] == 250.0 and st["advice_ms_median"] == 5000.0
+
+
+def test_stats_on_an_empty_log_has_no_nan(tmp_path):
+    st = Store(tmp_path).stats(0.0)
+    assert st == {"boards": 0, "passed": 0, "review": 0, "failed": 0,
+                  "verdict_ms_median": None, "advice_ms_median": None}
+
+
+def test_reset_clears_inspections_but_keeps_designs(tmp_path):
+    s = Store(tmp_path)
+    s.upsert_design("d", "bare")
+    sha = s.put_image(b"img")
+    s.log_inspection(make_insp(), sha)
+    s.reset()
+    assert s.recent() == [] and s.design("d") is not None and not s.image_path(sha).exists()

@@ -9,6 +9,7 @@ import csv
 import hashlib
 import json
 import sqlite3
+import statistics
 import time
 from pathlib import Path
 
@@ -219,6 +220,31 @@ class Store:
             args = (design,)
         q += " ORDER BY id DESC LIMIT ?"
         return [dict(r) for r in self.conn.execute(q, args + (limit,))]
+
+    def stats(self, since_ts: float) -> dict:
+        """Shift figures for the dashboard: verdict counts and median verdict / advice times since `since_ts`."""
+        rows = self.conn.execute("SELECT verdict, latency_json FROM inspections WHERE ts >= ?",
+                                 (since_ts,)).fetchall()
+        count = {v: sum(r["verdict"] == v for r in rows) for v in ("PASS", "REVIEW", "FAIL")}
+        verdict_ms = [json.loads(r["latency_json"] or "{}").get("total_to_verdict") for r in rows]
+        verdict_ms = [float(x) for x in verdict_ms if x is not None]
+        advice_ms = [float(r[0]) for r in self.conn.execute(
+            "SELECT a.latency_ms FROM advice a JOIN inspections i ON i.id = a.inspection_id "
+            "WHERE i.ts >= ? AND a.latency_ms IS NOT NULL", (since_ts,))]
+        return {"boards": len(rows), "passed": count["PASS"], "review": count["REVIEW"], "failed": count["FAIL"],
+                "verdict_ms_median": statistics.median(verdict_ms) if verdict_ms else None,
+                "advice_ms_median": statistics.median(advice_ms) if advice_ms else None}
+
+    def reset(self) -> None:
+        """Empty the inspection log and its images (the shared online demo, nightly). Designs, model versions,
+        eye tests and customer rules are kept."""
+        shas = [r[0] for r in self.conn.execute("SELECT image_sha FROM inspections WHERE image_sha IS NOT NULL")]
+        with self.conn:
+            self.conn.execute("BEGIN")
+            for table in ("feedback_events", "advice", "defects", "alerts", "inspections"):
+                self.conn.execute(f"DELETE FROM {table}")
+        for sha in shas:
+            self.image_path(sha).unlink(missing_ok=True)
 
     def board_history(self, board_id: str) -> list[dict]:
         return [dict(r) for r in self.conn.execute(
