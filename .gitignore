@@ -33,3 +33,6 @@ var/
 *.db
 *.db-wal
 *.db-shm
+
+# brainstorming mockups
+.superpowers/
