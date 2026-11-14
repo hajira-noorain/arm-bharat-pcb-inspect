@@ -78,3 +78,44 @@ def test_live_view_and_named_decisions_through_the_api(tmp_path):
     assert c.post("/api/review", json={"inspection_id": 1, "verdict": "PASS"}).status_code == 400
     assert c.post("/api/review", json={"inspection_id": 1, "verdict": "REVIEW", "operator": "Asha"}).status_code == 400
     assert c.post("/api/review", json={"inspection_id": 1, "verdict": "PASS", "operator": "Asha"}).status_code == 404
+
+
+def test_a_design_whose_thresholds_include_infinity_still_inspects_through_the_api(tmp_path):
+    """Datasets with almost no good boards calibrate PASS to 'never' (an infinite threshold). The dashboard's
+    reply must still be valid JSON: this once failed every inspection of such a design."""
+    from fastapi.testclient import TestClient
+
+    from pcbinspect.app import create_app
+    from pcbinspect.gate import ConformalGate
+    from pcbinspect.pipeline import Design, save_design
+    from pcbinspect.severity import DesignRules
+    rng = np.random.default_rng(0)
+    (tmp_path / "demo" / "boards").mkdir(parents=True)
+    cv2.imwrite(str(tmp_path / "demo" / "boards" / "b0.png"), photo())
+    (tmp_path / "models" / "gate").mkdir(parents=True)
+    ConformalGate(rng.uniform(0.6, 1.0, 120), np.array([]), "few-good").save(tmp_path / "models" / "gate" / "fg.json")
+    save_design(tmp_path / "designs", Design("fg", "bare", False, None, 0.025, 20.0, DesignRules(0.2, 0.2, 2, True),
+                                             "models/gate/fg.json"))
+    cfg = {"root": str(tmp_path), "data_dir": "var", "designs_dir": "designs", "camera": "replay",
+           "replay_glob": "demo/boards/*.png", "vision_backend": "executorch", "detector_pte": "none.pte",
+           "detector_pt": "none.pt", "backbone_pte": "none.pte", "llm_pte": "none.pte",
+           "llm_tokenizer": "none.model", "gpio": False}
+    c = TestClient(create_app(cfg))
+    r = c.post("/api/inspect", json={"design": "fg"})
+    assert r.status_code == 200, r.text[:300]
+    g = r.json()["gate"]
+    assert g["tau"] is None and g["n_good"] == 0
+
+
+def test_several_config_overrides_all_apply(monkeypatch):
+    import sys
+
+    import pcbinspect.app as appmod
+    seen = {}
+    monkeypatch.setattr(appmod, "create_app", lambda cfg: seen.update(cfg) or "app")
+    import uvicorn
+    monkeypatch.setattr(uvicorn, "run", lambda *a, **k: None)
+    monkeypatch.setattr(sys, "argv", ["app", "--config", "config/app.yaml", "--set", "camera=replay",
+                                      "--set", "gpio=false", "port=8123"])
+    appmod.main()
+    assert seen["camera"] == "replay" and seen["gpio"] is False and seen["port"] == 8123

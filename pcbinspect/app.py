@@ -10,6 +10,7 @@ import glob
 import json
 import re
 import logging
+import math
 import queue
 import threading
 import time
@@ -461,8 +462,12 @@ class Station:
         r["latency"] = json.loads(r["latency_json"] or "{}")
         versions = json.loads(r.get("model_versions_json") or "{}") if isinstance(r, dict) else {}
         th = self.inspector.thresholds(r["design"], r["alpha"], golden=versions.get("gate") == "golden")
+        # an infinite threshold means "never decided automatically" (e.g. no good boards to calibrate PASS on);
+        # JSON has no infinity, so it is sent as null and the reply stays valid
+        def finite(x):
+            return x if x is None or math.isfinite(float(x)) else None
         r["gate"] = None if th is None else {
-            "alpha": th.alpha, "beta": th.beta, "lam": th.lam, "tau": th.tau,
+            "alpha": th.alpha, "beta": th.beta, "lam": finite(th.lam), "tau": finite(th.tau),
             "n_defective": th.n_defective, "n_good": th.n_good,
             "planted": "planted defects" in (self.designs[r["design"]].description or "")
             if r["design"] in self.designs else False}
@@ -1000,7 +1005,8 @@ def create_app(cfg: dict) -> FastAPI:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config/app.yaml")
-    ap.add_argument("--set", nargs="*", default=[], help="override config: key=value")
+    ap.add_argument("--set", nargs="*", action="extend", default=[],
+                    help="override config: key=value (repeat --set or list several after one)")
     args = ap.parse_args()
     cfg = yaml.safe_load(Path(args.config).read_text())
     for kv in args.set:
