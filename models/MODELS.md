@@ -5,7 +5,14 @@ The station looks for its models under `models/`. Only the small files are in gi
 - `models/gate/`: the calibrated PASS/FAIL/CHECK thresholds, one JSON per design. The detector's own ones are at the top level; those for the other sizes are in `y26s/` and `y26m/`. `detector_variant` in `config/app.yaml` picks them together with the detector.
 - `models/anomaly/`: the good-board patch memories for VisA pcb1-4 (`bank.npy` + `meta.json`).
 
-The weights below are too large for git (the 3B Llama file alone is 2.4 GB). `deploy/make_bundle.py` copies them into the Pi bundle. To run the station from this repo, put each file at the path shown. Check it against its SHA-256 (`sha256sum -c`), or rebuild it with the command given.
+The weights below are too large for git (the 3B Llama file alone is 2.4 GB). They are in the private Hugging Face repo `Sulaiman-shariff/arm-bharat-pcb-inspect`, with the ready-to-run Pi bundle, Meta's original checkpoints, every earlier model version and the run logs. To fill this checkout:
+
+```bash
+hf auth login     # a read token for the account
+hf download Sulaiman-shariff/arm-bharat-pcb-inspect --include "models/*" --local-dir .
+```
+
+`deploy/make_bundle.py` copies them into the Pi bundle. Check each file against its SHA-256 (`sha256sum -c`), or rebuild it with the command given.
 
 ## Files the station loads
 

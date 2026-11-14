@@ -109,7 +109,7 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 |---|---|
 | `pcbinspect/` | The station: camera, vision, golden comparison, parts check, severity, gate, Llama advice and checker, log, dashboard |
 | `config/`, `kb/` | Station settings, IPC-style limits, the defect knowledge base Llama chooses from |
-| `models/` | Calibrated thresholds and anomaly memories (in git); `MODELS.md` lists the model files that are not |
+| `models/` | Calibrated thresholds and anomaly memories (in git); `MODELS.md` lists the model files that are not, and how to download them from the private Hugging Face repo |
 | `training/`, `llm/` | Dataset building, training, evaluation and export scripts; `training/colab/` has the exact jobs that were run |
 | `results/measured/` | Every measured result file; `results/README.md` explains the names |
 | `bench/`, `deploy/` | Pi benchmarks and soak; Pi setup, bundle builder, Arm checks, the rig guide (`deploy/RIG.md`) |
