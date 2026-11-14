@@ -30,3 +30,4 @@ upload_design: deeppcb        # uploads are judged by this design's detector onl
 samples_per_design: 4
 shift_hours: 8                # the dashboard's shift figures cover this many hours
 demo_reset_hour: 3            # the shared online demo log is emptied at this hour every night
+demo_advice_queue: 3          # online demo: only the newest boards wait for Llama, older ones get standard advice

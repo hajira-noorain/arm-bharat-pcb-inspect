@@ -81,6 +81,8 @@ class Station:
         self.waiting = 0                                       # inspections waiting for or holding the lock
         self.demo = bool(cfg.get("demo"))
         self.uploads: OrderedDict[str, dict] = OrderedDict()  # demo uploads: token -> result, memory only
+        self._samples_cache: tuple | None = None               # (manifest mtime, {file: Sample})
+        self._thumbs: dict[str, bytes] = {}                    # test-board thumbnails, made once
         self.llm_lock = threading.Lock()                       # one Llama generation at a time
         self.spec_compiler = None                              # loaded on first use (setup-time task)
         self._load_customer_rules()
@@ -265,6 +267,30 @@ class Station:
             self.uploads.clear()
         log.info("demo log reset")
 
+    BUSY = "Llama was busy with newer boards; standard advice shown"
+
+    def _queue_advice(self, key, record: dict, design: str):
+        """Queue a board for Llama. On the shared online demo only the newest few boards wait for Llama, so the
+        next visitor is not stuck behind a burst of boards nobody is looking at; older queued boards get the
+        knowledge base's standard advice at once, marked as such. A real station keeps every board in the queue."""
+        dropped = []
+        cap = int(self.cfg.get("demo_advice_queue", 3)) if self.demo else 0
+        with self.jobs.mutex:
+            while cap and len(self.jobs.queue) >= cap:
+                dropped.append(self.jobs.queue.popleft())
+        for k, rec, _ in dropped:
+            adv = self.advisor._template(rec, [self.BUSY])
+            if isinstance(k, str):
+                r = self.uploads.get(k)
+                if r is not None:
+                    r["advice"] = [{"advice": adv.to_json(), "backend": adv.backend, "model": adv.model,
+                                    "latency_ms": 0.0, "decode_tps": None, "grounded": False,
+                                    "rejected_reason": self.BUSY}]
+                    r["advice_pending"] = False
+            else:
+                self.store.log_advice(k, adv.backend, adv.model, adv.to_json(), False, self.BUSY, 0.0, None, None)
+        self.jobs.put((key, record, design))
+
     def _advise_upload(self, token: str, record: dict, design: str):
         try:
             with self.llm_lock:
@@ -287,8 +313,13 @@ class Station:
         """The test boards a visitor can pick, by file name. Only these names are ever opened."""
         if not self.demo:
             raise HTTPException(404)
-        return {s.file: s for s in load_samples(self.root, int(self.cfg.get("samples_per_design", 4)))
-                if s.design in self.designs}
+        man = self.root / "demo" / "manifest.json"
+        mtime = man.stat().st_mtime_ns if man.is_file() else None
+        if self._samples_cache is None or self._samples_cache[0] != mtime:   # read again only if it changed
+            self._samples_cache = (mtime, {s.file: s for s in load_samples(
+                self.root, int(self.cfg.get("samples_per_design", 4))) if s.design in self.designs})
+            self._thumbs.clear()
+        return self._samples_cache[1]
 
     def inspect_sample(self, file: str, alpha: float | None) -> dict:
         s = self.samples().get(file)
@@ -352,7 +383,7 @@ class Station:
         while len(self.uploads) > UPLOADS_KEPT:
             self.uploads.popitem(last=False)
         if defects:
-            self.jobs.put((token, insp.to_llm_record(), design))
+            self._queue_advice(token, insp.to_llm_record(), design)
         return self.upload_json(token)
 
     def upload_json(self, token: str) -> dict:
@@ -365,11 +396,13 @@ class Station:
         s = self.samples().get(file)
         if s is None:
             raise HTTPException(404)
-        im = cv2.imread(str(self.root / "demo" / "boards" / s.file))
-        k = 160 / max(im.shape[:2])
-        im = cv2.resize(im, (max(1, round(im.shape[1] * k)), max(1, round(im.shape[0] * k))),
-                        interpolation=cv2.INTER_AREA)
-        return cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+        if file not in self._thumbs:
+            im = cv2.imread(str(self.root / "demo" / "boards" / s.file))
+            k = 160 / max(im.shape[:2])
+            im = cv2.resize(im, (max(1, round(im.shape[1] * k)), max(1, round(im.shape[0] * k))),
+                            interpolation=cv2.INTER_AREA)
+            self._thumbs[file] = cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+        return self._thumbs[file]
 
     def _run_inspection(self, bgr, design: str, alpha: float | None, board_id: str | None, golden,
                         force_review=None, capture_info=None, cap_ms: float = 0.0) -> dict:
@@ -388,7 +421,7 @@ class Station:
                                 (json.dumps(insp.latency_ms), iid))
         cv2.imwrite(str(self._overlay_path(iid)), render(bgr, insp, analysis))
         if insp.defects:
-            self.jobs.put((iid, insp.to_llm_record(), design))
+            self._queue_advice(iid, insp.to_llm_record(), design)
         return self.inspection_json(iid)
 
     # ---------------- detection-limit eye test ----------------
@@ -1007,7 +1040,8 @@ def create_app(cfg: dict) -> FastAPI:
 
     @app.get("/api/samples/{file}.jpg")
     def sample_thumb(file: str):
-        return Response(st.sample_thumb(file), media_type="image/jpeg")
+        return Response(st.sample_thumb(file), media_type="image/jpeg",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/api/image/{iid}.jpg")
     def image(iid: int):
@@ -1015,6 +1049,16 @@ def create_app(cfg: dict) -> FastAPI:
         if r is None or not r["image_sha"] or not st.store.image_path(r["image_sha"]).exists():
             raise HTTPException(404)
         return FileResponse(st.store.image_path(r["image_sha"]), media_type="image/jpeg")
+
+    @app.get("/api/log")
+    def log_rows(limit: int = 200):
+        """Recent inspections for the Log screen, with how many findings each had and who wrote its advice."""
+        limit = max(1, min(int(limit), 1000))
+        q = ("SELECT i.id, i.ts, i.board_id, i.design, i.verdict, i.final_verdict, i.decided_by, i.decision_reason, "
+             "(SELECT COUNT(*) FROM defects d WHERE d.inspection_id = i.id) AS n_defects, "
+             "(SELECT a.backend FROM advice a WHERE a.inspection_id = i.id ORDER BY a.id DESC LIMIT 1) AS advice_by "
+             "FROM inspections i ORDER BY i.id DESC LIMIT ?")
+        return [dict(r) for r in st.store.conn.execute(q, (limit,))]
 
     @app.get("/api/stats")
     def stats():

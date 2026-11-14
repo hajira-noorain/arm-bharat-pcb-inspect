@@ -180,3 +180,50 @@ def test_reset_demo_empties_the_log(taught_client):
     st.reset_demo()
     assert taught_client.get("/api/stats").json()["boards"] == 0
     assert taught_client.get("/api/state").json()["recent"] == [] and not st.uploads and not st.cache
+
+
+def test_log_lists_recent_with_counts(taught_client):
+    taught_client.post("/api/inspect", json={"design": "demo-board", "sample": "b4.png"})
+    rows = taught_client.get("/api/log?limit=200").json()
+    assert rows[0]["n_defects"] >= 1 and rows[0]["verdict"] in ("FAIL", "REVIEW") and "final_verdict" in rows[0]
+    assert rows[0]["advice_by"] in (None, "template", "llama-executorch")
+
+
+def test_test_boards_and_thumbnails_are_read_once(taught_client, monkeypatch):
+    """The page asks for ~40 thumbnails at once; each must not decode a full photo again."""
+    import pcbinspect.app as app_mod
+    st = taught_client.app.state.station
+    taught_client.get("/api/samples"); taught_client.get("/api/samples/b4.png.jpg")
+    calls = {"load": 0, "read": 0}
+    real_load, real_read = app_mod.load_samples, app_mod.cv2.imread
+    monkeypatch.setattr(app_mod, "load_samples", lambda *a, **k: (calls.__setitem__("load", calls["load"] + 1), real_load(*a, **k))[1])
+    monkeypatch.setattr(app_mod.cv2, "imread", lambda *a, **k: (calls.__setitem__("read", calls["read"] + 1), real_read(*a, **k))[1])
+    for _ in range(3):
+        assert taught_client.get("/api/samples").status_code == 200
+        assert taught_client.get("/api/samples/b4.png.jpg").status_code == 200
+    assert calls == {"load": 0, "read": 0}
+
+
+def test_demo_advice_queue_keeps_only_the_newest_boards_waiting_for_llama(taught_client, monkeypatch):
+    """Online, a burst of inspections must not make the next visitor wait minutes for Llama: only the newest few
+    boards wait; older queued ones get the knowledge base's standard advice at once, marked as such."""
+    st = taught_client.app.state.station
+    gate = threading.Event()
+    real_template = st.advisor._template
+
+    def slow_advise(record, history=None, **kw):
+        gate.wait(10)
+        return real_template(record, [])
+    monkeypatch.setattr(st.advisor, "advise", slow_advise)
+    monkeypatch.setitem(st.cfg, "demo_advice_queue", 2)
+    ids = [taught_client.post("/api/inspect", json={"design": "demo-board", "sample": "b4.png"}).json()["id"]
+           for _ in range(6)]
+    busy = [i for i in ids if any("busy" in (a["rejected_reason"] or "")
+                                  for a in taught_client.get(f"/api/inspection/{i}").json()["advice"])]
+    assert len(busy) >= 3 and ids[-1] not in busy and ids[-2] not in busy
+    gate.set()
+    for _ in range(80):
+        if all(taught_client.get(f"/api/inspection/{i}").json()["advice"] for i in ids):
+            break
+        time.sleep(0.25)
+    assert all(taught_client.get(f"/api/inspection/{i}").json()["advice"] for i in ids)

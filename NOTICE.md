@@ -17,7 +17,7 @@ The licence for this repository's own code is being finalised (see the note on U
 | [Arm Optimized-Runtimes](https://github.com/arm/Optimized-Runtimes), YOLO26 for Raspberry Pi 5 | Optional detector runtime, downloaded by `deploy/pi_setup.sh` | Apache-2.0 |
 | PyTorch / torchvision (ResNet-18, Wide-ResNet-50 ImageNet weights) | Anomaly feature backbone | BSD-3-Clause |
 | FAISS, OpenCV, NumPy, SciPy, scikit-learn, FastAPI, uvicorn, PyYAML, reportlab | Runtime and tooling | MIT / BSD / Apache-2.0 (per package) |
-| Atkinson Hyperlegible, Barlow Condensed (fonts, bundled in `pcbinspect/static/fonts`) | Dashboard | SIL Open Font License 1.1 |
+| Archivo and Archivo Narrow (The Archivo Project Authors; fonts, bundled in `pcbinspect/static/fonts`, subset to Latin) | Dashboard | SIL Open Font License 1.1 |
 
 ## Datasets
 
