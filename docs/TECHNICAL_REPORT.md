@@ -128,6 +128,16 @@ The low precision on HRIPCB has a specific cause. Its 123 test photos show two p
 
 The first version scored 97% on the datasets it was trained on, and 18% on photos of boards from another lab. That gap is the reason the station measures its own limit (section 5.2) instead of quoting a dataset score. The DefectDet test boards are physical boards the model never saw, but they come from the same lab as the training half, so this is not a cross-lab result.
 
+**Larger detectors, and why accuracy alone did not decide.** The same data was used to train two larger models, YOLO26s and YOLO26m. Both find more on every held-out test set (mAP 85.8% and 86.8% against 83.3%; through the exported ExecuTorch files, and the INT8 files lose 0.1 points). At the station's own setting the picture is less simple. Each was given thresholds calibrated on its own scores, and on the DeepPCB test boards at a 5% setting:
+
+| Detector | Missed, with the good board (as deployed) | Missed, detector alone | False calls per board | Boards sent to a person |
+|---|---|---|---|---|
+| YOLO26n (first) | 4.2% | 6.5% | 0.57 | 20% |
+| YOLO26s | 6.5% | 8.2% | 0.55 | 7% |
+| YOLO26m | 5.1% | 5.4% | 0.57 | 8% |
+
+YOLO26m keeps its misses close to the target while sending far fewer boards to a person; YOLO26s's detector-alone miss rate (8.2%) is above the 7.2% the calibration can promise with 95% confidence, which should happen only about one time in twenty. So a better mAP did not by itself mean fewer misses on the line, and YOLO26s is not recommended. All three ship, each with its own thresholds; YOLO26m is used if the Pi is fast enough (section 7), otherwise YOLO26n.
+
 **Synthetic boards did not help.** A fourth version added 1,049 tiles rendered from 61 open-hardware KiCad designs with injected defects (labels checked by eye against each clean render). It was no better on the DefectDet test boards (83.9% against 84.2%) and slightly worse on most other sets, so it is not deployed. The rendering pipeline (`training/kicad/`) stays in the repo.
 
 Enlarging small-defect photos before inspection was also tested on the DefectDet test boards. It only hurt: every detector did best at native scale. The deployed detector fell from 84% mAP at native scale to 77% at 1.5x and 49% at 2x.
@@ -143,6 +153,23 @@ The PS lists anomalies alongside named defects. On assembled boards the variety 
 5. **Export.** The backbone is the only neural network on this path. Its ExecuTorch FP32 export matches PyTorch to about 1e-6 relative error, so a memory built in the cloud is valid on the Pi (measured at 320 px: 1.2e-6).
 
 **How the setting was chosen.** Nine settings were compared on VisA pcb1-4: two backbones, three input sizes, and three scoring refinements. The deployed setting (ResNet-18, 320 px, top-1% score) had a mean image AUROC of 95.6%, versus 90.5% for the first version (256 px, worst patch). It also had the best heatmap (pixel AUROC 97.9%) and tied for the best result when teaching a design from 10 good boards (90.8%, versus 84.5%). A Wide-ResNet-50 was no better and costs several times the compute on the Pi. Per-position normalisation and a board mask raised the full-memory score but hurt the 10-board result and the heatmap, so they are off.
+
+**Naming a missing part.** An unusual area tells a person where to look, but not what is wrong, and patch-feature methods are known to be weakest on parts that are absent or swapped (MVTec LOCO AD; Kim et al. 2024 report 74 against 98 AUROC for a part-aware method on such faults). The station therefore also checks parts one by one (`pcbinspect/parts.py`):
+
+1. **Teaching.** A one-class part detector (YOLO26n, trained on 53 boards of the FPIC dataset) finds every part on the good boards. A part not found on every good photo is left off, and how much each part's picture varies from one good board to the next is recorded. A small classifier names the parts it is sure of (capacitor, resistor, chip, and so on); it runs only at teaching.
+2. **Inspection.** The board is lined up with the taught one. A part is called missing only when two cues agree: the detector finds nothing there, and the picture of that place no longer looks like the good board. Something is called unexpected only if the detector is confident and the place looks different. A part that is present but clearly unlike the good one is reported as "looks different".
+3. **Verdict.** A parts finding that falls on an area the anomaly memory already flags names it; one that nothing else backs sends the board to a person (CHECK). It never fails a board by itself, because the part detector's confidence is not calibrated. A board that cannot be lined up, or where half the parts disagree, is never passed.
+
+Measured: on 15 FPIC boards never trained on, the part detector reached 97.3% precision and 94.2% recall, and with parts removed in software (a simulation) 86% of removed parts were reported missing with no call at all on any untouched board. On real VisA photos (four designs, faults made by hand, the part detector never saw these boards or this camera), teaching from eight good photos with thresholds chosen on good training photos only:
+
+| VisA test photos | Count | Reported on the labelled spot |
+|---|---|---|
+| Good boards (any parts call is false) | 320 | 15 raised a call (4.7%) |
+| Labelled "missing" | 92 | 56 (61%) |
+| Labelled "extra" | 30 | 10 (33%) |
+| Labelled "wrong place" | 13 | 11 (85%) |
+
+It works well on two designs (all 33 missing parts on pcb4, 12 of 19 on pcb2) and poorly on two (pcb3 9 of 20, pcb1 2 of 20, where only eight parts could be mapped). These designs had been looked at while building the check, so this is a development result, not a blind test. `docs/RESEARCH_AND_DECISIONS.md` section 5 has the literature behind the design and what it does not support claiming.
 
 **Second dataset.** On Real-IAD's `pcb` object (five camera views per board, evaluation only, never trained on), the same method (ResNet-18, 320 px) reached a mean image AUROC of 90.6% across the five views (89.2% to 93.0%), with one memory per view built from that view's good images.
 
@@ -372,7 +399,7 @@ Everything runs on the Pi 5's four Cortex-A76 cores, offline:
 
 What is known today is from an x86 development host and is labelled as such wherever it appears (for example about 7 s per board for Llama's advice). A 30-minute soak (`bench/soak.py`) records whether performance holds through a shift. [[PENDING Pi numbers, 20-21 Nov]]
 
-**Which detector size ships.** Three bare-board detectors are in the bundle: YOLO26n, and the retrained YOLO26s and YOLO26m, which find more on every held-out test set (section 3.1). Each comes with its own PASS/FAIL/CHECK thresholds, calibrated on its own scores; one setting (`detector_variant`) swaps a model and its thresholds together and refuses to mix them. The size that ships is the largest one whose measured time on the Pi keeps a board's verdict under about two seconds.
+**Which detector size ships.** Three bare-board detectors are in the bundle: YOLO26n, and the retrained YOLO26s and YOLO26m, which find more on every held-out test set (section 3.1). Each comes with its own PASS/FAIL/CHECK thresholds, calibrated on its own scores; one setting (`detector_variant`) swaps a model and its thresholds together and refuses to mix them. YOLO26m ships if its measured time on the Pi keeps a board's verdict under about two seconds, otherwise YOLO26n; YOLO26s is not recommended (section 3.1).
 
 **Before the Pi was available,** the same aarch64 wheels and `.pte` files ran in an arm64 Debian container under emulation (`deploy/Dockerfile.pi`). That proved the Arm build works. Speed numbers come only from the real board.
 
@@ -404,6 +431,8 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - The conformal guarantee is marginal and holds only for boards like the calibration boards.
 - The miss-rate setting is a target on average; for one calibration set the 95%-confidence bound is looser (7.2% for a 5% target with 250 calibration defects). DeepPCB's detector-only gate measured 6.5%, inside that bound but above the target.
 - On assembled boards (VisA) the anomaly gate at 5% sends about 60% of test boards to a person (about half of the VisA test boards are defective). It finds unknown problems; it does not yet replace a human for assembled boards.
+- The parts check names missing parts reliably only on designs whose parts the detector maps well; on two of the four VisA designs it found few of them. Its VisA figures are development results on hand-made faults. It does not check polarity, part value or solder joints.
+- A larger detector is not automatically safer: YOLO26s scored higher mAP but missed more at the station's setting than the first detector. Which size ships is decided by the Pi timings among the sizes whose operating-point results hold (YOLO26n, YOLO26m).
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
 - Llama's advice was measured on seeded records with a stated repeat history, not on a real line's history. The 3B model follows that evidence about nine times in ten; the 1B fallback does not follow it at all, so on a device that can only hold 1B the knowledge base, not Llama, orders the causes. The summary's wording is checked for numbers and defect types only. The 3B rule reader sends many clauses to the operator rather than guessing.

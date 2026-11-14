@@ -61,6 +61,24 @@ Each version adds training data; the test boards are the same for all of them an
 | v3_et: v3 through the exported ExecuTorch FP32 .pte | 83.3% | 96.3% | 95.8% | 81.2% | 73.8% | 84.2% |
 | v3_et_int8: v3 through the exported ExecuTorch INT8 .pte | 83.2% | 96.4% | 95.8% | 80.9% | 73.7% | 83.8% |
 
+### Which bare-board detector: three sizes at the station's own setting
+
+All on the same held-out test boards, through the exported ExecuTorch files; each detector with thresholds calibrated on its own scores. Misses are at the 5% setting on DeepPCB (one random defect per board, 95% interval). The calibration promises at most 7.2% with 95% confidence for 250 calibration defects.
+
+| Detector | mAP@0.5, all test boards | INT8 file | Missed, detector alone | Missed, with the good board (as deployed) | False calls per board, with the good board | Boards sent to a person (detector alone) |
+|---|---|---|---|---|---|---|
+| YOLO26n (first) | 83.3% |  | 6.5% (5.0% to 8.1%) | 4.2% (3.3% to 5.2%) | 0.57 | 19.8% |
+| YOLO26s (retrained) | 85.8% | 85.7% | 8.2% (6.5% to 10.1%) | 6.5% (5.3% to 7.7%) | 0.55 | 7.2% |
+| YOLO26m (retrained) | 86.8% | 86.7% | 5.4% (4.1% to 6.7%) | 5.1% (4.1% to 6.2%) | 0.57 | 7.8% |
+
+Detection-limit card, simulated photos, with the good board (smallest size found 90% of the time at 95% confidence):
+
+| Detector | False calls per pattern | Opens | Shorts | Pin holes | Mouse bites |
+|---|---|---|---|---|---|
+| YOLO26n (first) | 0.32 | every tested size | 0.34 mm | 0.42 mm | 0.48 mm |
+| YOLO26s (retrained) | 0.12 | every tested size | 0.34 mm | 0.41 mm | 0.62 mm |
+| YOLO26m (retrained) | 0.16 | every tested size | 0.32 mm | 0.51 mm | 0.43 mm |
+
 ### Detector precision, recall and F1 on the held-out test boards
 
 The detector alone, run through ExecuTorch (the on-device runtime), before the golden comparison and before the review gate. A detection counts as correct when it names the right defect type and overlaps the labelled defect (IoU of 0.5 or more); every other detection is a false alarm and every unclaimed label is a miss.
@@ -139,9 +157,9 @@ Each channel has its own per-defect gate at a 5% allowed miss rate, calibrated o
 
 | Evidence | Missed, one random defect per board (95% CI) | Missed, all defects (95% CI) | False calls per board | Named correctly |
 |---|---|---|---|---|
-| Detector only | 6.3% (4.9% to 7.9%) | 6.6% (5.4% to 7.9%) | 0.12 | 99.3% |
-| Golden-board difference only | 4.8% (3.6% to 6.2%) | 4.9% (3.9% to 6.1%) | 0.98 | 80.5% |
-| Detector + golden difference (fused) | 4.2% (3.3% to 5.2%) | 4.4% (3.5% to 5.6%) | 0.57 | 98.9% |
+| Detector only | 8.1% (6.4% to 10.0%) | 8.4% (7.1% to 9.9%) | 0.10 | 99.7% |
+| Golden-board difference only | 5.2% (3.9% to 6.5%) | 5.3% (4.2% to 6.5%) | 0.98 | 80.7% |
+| Detector + golden difference (fused) | 6.5% (5.3% to 7.7%) | 6.9% (5.7% to 8.3%) | 0.55 | 99.2% |
 
 ### Detection-limit eye test, in silico (defects drawn on held-out DeepPCB patterns)
 
@@ -295,50 +313,50 @@ Part-kind classifier on named parts of the same held-out boards: 86.1% named cor
 
 | Removed parts (longer side) | Count | Reported missing |
 |---|---|---|
-| under 1 mm | 23 | 95.7% |
-| 1 to 2 mm | 85 | 90.6% |
-| 2 to 5 mm | 18 | 77.8% |
+| under 1 mm | 23 | 100.0% |
+| 1 to 2 mm | 85 | 91.8% |
+| 2 to 5 mm | 18 | 88.9% |
 | over 5 mm | 50 | 70.0% |
-| All removed parts | 176 | 84.1% |
-| Removed parts that were on the taught map | 161 | 91.9% |
+| All removed parts | 176 | 86.4% |
+| Removed parts that were on the taught map | 161 | 94.4% |
 
-Labelled parts the taught map contained: 95.9%. False 'missing' calls per board: 0.48 with parts removed, 0.00 with none removed. Unexpected-part calls per board: 0.00 and 0.00. Boards with nothing removed that raised no call at all: 100.0%.
+Labelled parts the taught map contained: 95.9%. False 'missing' calls per board: 0.61 with parts removed, 0.00 with none removed. Unexpected-part calls per board: 0.00 and 0.00. Boards with nothing removed that raised no call at all: 100.0%.
 
 Part names on the taught map, against FPIC's own labels (4181 parts): right 86.3%, wrong 6.8%, shown only as 'part' because the classifier was not sure 6.9%.
 
 ### Assembled boards: parts check on real missing and extra parts (VisA pcb1-4)
 
-Real photographs. The part detector never saw these boards or this camera. Each design is taught from four good photos; no mm scale is available, so teaching picks the resampling factor. A finding counts only if it lies on the area VisA marks as the anomaly.
+Real photographs. The part detector never saw these boards or this camera. Each design is taught from eight good photos; no mm scale is available, so teaching picks the resampling factor. A finding counts only if it lies on the area VisA marks as the anomaly.
 
 | Photos | Count | Lined up with the taught board | Parts check raised something | Missing part reported on the labelled area | Unexpected part reported on the labelled area |
 |---|---|---|---|---|---|
-| Good boards | 320 | 100.0% | 21.6% | n/a | n/a |
-| Labelled 'missing' | 92 | 98.9% | 73.9% | 57.6% | 3.3% |
-| Labelled 'extra' | 30 | 100.0% | 56.7% | 3.3% | 46.7% |
+| Good boards | 320 | 100.0% | 4.7% | n/a | n/a |
+| Labelled 'missing' | 92 | 98.9% | 63.0% | 56.5% | 3.3% |
+| Labelled 'extra' | 30 | 100.0% | 36.7% | 3.3% | 26.7% |
 | Labelled 'wrong place' | 13 | 100.0% | 84.6% | 23.1% | 15.4% |
-| Labelled 'bent' | 50 | 98.0% | 40.0% | 12.0% | 2.0% |
+| Labelled 'bent' | 50 | 98.0% | 20.0% | 12.0% | 0.0% |
 | Labelled 'burnt' | 8 | 100.0% | 12.5% | 12.5% | 0.0% |
-| Labelled 'damage' | 21 | 100.0% | 42.9% | 23.8% | 9.5% |
-| Labelled 'dirt' | 42 | 100.0% | 57.1% | 23.8% | 14.3% |
-| Labelled 'melt' | 152 | 100.0% | 46.1% | 7.9% | 2.0% |
-| Labelled 'scratch' | 83 | 100.0% | 42.2% | 10.8% | 2.4% |
+| Labelled 'damage' | 21 | 100.0% | 38.1% | 23.8% | 0.0% |
+| Labelled 'dirt' | 42 | 100.0% | 54.8% | 23.8% | 11.9% |
+| Labelled 'melt' | 152 | 100.0% | 19.7% | 7.2% | 2.6% |
+| Labelled 'scratch' | 83 | 100.0% | 21.7% | 10.8% | 3.6% |
 
 What teaching kept for each design:
 
 | Design | Parts on the map | Left off as unreliable | Ignore zones | Resampling factor |
 |---|---|---|---|---|
-| pcb1 | 8 | 1 | 10 | 1.5 |
-| pcb2 | 26 | 4 | 3 | 1.5 |
-| pcb3 | 19 | 0 | 10 | 2.0 |
-| pcb4 | 11 | 1 | 1 | 1.0 |
+| pcb1 | 8 | 1 | 8 | 1.5 |
+| pcb2 | 26 | 4 | 6 | 1.5 |
+| pcb3 | 19 | 0 | 12 | 2.0 |
+| pcb4 | 10 | 2 | 1 | 1.0 |
 
 The same photos decided two ways: by the part detector alone, and by the detector together with the picture comparison (a part is missing only when both agree; the station uses this one):
 
 | Photos | Count | Detector alone | Detector and picture comparison |
 |---|---|---|---|
-| Good boards: something raised (false call) | 320 | 36.9% | 21.6% |
-| Labelled 'missing': reported on the labelled area | 92 | 60.9% | 63.0% |
-| Labelled 'extra': reported on the labelled area | 30 | 46.7% | 46.7% |
+| Good boards: something raised (false call) | 320 | 16.2% | 4.7% |
+| Labelled 'missing': reported on the labelled area | 92 | 62.0% | 60.9% |
+| Labelled 'extra': reported on the labelled area | 30 | 26.7% | 26.7% |
 | Labelled 'wrong place': reported on the labelled area | 13 | 38.5% | 84.6% |
 
 ### Assembled boards: the parts-check rule, chosen on good training photos
