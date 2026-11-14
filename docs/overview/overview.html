@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PCB Inspection Station: overview</title>
+<style>
+@font-face { font-family: "Archivo"; font-weight: 400; src: url("../../pcbinspect/static/fonts/Archivo-400.woff2") format("woff2"); }
+@font-face { font-family: "Archivo"; font-weight: 600; src: url("../../pcbinspect/static/fonts/Archivo-600.woff2") format("woff2"); }
+@font-face { font-family: "Archivo"; font-weight: 800; src: url("../../pcbinspect/static/fonts/Archivo-800.woff2") format("woff2"); }
+@font-face { font-family: "Archivo Narrow"; font-weight: 500; src: url("../../pcbinspect/static/fonts/ArchivoNarrow-500.woff2") format("woff2"); }
+@font-face { font-family: "Archivo Narrow"; font-weight: 700; src: url("../../pcbinspect/static/fonts/ArchivoNarrow-700.woff2") format("woff2"); }
+:root { --ink: #16201C; --soft: #5E6A66; --line: #DCE3EE; --blue: #1D3F8F; --blue2: #9DB0DA; --blue3: #EEF2FB;
+  --bench: #EEF1F0; --navy: #14213F; --pass: #2E7D32; --check: #C98A0B; --fail: #C62828; }
+@page { size: A4; margin: 16mm 16mm 18mm; @bottom-left { content: "PCB Inspection Station · overview"; font: 500 8.5pt "Archivo Narrow"; color: #5E6A66; }
+  @bottom-right { content: counter(page); font: 700 8.5pt "Archivo Narrow"; color: #1D3F8F; } }
+@page :first { @bottom-left { content: none; } @bottom-right { content: none; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 400 10.4pt/1.5 "Archivo", sans-serif; color: var(--ink); }
+h1 { font-weight: 800; font-size: 30pt; line-height: 1.05; letter-spacing: -0.6pt; margin: 0 0 10pt; }
+h2 { font-weight: 800; font-size: 17pt; letter-spacing: -0.3pt; margin: 0 0 6pt; color: var(--ink); }
+h2 .n { color: var(--blue); margin-right: 6pt; }
+h3 { font-weight: 800; font-size: 11.5pt; margin: 14pt 0 4pt; break-after: avoid; }
+p { margin: 0 0 7pt; }
+.lead { font-size: 11.5pt; color: var(--ink); }
+.soft { color: var(--soft); }
+.narrow { font-family: "Archivo Narrow", sans-serif; font-weight: 500; }
+section { break-before: page; }
+.keep { break-inside: avoid; }
+ul, ol { margin: 0 0 8pt; padding-left: 15pt; }
+li { margin: 2pt 0; }
+b, strong { font-weight: 600; }
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; font: 500 9.4pt/1.35 "Archivo Narrow", sans-serif; break-inside: avoid; }
+th { text-align: left; color: var(--blue); font-weight: 700; border-bottom: 1.3pt solid var(--blue); padding: 4pt 5pt; vertical-align: bottom; }
+td { border-bottom: 0.6pt solid var(--line); padding: 4pt 5pt; vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.hl td { background: var(--blue3); font-weight: 700; }
+.note { background: var(--bench); border-left: 3pt solid var(--blue); padding: 7pt 10pt; margin: 8pt 0 10pt; break-inside: avoid; }
+.note b { color: var(--blue); }
+.warn { background: #FDF4E0; border-left-color: var(--check); }
+figure { margin: 8pt 0 12pt; break-inside: avoid; }
+figure img { width: 100%; border: 0.6pt solid var(--line); border-radius: 4pt; display: block; }
+figcaption { font: 500 8.8pt/1.4 "Archivo Narrow"; color: var(--soft); margin-top: 4pt; }
+/* cover */
+.cover { height: 263mm; display: flex; flex-direction: column; }
+.cover .band { background: var(--navy); color: #fff; padding: 22pt 24pt 26pt; border-radius: 6pt; }
+.cover .band .kicker { font: 500 10pt "Archivo Narrow"; color: #9FB0D6; margin-bottom: 18pt; }
+.cover .band h1 { color: #fff; font-size: 34pt; }
+.cover .band p { color: #D6DEEF; font-size: 12pt; max-width: 150mm; margin: 0; }
+.figs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9pt; margin: 16pt 0; }
+.fig { border: 0.8pt solid var(--line); border-radius: 5pt; padding: 10pt 12pt; }
+.fig b { display: block; font-size: 22pt; font-weight: 800; letter-spacing: -0.5pt; color: var(--blue); line-height: 1.1; }
+.fig span { font: 500 9.4pt/1.35 "Archivo Narrow"; color: var(--soft); }
+.cover .foot { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; font: 500 9.4pt/1.4 "Archivo Narrow"; color: var(--soft); border-top: 1pt solid var(--line); padding-top: 9pt; }
+.cover .foot b { color: var(--ink); font-weight: 700; }
+/* flow */
+.flow { display: grid; grid-template-columns: 1fr; gap: 0; margin: 10pt 0 6pt; }
+.step { display: grid; grid-template-columns: 26pt 1fr 1fr; gap: 10pt; align-items: start; padding: 8pt 0; border-bottom: 0.6pt solid var(--line); break-inside: avoid; }
+.step .k { width: 22pt; height: 22pt; border-radius: 50%; border: 1.4pt solid var(--blue); color: var(--blue); display: grid; place-items: center; font: 700 10pt "Archivo Narrow"; }
+.step h4 { margin: 2pt 0 2pt; font-size: 10.8pt; font-weight: 800; }
+.step .how { font: 500 9.3pt/1.4 "Archivo Narrow"; color: var(--soft); }
+.verdicts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; margin: 8pt 0 10pt; break-inside: avoid; }
+.verdicts div { border-radius: 5pt; padding: 8pt 10pt; border-left: 4pt solid; background: var(--bench); }
+.verdicts b { display: block; font-size: 15pt; font-weight: 800; }
+.v-pass { border-color: var(--pass) !important; } .v-pass b { color: var(--pass); }
+.v-check { border-color: var(--check) !important; } .v-check b { color: var(--check); }
+.v-fail { border-color: var(--fail) !important; } .v-fail b { color: var(--fail); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14pt; }
+.chart text { font-family: "Archivo Narrow", sans-serif; }
+dl { margin: 0; display: grid; grid-template-columns: 34mm 1fr; gap: 4pt 10pt; font-size: 9.8pt; }
+dt { font-weight: 700; color: var(--blue); }
+dd { margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ================= cover ================= -->
+<div class="cover">
+  <div class="band">
+    <div class="kicker">Arm Bharat AI-SoC Challenge 2026-27 · Problem Statement 5 · real-time industrial defect detection and QC assistant</div>
+    <h1>PCB Inspection Station</h1>
+    <p>An offline inspector for circuit boards on a Raspberry Pi 5. It finds and measures defects, says PASS, FAIL or CHECK at a miss rate you choose, and Llama 3.2 on ExecuTorch tells the operator the likely cause and what to do next. This document explains the whole system in plain words.</p>
+  </div>
+
+  <div class="figs">
+    <div class="fig"><b>4.0%</b><span>of defects missed on boards it had never seen, at a 5% miss-rate setting (DeepPCB, compared with the known-good board)</span></div>
+    <div class="fig"><b>0.29</b><span>false calls per board on the same 500 held-out boards (250 defective, 250 good)</span></div>
+    <div class="fig"><b>83.3%</b><span>mAP of the defect detector on 1,006 held-out boards (7,093 defects) from five public datasets</span></div>
+    <div class="fig"><b>95% · 88%</b><span>how often Llama's advice follows the evidence (repeating defect → process cause; one-off → handling), against about 50% for a blind pick</span></div>
+    <div class="fig"><b>0</b><span>network connections needed: every model runs on the Pi's Arm CPU through ExecuTorch</span></div>
+    <div class="fig"><b>11 + 3</b><span>bare-board defect types named, plus missing, extra and changed parts on assembled boards</span></div>
+  </div>
+
+  <div class="note"><b>Try it.</b> Recorded demo of the real station on held-out test boards: <b>pcb-inspection-demo.vercel.app</b>. The live version, with photo upload, runs from one Docker command (deploy/DEMO.md in the repository).</div>
+
+  <div class="foot">
+    <div><b>What is measured and what is not.</b> Every number here was measured, mostly on public datasets. Speed, memory and power on the Raspberry Pi 5 are measured on the device on 20-21 November 2026 and are not in this document.</div>
+    <div><b>Where the details are.</b> docs/TECHNICAL_REPORT.md (the full write-up), docs/RESULTS.md (every table, generated from the result files), results/measured/ (the raw results).</div>
+  </div>
+</div>
+
+<!-- ================= 1. problem ================= -->
+<section>
+  <h2><span class="n">1</span>The problem, simply</h2>
+  <p class="lead">A printed circuit board is a sheet of copper tracks on an insulating board. Before parts are soldered on, it must have no breaks and no stray copper. After assembly, every part must be there. Boards go wrong in a small number of ways:</p>
+  <table>
+    <tr><th>What goes wrong</th><th>What it looks like</th><th>Why it matters</th></tr>
+    <tr><td><b>Open</b>, mouse bite, pinhole</td><td>A track is cut, nicked at its edge, or has a hole in it</td><td>The circuit breaks, or the thin spot fails later</td></tr>
+    <tr><td><b>Short</b>, spur, spurious copper</td><td>Copper joins two tracks, sticks out of one, or sits where it should not</td><td>Two signals connect that never should</td></tr>
+    <tr><td>Missing hole, damaged pad, hole breakout</td><td>A drilled hole is missing or does not sit in its pad</td><td>A part cannot be fitted or connected</td></tr>
+    <tr><td>Scratch, foreign object</td><td>Surface damage or debris</td><td>Can cut a track or cause a short</td></tr>
+    <tr><td><b>Assembled boards</b>: missing, extra or wrong part</td><td>A component is not there, is extra, or looks different</td><td>The board will not work</td></tr>
+  </table>
+  <p>A small electronics shop in India needs a station that finds these quickly, decides what each one means, tells the operator what to do, and keeps a record, all without an internet connection. It also has to answer a question most inspection systems skip: <b>can I trust what it says, on my camera and my boards?</b> That question shaped the whole design.</p>
+
+  <h3>What the challenge asks for, and where it is</h3>
+  <table>
+    <tr><th>Problem Statement 5 asks for</th><th>What the station does</th></tr>
+    <tr><td>Detect defects, cracks and anomalies</td><td>A defect detector for 11 types, a comparison with a known-good board, an "anything unusual" model and a part-by-part check for assembled boards</td></tr>
+    <tr><td>Classify type and severity</td><td>Type from the detector; size in millimetres from the good-board comparison; severity from IPC-style limits for Class 1, 2 and 3</td></tr>
+    <tr><td>Alert operators with actionable advice</td><td>PASS / FAIL / CHECK with a green, red or amber light, and Llama's advice on cause and action</td></tr>
+    <tr><td>Log inspection results</td><td>Every board, finding, decision and piece of advice in a database on the Pi, exportable as CSV</td></tr>
+    <tr><td>Real time at the edge, no cloud</td><td>Every model runs on the Raspberry Pi 5's Arm CPU</td></tr>
+    <tr><td>A Llama model on ExecuTorch for reasoning</td><td>Llama 3.2 3B (Meta's SpinQuant 4-bit version) on ExecuTorch; Llama 3.2 1B as the fallback</td></tr>
+  </table>
+</section>
+
+<!-- ================= 2. one board ================= -->
+<section>
+  <h2><span class="n">2</span>What happens to one board</h2>
+  <p class="lead">The operator places the board and presses Inspect (or a foot pedal). Within moments the station gives its verdict. Llama's advice arrives a little later; the verdict never waits for it.</p>
+  <div class="flow">
+    <div class="step"><span class="k">1</span><div><h4>Take the picture</h4>The Pi camera takes a photo with focus and exposure locked. A printed marker beside the board tells the station how many millimetres one pixel is.</div><div class="how">Pi Camera through Picamera2 (or a USB webcam); ArUco marker for scale, QR code for the board ID; frames averaged to cut noise.</div></div>
+    <div class="step"><span class="k">2</span><div><h4>Compare with a known-good board</h4>The board is lined up with a reference photo of a good board of the same design and the copper is compared. Any change shows up, and a track that is now split is an open, two tracks now joined are a short.</div><div class="how">Image alignment (ECC, coarse to fine), copper segmentation, connectivity check. Classical computer vision, no learned model.</div></div>
+    <div class="step"><span class="k">3</span><div><h4>Name the defects</h4>A neural network looks at the board and names each defect (open, short, spur and so on). The two opinions are merged: the comparison sees everything, the detector says what it is.</div><div class="how">YOLO26n detector on 640-pixel tiles, run through ExecuTorch on the Arm CPU.</div></div>
+    <div class="step"><span class="k">4</span><div><h4>For assembled boards: anything unusual, and every part</h4>A second model knows what good boards look like and flags any area that differs. A part check finds each component and reports one that is missing, extra or looks different.</div><div class="how">ResNet-18 features with a memory of good patches; a one-class part detector (YOLO26n) taught from good photos of the design.</div></div>
+    <div class="step"><span class="k">5</span><div><h4>Measure and grade</h4>Each defect is measured in millimetres: how much of a track's width a nick removes, how much of a gap a spur closes. That is compared with IPC-style limits for the customer's class.</div><div class="how">Measured from the good-board comparison, not from the detector's box. Limits are editable (30%, 20%, 10% for Class 1, 2, 3).</div></div>
+    <div class="step"><span class="k">6</span><div><h4>Decide: PASS, FAIL or CHECK</h4>Thresholds set by calibration decide. If the station is not sure, it says CHECK and a person decides. The light on the stack turns green, red or amber.</div><div class="how">Conformal calibration at the operator's chosen miss rate (section 3).</div></div>
+    <div class="step"><span class="k">7</span><div><h4>Advise and log</h4>Llama reads the list of findings (never the picture) and chooses the likely cause and the next action for each, from a checked knowledge base. Everything is saved on the Pi.</div><div class="how">Llama 3.2 3B on ExecuTorch, choices read from its next-token scores; SQLite database.</div></div>
+  </div>
+  <figure><img src="shot_inspect.png" alt="The station's dashboard after inspecting a test board"><figcaption>The station's dashboard (recorded demo) after inspecting a held-out DeepPCB board: CHECK, five defects found and numbered on the board, each with size, place and IPC result, and the board's known answer from the dataset (5 of 5 found, no extra calls).</figcaption></figure>
+</section>
+
+<!-- ================= 3. pass fail check ================= -->
+<section>
+  <h2><span class="n">3</span>PASS, FAIL or CHECK, and why you can trust the miss rate</h2>
+  <div class="verdicts">
+    <div class="v-pass"><b>PASS</b>No defect found at the chosen miss rate. Green light.</div>
+    <div class="v-fail"><b>FAIL</b>A defect the station is sure about. Red light.</div>
+    <div class="v-check"><b>CHECK</b>Not sure. A person looks and presses Pass or Fail, with their name. Amber light.</div>
+  </div>
+  <p>Most detectors use a confidence threshold someone picked by eye, which says nothing about how many defects will get through. Here the operator picks the <b>allowed miss rate</b> instead: 1%, 5% or 10% of defects may slip through. The station sets its thresholds to keep that promise.</p>
+  <p><b>How, in plain words.</b> Before deployment the station is shown boards it was not trained on, with known defects (the calibration boards). For each, it records how strongly it saw one real defect. If the miss rate should be 5%, the threshold is placed so that only 5% of those known defects would have scored below it. A new board from the same process is then missed with at most that probability. This is called <b>conformal calibration</b>. It makes no assumption about how the scores are spread. A second threshold limits how many good boards are failed. Boards in between go to a person.</p>
+  <div class="note"><b>Checked on boards never used for calibration (DeepPCB, detector alone).</b> Targets of 1%, 5% and 10% gave measured miss rates of 1.0%, 6.5% and 11.6%. Each is inside the bound the calibration can promise with 95% confidence (1.9%, 7.2% and 13.2%) for 250 calibration defects. With the known-good board added, the 5% setting measured 4.0%.</div>
+  <p><b>The honest limit.</b> The promise holds only while boards look like the calibration boards: same product, camera and light. The station checks each new photo's sharpness and brightness against the calibration photos, and never passes a board it could not line up with its reference. For a design where it has never seen a good board, it never says PASS: everything without a confident defect goes to a person.</p>
+
+  <h3>How small a defect can it find? The eye test</h3>
+  <p>A dataset score says how a model did on someone else's photos. The station measures itself, like an eye chart: a printed card carries 252 defects of known sizes, and the station states for each defect type the smallest size it finds 90% of the time with 95% confidence (the a90/95 method of the US military's inspection handbook, MIL-HDBK-1823A). Read on simulated photos of the card:</p>
+  <table>
+    <tr><th>Defect</th><th>Detector + known-good board</th><th>Detector only</th></tr>
+    <tr><td>Opens, spurs, spurious copper</td><td>from 0.20 mm (smallest tested)</td><td>not certified up to 1.00 mm</td></tr>
+    <tr><td>Shorts across gaps</td><td>from 0.34 mm</td><td>not certified up to 0.50 mm</td></tr>
+    <tr><td>Pinholes</td><td>from 0.42 mm</td><td>not certified up to 1.00 mm</td></tr>
+    <tr><td>Mouse bites</td><td>from 0.48 mm</td><td>not certified up to 1.00 mm</td></tr>
+  </table>
+  <p class="soft">A detector that scores 96% on DeepPCB cannot promise 90% detection of any size on its own. That is why the station leads with the known-good comparison. The real printed card is photographed on the Pi on 20-21 November.</p>
+</section>
+
+<!-- ================= 4. llama ================= -->
+<section>
+  <h2><span class="n">4</span>What Llama does, and how it is kept honest</h2>
+  <p class="lead">One Llama 3.2 3B model (Meta's SpinQuant 4-bit version, exported to a 2.4 GB ExecuTorch file) does three jobs on the Pi. The rule throughout: <b>Llama decides, but what the operator acts on is always something the station can check.</b></p>
+  <div class="two">
+    <div>
+      <h3>1. Advice for each board</h3>
+      <p>Llama reads the findings (type, size, place, and whether the same defect keeps repeating on recent boards) and, for each defect, chooses the likely cause and the action from 2 to 4 options in the defect knowledge base. Each cause is asked as a yes/no question and the station reads Llama's probabilities directly, so nothing has to be parsed from free text. Llama also writes a one-line summary, which cannot contain a number that is not in the findings.</p>
+      <h3>2. Customer rules</h3>
+      <p>A customer writes "nicks that reduce the width by more than 20% are rejectable". Llama fills a fixed rule form, choosing only answers the sentence supports. The rule is checked, compared with the station's measured detection limit, and read back to the operator.</p>
+      <h3>3. Shift questions</h3>
+      <p>"What is the pass rate today?" Llama picks one of the station's fixed read-only database queries and words the rows it gets back. It can never write a database command itself.</p>
+    </div>
+    <figure style="margin-top:10pt"><img src="shot_advice_card.png" alt="Llama's advice on the dashboard"><figcaption>Llama's advice on the dashboard, grouped by defect type: action, likely cause, and who wrote it and how long it took. Every cause and action is knowledge-base text, word for word.</figcaption></figure>
+  </div>
+  <div class="note"><b>A checker stands behind every answer.</b> It rejects a cause or action that does not belong to the defect, a number that is not in the findings, a defect type that is not on the board, and a summary that blames handling where the chosen cause is a process step (or the reverse). A rejected answer is replaced by the knowledge base's standard advice, and the screen says so.</div>
+  <h3>Measured</h3>
+  <table>
+    <tr><th>Test</th><th class="num">Llama 3.2 3B (deployed)</th><th class="num">Blind pick / baseline</th></tr>
+    <tr><td>Advice shown (passed every check), 150 held-out records</td><td class="num">100%</td><td class="num">1B model: 87.3%</td></tr>
+    <tr><td>A defect that keeps repeating gets a process cause</td><td class="num">95.3%</td><td class="num">51.0% by chance</td></tr>
+    <tr><td>A one-off defect gets a handling cause</td><td class="num">88.4%</td><td class="num">46.6% by chance</td></tr>
+    <tr><td>Customer rules exactly right, 40 held-out clauses</td><td class="num">62.5%</td><td class="num">keyword reader 52.5%</td></tr>
+    <tr><td>Customer rules silently wrong (passed every check but wrong)</td><td class="num">2.5%</td><td class="num">keyword reader 45.0%</td></tr>
+    <tr><td>Shift question answered from the right query, 20 held-out questions</td><td class="num">80.0%</td><td class="num">keyword rule 75.0%</td></tr>
+  </table>
+  <p class="soft">The 1B model picked whichever cause was listed first and could not tell a repeating defect from a one-off; that is why the 3B model is the default. Known weak spot: Llama's free-text wording of shift answers is checked for numbers but not for meaning, and it sometimes picks the wrong number from the rows (seen while recording the demo). The query it chose and its rows are always shown under the answer.</p>
+</section>
+
+<!-- ================= 5. data ================= -->
+<section>
+  <h2><span class="n">5</span>The data</h2>
+  <p class="lead">Everything was trained on public datasets on a cloud GPU (Google Colab), then exported to ExecuTorch for the Pi. Test boards were kept apart from training, split by <b>physical board</b> wherever the data allowed, so the station is scored on boards it never saw.</p>
+  <table>
+    <tr><th>Dataset</th><th>What it is</th><th>Used for</th><th>Licence</th></tr>
+    <tr><td><b>DeepPCB</b></td><td>1,500 binarised board images, each with its defect-free template, 48 px/mm</td><td>Detector training and test; known-good comparison; eye-test card patterns</td><td>MIT</td></tr>
+    <tr><td><b>PKU-Market-PCB</b></td><td>693 colour photos of 10 boards with drawn-in defects</td><td>Detector training and test (split by board)</td><td>Released for research use</td></tr>
+    <tr><td><b>Mendeley PCB-Defect</b> (2025)</td><td>230 real etched boards, flatbed scans</td><td>Detector training and test</td><td>As stated on its page</td></tr>
+    <tr><td><b>DsPCBSD+</b> (2024)</td><td>10,259 crops of real production-line inspection images</td><td>Detector training and test</td><td>CC BY 4.0</td></tr>
+    <tr><td><b>DefectDet</b> (2026)</td><td>268 photos of real manufactured double-layer boards</td><td>Half the physical boards train, the other half test only</td><td>CC BY 4.0</td></tr>
+    <tr><td><b>VisA</b> pcb1-pcb4</td><td>Photos of four assembled board designs, good and faulty</td><td>Assembled-board "anything unusual" model and its test; parts-check test</td><td>CC BY 4.0</td></tr>
+    <tr><td><b>FPIC</b> (Univ. of Florida)</td><td>Photos of assembled boards with every component labelled</td><td>Part detector and part-kind classifier (53 boards train, 15 held out)</td><td>Research collection</td></tr>
+    <tr><td><b>EPID</b></td><td>Assembled-board images</td><td>Test only</td><td>CC BY 4.0</td></tr>
+    <tr><td><b>Real-IAD</b> (pcb)</td><td>Industrial anomaly images, five camera views per board</td><td><b>Evaluation only</b>: never trained on, never redistributed</td><td>CC BY-NC-SA 4.0</td></tr>
+  </table>
+  <p>The sources look very different from each other: black-and-white scans, green solder mask, bare copper, production crops, phone-style photos. That variety is deliberate. Training also recoloured the scans as real board finishes and simulated camera effects, so the detector does not learn one look. The 11 defect types of all sources were unified into one list.</p>
+  <h3>What more data bought</h3>
+  <p>The first detector scored 97% on the datasets it was trained on, but only 18% on photos of real boards from another lab. Adding production-line data and half of the real DefectDet boards lifted the unseen DefectDet boards from 17.8% to 84.2%. That gap is why the station measures its own limits instead of quoting a dataset score.</p>
+  <table>
+    <tr><th>Detector version (mAP@0.5 on held-out boards)</th><th class="num">All</th><th class="num">DeepPCB</th><th class="num">PKU</th><th class="num">Mendeley</th><th class="num">DsPCBSD+</th><th class="num">DefectDet</th></tr>
+    <tr><td>First version (3 sources)</td><td class="num">33.2%</td><td class="num">96.6%</td><td class="num">97.3%</td><td class="num">83.7%</td><td class="num">0.1%</td><td class="num">17.8%</td></tr>
+    <tr><td>+ DsPCBSD+</td><td class="num">70.4%</td><td class="num">96.6%</td><td class="num">91.2%</td><td class="num">83.3%</td><td class="num">75.1%</td><td class="num">30.2%</td></tr>
+    <tr class="hl"><td>+ DefectDet boards, recolouring (deployed)</td><td class="num">83.3%</td><td class="num">96.3%</td><td class="num">95.8%</td><td class="num">81.1%</td><td class="num">73.8%</td><td class="num">84.2%</td></tr>
+  </table>
+</section>
+
+<!-- ================= 6. results ================= -->
+<section>
+  <h2><span class="n">6</span>The numbers</h2>
+  <h3>Defect detector (deployed YOLO26n, through ExecuTorch)</h3>
+  <div class="two">
+    <div>
+      <svg class="chart" viewBox="0 0 300 168" width="100%" role="img" aria-label="mAP by test set">
+        <g font-size="9.5" fill="#16201C">
+          <text x="92" y="16" text-anchor="end">All test boards</text><rect x="98" y="7" width="166.6" height="12" rx="2" fill="#1D3F8F"/><text x="268" y="16">83.3%</text>
+          <text x="92" y="40" text-anchor="end">DeepPCB</text><rect x="98" y="31" width="192.6" height="12" rx="2" fill="#1D3F8F"/><text x="268" y="40" fill="#fff" text-anchor="end">96.3%</text>
+          <text x="92" y="64" text-anchor="end">PKU-Market-PCB</text><rect x="98" y="55" width="191.6" height="12" rx="2" fill="#1D3F8F"/><text x="268" y="64" fill="#fff" text-anchor="end">95.8%</text>
+          <text x="92" y="88" text-anchor="end">DefectDet (unseen)</text><rect x="98" y="79" width="168.4" height="12" rx="2" fill="#1D3F8F"/><text x="270" y="88">84.2%</text>
+          <text x="92" y="112" text-anchor="end">Mendeley</text><rect x="98" y="103" width="162.2" height="12" rx="2" fill="#1D3F8F"/><text x="264" y="112">81.1%</text>
+          <text x="92" y="136" text-anchor="end">DsPCBSD+</text><rect x="98" y="127" width="147.6" height="12" rx="2" fill="#1D3F8F"/><text x="249" y="136">73.8%</text>
+          <text x="98" y="160" fill="#5E6A66">mAP@0.5 on held-out boards (bar length = mAP, axis 0 to 100%)</text>
+        </g>
+      </svg>
+    </div>
+    <div>
+      <table>
+        <tr><th>At confidence 0.25</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr>
+        <tr class="hl"><td>All test boards (7,093 defects)</td><td class="num">76.6%</td><td class="num">81.0%</td><td class="num">78.7%</td></tr>
+        <tr><td>DeepPCB</td><td class="num">83.4%</td><td class="num">97.1%</td><td class="num">89.7%</td></tr>
+        <tr><td>DefectDet (unseen boards)</td><td class="num">73.2%</td><td class="num">86.9%</td><td class="num">79.5%</td></tr>
+      </table>
+      <p class="soft narrow">The setting favours recall: better to show a doubtful box than hide a defect. The good-board comparison and the calibrated thresholds deal with false alarms.</p>
+    </div>
+  </div>
+  <p><b>What ships is what was measured.</b> The exported ExecuTorch file gives the same mAP as the PyTorch model to within 0.05 points. The INT8 version is a third of the size (3.2 MB against 9.8 MB) and loses at most 0.4 points. All six detector files (three sizes, FP32 and INT8) were also run on Arm in an emulator and gave the same findings.</p>
+
+  <h3>The station as deployed (detector + known-good board), DeepPCB, 5% setting</h3>
+  <table>
+    <tr><th>Evidence used</th><th class="num">Defects missed (95% range)</th><th class="num">False calls per board</th><th class="num">Named correctly</th></tr>
+    <tr><td>Detector only</td><td class="num">6.3% (4.9 to 7.9)</td><td class="num">0.12</td><td class="num">99%</td></tr>
+    <tr><td>Known-good comparison only</td><td class="num">5.2% (3.9 to 6.6)</td><td class="num">0.49</td><td class="num">81%</td></tr>
+    <tr class="hl"><td>Both, merged (deployed)</td><td class="num">4.0% (3.1 to 5.0)</td><td class="num">0.29</td><td class="num">99%</td></tr>
+  </table>
+  <p class="soft">On these boards 95% of good boards PASS and none FAIL; no defective board passes. Larger detectors (YOLO26s, YOLO26m) score higher mAP (85.8%, 86.8%) and ship too; which one runs is chosen from the Pi's timings.</p>
+
+  <h3>Assembled boards</h3>
+  <table>
+    <tr><th>Test</th><th class="num">Result</th></tr>
+    <tr><td>"Anything unusual" model, VisA pcb1-4: telling faulty from good boards (image AUROC)</td><td class="num">95.6%</td></tr>
+    <tr><td>Same model, locating the fault (pixel AUROC)</td><td class="num">97.9%</td></tr>
+    <tr><td>Same method on Real-IAD, five camera views, never trained on</td><td class="num">90.6%</td></tr>
+    <tr><td>Part detector on 15 held-out FPIC boards: precision / recall</td><td class="num">97.3% / 94.2%</td></tr>
+    <tr><td>Parts removed in software: reported missing (no call on any untouched board)</td><td class="num">86%</td></tr>
+    <tr><td>Real VisA photos, hand-made faults: missing parts found on the spot / good boards with a false call</td><td class="num">61% / 4.7%</td></tr>
+  </table>
+  <h3>Learning during use</h3>
+  <p>When the operator confirms defects and marks false alarms, the station can update a small model, which is switched on only if it hides no real defect. Simulated on held-out DeepPCB boards, the share of boards sent to a person fell from 20% to 4%, with no defective board passed.</p>
+</section>
+
+<!-- ================= 7. pi ================= -->
+<section>
+  <h2><span class="n">7</span>Running on the Arm CPU</h2>
+  <p class="lead">The whole station runs on a Raspberry Pi 5 (8 GB, four Arm Cortex-A76 cores), offline. A phone or laptop on the Pi's own Wi-Fi hotspot opens the dashboard.</p>
+  <table>
+    <tr><th>Part</th><th>Runs as</th><th class="num">File size</th></tr>
+    <tr><td>Defect detector (YOLO26n; s and m also shipped)</td><td>ExecuTorch, XNNPACK, FP32 or INT8 (or Arm's optimised YOLO26 runtime)</td><td class="num">9.8 MB / 3.2 MB</td></tr>
+    <tr><td>"Anything unusual" backbone (ResNet-18)</td><td>ExecuTorch, XNNPACK</td><td class="num">11.1 MB</td></tr>
+    <tr><td>Part detector and part-kind classifier</td><td>ExecuTorch, XNNPACK</td><td class="num">9.8 MB / 6.2 MB</td></tr>
+    <tr><td>Llama 3.2 3B Instruct, SpinQuant INT4 (default)</td><td>ExecuTorch, XNNPACK with Arm KleidiAI kernels</td><td class="num">2.38 GB</td></tr>
+    <tr><td>Llama 3.2 1B Instruct, SpinQuant INT4 (fallback)</td><td>ExecuTorch</td><td class="num">1.08 GB</td></tr>
+  </table>
+  <p><b>Measured on the Pi on 20-21 November</b> (bench/bench_device.py, deploy/measure_on_pi.sh): inspections per second and time to verdict, time per stage, detector speed in FP32, INT8 and Arm's runtime at 1, 2 and 4 threads, Llama's time to first token and tokens per second, memory with everything loaded, board power from the Pi's own power chip, and temperature over a 30-minute run. Until then, speed figures in this project are labelled with the machine they came from: Llama's advice took a median of 7 s on a cloud server CPU and 25 to 48 s on a laptop CPU.</p>
+  <div class="note"><b>Already checked without a Pi.</b> The Arm (aarch64) build of every model was run in an arm64 Debian emulator: all six detector files load and give the same findings. The check the Pi runs first (deploy/arm_check.py) loads every model and runs Llama, including from the web server's worker thread, a case that once crashed and is now tested.</div>
+
+  <h3>The operator's screen</h3>
+  <p>A dashboard served by the Pi shows, in order: the verdict with the stack light; the board with each finding numbered on it; a table of findings with size, place, IPC class result and confidence; and Llama's advice grouped by defect type. CHECK boards get Pass and Fail buttons that record the operator's name and reason. The Log tab lists every board and reopens it; Trends shows a Pareto chart of defect types and a control chart that flags when the process changes. Setup holds teaching a new board design from a few good boards, the eye test, customer rules and questions about the log.</p>
+</section>
+
+<!-- ================= 8. limits + glossary ================= -->
+<section>
+  <h2><span class="n">8</span>What it does not do yet</h2>
+  <ul>
+    <li><b>Pi timings are not measured yet.</b> They are measured on the device on 20-21 November.</li>
+    <li><b>Real boards under the real camera</b> are tested only in that session (a taught board and a knife cut, the printed eye-test card). Everything else is on public datasets.</li>
+    <li><b>Assembled boards:</b> the "anything unusual" model sends about 60% of VisA test boards to a person (about half of them are faulty), and the parts check works well on two of the four VisA designs and poorly on two. It does not check polarity, part value or solder joints.</li>
+    <li><b>Severity limits</b> come from cited secondary sources, not the licensed IPC standard; they are editable per customer.</li>
+    <li><b>Llama's free-text sentences</b> are checked for numbers, defect types and the kind of cause, but not for every claim. The causes and actions the operator acts on are always knowledge-base text.</li>
+  </ul>
+
+  <h2 style="margin-top:18pt"><span class="n">9</span>Words used in this document</h2>
+  <dl>
+    <dt>Precision</dt><dd>Of the defects the station reported, the share that were real.</dd>
+    <dt>Recall</dt><dd>Of the real defects, the share the station found.</dd>
+    <dt>F1</dt><dd>One number that balances precision and recall (their harmonic mean).</dd>
+    <dt>mAP@0.5</dt><dd>The standard detection score: how well found boxes match labelled defects (overlap of at least half), averaged over defect types. 100% is perfect.</dd>
+    <dt>AUROC</dt><dd>How well a score separates faulty from good: 100% is perfect separation, 50% is a coin toss.</dd>
+    <dt>Miss rate</dt><dd>The share of real defects not caught. The operator chooses the allowed value.</dd>
+    <dt>Conformal calibration</dt><dd>A way to set thresholds from held-out examples so a chosen miss rate holds, without assuming how scores are spread.</dd>
+    <dt>a90/95</dt><dd>The smallest defect size found at least 90% of the time, with 95% confidence.</dd>
+    <dt>Known-good (golden) board</dt><dd>A reference photo of a good board of the same design, compared with each new board.</dd>
+    <dt>IPC Class 1, 2, 3</dt><dd>Quality classes for boards, from general products (1) to high-reliability ones (3); stricter classes allow less damage.</dd>
+    <dt>ExecuTorch</dt><dd>PyTorch's runtime for running models on devices such as phones and the Raspberry Pi.</dd>
+    <dt>INT8 / INT4</dt><dd>Storing a model's numbers in 8 or 4 bits instead of 32: smaller and faster, slightly less exact.</dd>
+    <dt>Held out</dt><dd>Kept apart from training and tuning, and used only to measure.</dd>
+  </dl>
+  <p class="soft" style="margin-top:14pt">Built with Llama. Llama 3.2 is licensed under the Llama 3.2 Community License. Dataset licences are listed in NOTICE.md.</p>
+</section>
+
+</body>
+</html>
