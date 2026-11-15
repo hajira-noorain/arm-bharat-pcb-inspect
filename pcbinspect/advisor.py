@@ -292,9 +292,14 @@ def render(advice: dict, record: dict, kb: KnowledgeBase) -> list[dict]:
 class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
-                 option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list"):
-        self.cause_mode = cause_mode      # scored path: 'list' (score the listed options) or 'pointwise'
-        #                                   (one yes/no question per candidate cause, no list in the prompt)
+                 option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list",
+                 abstain_gap: float = 0.15, temperature: float = 1.0):
+        self.cause_mode = cause_mode      # scored path: 'list' (score the listed options), 'pointwise'
+        #                                   (one yes/no question per candidate cause, no list in the prompt) or
+        #                                   'evidence' (the station's clues in the prompt, probabilities over the
+        #                                   causes, top two shown when they are close: see _advise_evidence)
+        self.abstain_gap = abstain_gap    # evidence mode: show the top two when their probabilities are this close
+        self.temperature = temperature    # evidence mode: calibration of the yes/no log-odds (set on dev data)
         self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
         self.last_forwards = 0
         self.fewshot = fewshot
@@ -316,6 +321,8 @@ class Advisor:
         if self.backend is None:
             return self._template(record, ["no LLM backend loaded"])
         try:
+            if self.cause_mode == "evidence" and hasattr(self.backend, "yes_no"):
+                return self._advise_evidence(record)
             if hasattr(self.backend, "score"):
                 return self._advise_scored(record, history)
             if hasattr(self.backend, "cont"):
@@ -323,6 +330,61 @@ class Advisor:
             return self._advise_single(record, history)
         except Exception as exc:  # runtime failure must never block the inspection
             return self._template(record, [f"LLM error: {exc!r}"])
+
+    # ---------------------------------------------------------------- evidence mode (logits backend)
+    def _advise_evidence(self, record: dict) -> Advice:
+        """Each defect is shown with the clues the station measured (pcbinspect/evidence.py); every candidate cause
+        is put to Llama alone as a yes/no question and the log-odds become probabilities over the causes. When the
+        top two are within `abstain_gap`, both are shown with the check that tells them apart (kb/evidence.yaml).
+        Actions are chosen by the probability of their own text. The board summary is the knowledge base's
+        standard sentence, so no free text can contradict the chosen causes."""
+        import math
+
+        from .cause_prompt import build_evidence_prompt, cause_question
+        from .causes import CauseModel
+        be, kb = self.backend, self.kb
+        cm = getattr(self, "_cm", None) or CauseModel(kb)
+        self._cm = cm
+        t0 = time.perf_counter()
+        defects = _sorted_defects(record)[:MAX_LLM_DEFECTS]
+        be.reset()
+        be.feed(build_evidence_prompt({**record, "defects": defects}, kb))
+        steps, extra = [], []
+        for d in defects:
+            causes = cm.causes(d["type"])
+            lo = {c: be.yes_no(cause_question(d["id"], c, kb)) / self.temperature for c in causes}
+            m = max(lo.values())
+            ex = {c: math.exp(v - m) for c, v in lo.items()}
+            z = sum(ex.values())
+            p = {c: v / z for c, v in ex.items()}
+            order = sorted(p, key=p.get, reverse=True)
+            aids = [a["id"] for a in kb.entry(d["type"])["actions"]]
+            be.feed(f"\n{d['id']} cause: {kb.by_id[order[0]]['short']}\n{d['id']} action:")
+            sc = be.score([" " + kb.by_id[a]["short"] for a in aids], end="\n")
+            action = aids[max(range(len(aids)), key=lambda k: sc[k][0])]
+            steps.append({"defect": d["id"], "cause": order[0], "action": action})
+            abstain = len(order) > 1 and p[order[0]] - p[order[1]] < self.abstain_gap
+            ev = cm.evidence[order[0]]
+            extra.append({"p": p, "abstain": abstain, "evidence": d.get("evidence"), "provenance": ev["provenance"],
+                          "source": ev["source"], "confirm": ev["confirm"],
+                          "alternatives": [{"cause_id": c, "cause": kb.by_id[c]["text"], "p": p[c],
+                                            "confirm": cm.evidence[c]["confirm"],
+                                            "provenance": cm.evidence[c]["provenance"]} for c in order[:2]]
+                          if abstain else []})
+        summary = template_advice(record, kb)["summary"]
+        res: GroundingResult = check(json.dumps({"steps": steps, "summary": summary}), record, kb)
+        if not res.ok:
+            return self._template(record, res.reasons, be.model)
+        rendered = render(res.advice, record, kb)
+        for r, x in zip(rendered, extra):
+            r.update(x)
+        covered = {s["defect"] for s in steps}
+        rest = [s for s in template_advice(record, kb)["steps"] if s["defect"] not in covered]
+        if rest:
+            rendered += render({"steps": rest}, record, kb)
+        total = GenResult("", (time.perf_counter() - t0) * 1e3, 0.0, 0.0, 0, 0)
+        return Advice(LLAMA_BACKEND, be.model, summary, rendered, True, [], [s["defect"] for s in rest], None,
+                      total, [], "template")
 
     # ---------------------------------------------------------------- scored choices (logits backend)
     def _advise_scored(self, record: dict, history: dict[str, int] | None, window: int = 20) -> Advice:
