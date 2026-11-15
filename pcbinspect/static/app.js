@@ -591,7 +591,7 @@ $("#ask-form").addEventListener("submit", async (e) => {
     const r = await api("/api/ask", { method: "POST", body: JSON.stringify({ question: q }) });
     const cols = r.rows.length ? Object.keys(r.rows[0]) : [];
     $("#ask-out").innerHTML = `<p class="answer">${esc(r.answer)}</p>
-      <p class="meta">Answered from the "${esc(words(r.query))}" query${r.route === "llama" ? ", chosen by Llama" : ""}; ${r.summary_by === "llama" ? "summary written by Llama and checked against these rows" : "shown directly from the rows"}.</p>
+      <p class="meta">Answered from the "${esc(words(r.query))}" query${r.route === "llama" ? ", chosen by Llama" : ""}; ${r.summary_by === "llama" ? "worded by Llama, every number filled in by the station from these rows" : "shown directly from the rows"}.</p>
       ${cols.length ? `<table><thead><tr>${cols.map((c) => `<th>${esc(words(c))}</th>`).join("")}</tr></thead><tbody>${r.rows.map((row) => `<tr>${cols.map((c) => `<td>${esc(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;
   } catch (err) { $("#ask-out").innerHTML = `<p class="answer">The question could not be answered: ${esc(err.message)}</p>`; }
 });

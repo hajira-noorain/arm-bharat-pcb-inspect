@@ -45,11 +45,12 @@ def log(tmp_path, n=3):
 
 def test_llama_chooses_the_query_and_the_question_supplies_the_parameters(tmp_path):
     s = log(tmp_path)
-    be = Scripted("yield", [["The station inspected "], ["7", "3"], [" boards and all of them failed."]])
+    be = Scripted("yield", [["The station inspected "], ["7", "{boards}"], [" boards and "], ["{failed}"],
+                            [" of them failed."]])
     r = ask.answer("How many boards failed in the last 3 hours?", s.conn, be)
     assert r["route"] == "llama" and r["query"] == "yield" and r["params"] == {"hours": 3}
-    # the model's first wish was "7": not a number in the rows, so it could not be written
-    assert r["summary_by"] == "llama" and r["answer"] == "The station inspected 3 boards and all of them failed."
+    # the model's first wish was "7": a digit cannot be written, so the number had to come through a field
+    assert r["summary_by"] == "llama" and r["answer"] == "The station inspected 3 boards and 3 of them failed."
     assert "yield:" in be.prompts[0] and '"params"' not in be.prompts[0]
 
 

@@ -84,7 +84,7 @@ def test_llama_summary_with_invented_numbers_is_rejected(tmp_path):
     s.log_inspection(Inspection("B-1", "deeppcb", "", [], 0.0, "PASS", 0.05, None), None)
     out = ask.answer("yield?", s.conn, backend=LyingBackend())
     assert out["route"] == "llama" and out["summary_by"] == "template"
-    assert "57" in out["summary_rejected"]
+    assert out["summary_rejected"] and "57" not in out["answer"]       # a typed number is never shown
 
 
 class GluedNumberBackend(LyingBackend):
@@ -102,5 +102,5 @@ def test_a_number_glued_to_a_word_is_still_checked(tmp_path):
     s = Store(tmp_path)
     s.log_inspection(Inspection("B-1", "deeppcb", "", [], 0.0, "PASS", 0.05, None), None)
     out = ask.answer("how many boards failed today?", s.conn, backend=GluedNumberBackend())
-    assert out["summary_by"] == "template" and "2" in out["summary_rejected"]
+    assert out["summary_by"] == "template" and out["summary_rejected"]
     assert "2boards" not in out["answer"]

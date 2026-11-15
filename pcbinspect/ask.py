@@ -11,6 +11,7 @@ import re
 import time
 
 from .grounding import NUM_RE, extract_json
+from .sentences import check_template, facts_for, render, standard_sentence, template_prompt
 
 DIGITS_RE = re.compile(r"\d+(?:\.\d+)?")
 
@@ -131,6 +132,10 @@ def table_text(rows: list[dict]) -> str:
     return "; ".join(", ".join(f"{k} {v}" for k, v in r.items()) for r in rows)
 
 
+def _no_digits(text_so_far: str, piece: str) -> bool:
+    return not any(ch.isdigit() for ch in piece)
+
+
 def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
     out = {"question": question, "route": "keyword", "summary_by": "template"}
     qid, params = keyword_route(question)
@@ -157,27 +162,25 @@ def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
         except Exception as exc:  # routing failure falls back to keywords
             out["route_error"] = repr(exc)
     rows = run_query(conn, qid, params)
-    out.update({"query": qid, "params": params, "rows": rows, "answer": table_text(rows)})
+    facts = facts_for(qid, rows, params)
+    out.update({"query": qid, "params": params, "rows": rows, "facts": facts,
+                "answer": standard_sentence(qid, facts)})
     if backend is not None and rows:
-        p = _chat("You summarise database rows for a factory operator in one or two plain sentences. "
-                  "Use only numbers that appear in the rows.",
-                  f"Question: {question}\nRows: {json.dumps(rows, default=str)}", "")
+        # Llama writes the sentence with {field} placeholders; the station fills in the numbers (pcbinspect/sentences.py)
         try:
-            allowed = {round(float(x), 2) for x in NUM_RE.findall(json.dumps(rows, default=str))}
-            seen = {round(float(x), 2) for x in DIGITS_RE.findall(json.dumps(rows, default=str))}
-            if scored:      # a number that is not in the rows cannot be written at all
-                from .grounding import number_filter_values
+            p = template_prompt(question, facts)
+            if scored:      # a digit cannot be written at all: every number has to come through a field
                 backend.reset()
                 backend.feed(p)
-                text = backend.write(max_new_tokens, stop=("\n\n",), allow=number_filter_values(allowed)).strip()
+                tpl = backend.write(max_new_tokens, stop=("\n\n",), allow=_no_digits, nonempty=True).strip()
             else:
-                text = backend.generate(p, max_new_tokens).text.strip().split("<|eot_id|>")[0].strip()
-            # every run of digits counts, also one glued to a word ("2boards"); a board ID from the rows may stay
-            bad = [m for m in DIGITS_RE.findall(text) if round(float(m), 2) not in allowed | seen]
-            if text and not bad:
-                out["answer"], out["summary_by"] = text, "llama"
+                tpl = backend.generate(p, max_new_tokens).text.strip().split("<|eot_id|>")[0].strip()
+            reasons = check_template(tpl, question, qid, facts)
+            out["template"] = tpl
+            if not reasons:
+                out["answer"], out["summary_by"] = render(tpl, facts), "llama"
             else:
-                out["summary_rejected"] = f"numbers not in rows: {bad}" if bad else "empty"
+                out["summary_rejected"] = "; ".join(reasons)
         except Exception as exc:
             out["summary_error"] = repr(exc)
     return out

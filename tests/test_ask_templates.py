@@ -1,0 +1,109 @@
+"""Fill-in sentences for shift answers: Llama writes {field} placeholders, the station writes the numbers."""
+import pytest
+
+from pcbinspect.sentences import check_template, facts_for, render, required_fields, standard_sentence
+
+YIELD = [{"boards": 28, "passed": 3, "failed": 0, "review": 25}]
+COUNTS = [{"defect": "unknown_anomaly", "n": 28}, {"defect": "spurious_copper", "n": 25}, {"defect": "short", "n": 19}]
+SEV = [{"severity": "major", "n": 66}, {"severity": "critical", "n": 44}]
+
+
+def test_facts_flatten_rows_and_precompute_rankings():
+    assert facts_for("yield", YIELD, {"hours": 24}) == {"boards": 28, "passed": 3, "failed": 0, "review": 25,
+                                                        "hours": 24}
+    f = facts_for("defect_counts", COUNTS, {"hours": 8})
+    assert (f["top_defect"], f["top_count"], f["second_defect"], f["second_count"]) == \
+        ("unknown anomaly", 28, "spurious copper", 25)
+    assert f["total_defects"] == 72 and f["n_types"] == 3 and f["count_short"] == 19
+    s = facts_for("severity_counts", SEV, {"hours": 8})
+    assert (s["critical"], s["major"], s["minor"], s["total_defects"]) == (44, 66, 0, 110)
+
+
+def test_what_the_question_asks_for_must_be_in_the_answer():
+    assert required_fields("How many boards went to a person for checking today?", "yield") == {"review"}
+    assert required_fields("What is the pass rate today?", "yield") == {"passed", "boards"}
+    assert required_fields("Which defect is the most common this shift?", "defect_counts") == {"top_defect"}
+    assert required_fields("Split the defects from today into critical, major and minor", "severity_counts") == \
+        {"critical", "major", "minor"}
+
+
+def test_the_checker_rejects_the_mistakes_seen_on_the_demo():
+    f = facts_for("yield", YIELD, {"hours": 24})
+    q = "How many boards went to a person for checking today?"
+    assert check_template("{boards} boards were sent for checking today.", q, "yield", f)      # wrong field
+    assert check_template("Here is the summary:", q, "yield", f)                               # no answer
+    assert check_template("", q, "yield", f)
+    assert check_template("25 boards went to a person.", q, "yield", f)                        # typed number
+    assert check_template("{reviewed} boards went to a person.", q, "yield", f)                # unknown field
+    assert check_template("{review} of {boards} boards went to a person today.", q, "yield", f) == []
+    c = facts_for("defect_counts", COUNTS, {"hours": 8})
+    q2 = "Which defect is the most common this shift?"
+    assert check_template("The most common defect is {second_defect} with {second_count}.", q2, "defect_counts", c)
+    assert check_template("The most common defect is {top_defect}, found {top_count} times.", q2,
+                          "defect_counts", c) == []
+    assert check_template("One. Two. Three sentences is too long.", q2, "defect_counts", c)
+
+
+def test_render_and_standard_sentences():
+    f = facts_for("yield", YIELD, {"hours": 24})
+    assert render("{review} of {boards} boards went to a person.", f) == "25 of 28 boards went to a person."
+    assert standard_sentence("yield", f) == ("28 boards inspected in the last 24 hours: 3 passed, 0 failed, "
+                                             "25 sent to a person.")
+    c = facts_for("defect_counts", COUNTS, {"hours": 8})
+    assert standard_sentence("defect_counts", c).startswith("72 defects in the last 8 hours; most common: unknown anomaly (28)")
+    assert standard_sentence("open_alerts", facts_for("open_alerts", [], {})) == "No open alerts."
+
+
+class TemplateWriter:
+    """A scored backend stand-in: routes to `want` and writes `tpl` as the sentence."""
+    name, model = "llama-executorch-logits", "scripted"
+
+    def __init__(self, want, tpl):
+        self.want, self.tpl, self.prompts = want, tpl, []
+
+    def reset(self):
+        pass
+
+    def feed(self, text):
+        self.prompts.append(text)
+
+    def score(self, options, end="\n"):
+        return [(0.0 if o.strip() == self.want else -9.0, 2) for o in options]
+
+    def write(self, max_new_tokens, stop=("\n",), allow=None, top_k=40, nonempty=False):
+        assert allow is not None and not allow("", "2") and allow("", "{review}")   # digits cannot be typed
+        return self.tpl
+
+
+def _store(tmp_path):
+    from pcbinspect.record import Inspection
+    from pcbinspect.store import Store
+    s = Store(tmp_path)
+    for v in ["PASS", "REVIEW", "REVIEW", "FAIL"]:
+        s.log_inspection(Inspection("B-1", "deeppcb", "", [], 0.0, v, 0.05, None), None)
+    return s
+
+
+def test_ask_renders_a_correct_fill_in_sentence(tmp_path):
+    from pcbinspect import ask
+    s = _store(tmp_path)
+    be = TemplateWriter("yield", "{review} of {boards} boards went to a person today.")
+    out = ask.answer("How many boards went to a person for checking today?", s.conn, backend=be)
+    assert out["answer"] == "2 of 4 boards went to a person today." and out["summary_by"] == "llama"
+    assert out["template"] == "{review} of {boards} boards went to a person today."
+    assert any("review = 2" in p for p in be.prompts)          # Llama saw labelled facts, not raw rows
+
+
+def test_ask_falls_back_to_the_standard_sentence_on_a_wrong_field(tmp_path):
+    from pcbinspect import ask
+    s = _store(tmp_path)
+    out = ask.answer("How many boards went to a person for checking today?", s.conn,
+                     backend=TemplateWriter("yield", "{boards} boards were sent for checking today."))
+    assert out["summary_by"] == "template" and "review" in out["summary_rejected"]
+    assert out["answer"] == "4 boards inspected in the last 24 hours: 1 passed, 1 failed, 2 sent to a person."
+
+
+def test_without_llama_the_answer_is_the_standard_sentence(tmp_path):
+    from pcbinspect import ask
+    out = ask.answer("What is the pass rate today?", _store(tmp_path).conn, backend=None)
+    assert out["answer"].startswith("4 boards inspected in the last 24 hours: 1 passed")
