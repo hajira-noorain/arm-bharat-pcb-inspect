@@ -16,6 +16,8 @@ PLACEHOLDER = re.compile(r"\{([a-z_][a-z0-9_]*)(?:\|([a-z][a-z ]*))?\}")
 DIGIT = re.compile(r"\d")
 SUPERLATIVE = re.compile(r"\b(most|top|highest|largest|biggest|commonest|main)\b", re.I)
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
+COMPARE = re.compile(r"\b(more|fewer|less|than|versus|vs|compared?|or)\b", re.I)
+RATE = re.compile(r"\b(rate|percent|percentage|yield|share)\b|%", re.I)
 SYSTEM = ("You answer a factory operator's question about the inspection log in one or two plain sentences. "
           "Write every number or name from the facts as {name}, using the names listed; never type a number.")
 
@@ -37,9 +39,34 @@ TYPE_WORDS = {"open": "opens?", "short": "shorts?", "mouse_bite": "mouse ?bites?
               "changed_part": "changed parts?|wrong parts?"}
 
 
+TYPE_PLURAL = {"open": "opens", "short": "shorts", "mouse_bite": "mouse bites", "spur": "spurs",
+               "spurious_copper": "copper islands", "pin_hole": "pinholes", "missing_hole": "missing holes",
+               "missing_pad": "missing pads", "hole_breakout": "hole breakouts", "scratch": "scratches",
+               "foreign_object": "foreign objects", "missing_part": "missing parts", "extra_part": "extra parts",
+               "changed_part": "changed parts"}
+
+
 def named_types(question: str) -> list[str]:
+    """Defect types the question names, in the order it names them."""
     q = question.lower()
-    return [t for t, pat in TYPE_WORDS.items() if re.search(rf"\b(?:{pat})\b", q)]
+    found = [(m.start(), t) for t, pat in TYPE_WORDS.items() if (m := re.search(rf"\b(?:{pat})\b", q))]
+    return [t for _, t in sorted(found)]
+
+
+def named_severities(question: str) -> list[str]:
+    q = question.lower()
+    return [s for _, s in sorted((q.find(s), s) for s in ("critical", "major", "minor") if s in q)]
+
+
+def comparison(a: str, na: int, b: str, nb: int) -> str:
+    """'more X than Y' / 'as many X as Y', computed here so the model never compares numbers itself."""
+    if na == nb:
+        return f"as many {a} as {b}"
+    return f"more {a} than {b}" if na > nb else f"more {b} than {a}"
+
+
+def _asks_comparison(question: str, named: list) -> bool:
+    return len(named) >= 2 and bool(COMPARE.search(question))
 
 
 def facts_for(qid: str, rows: list[dict], params: dict, question: str = "") -> dict:
@@ -48,6 +75,8 @@ def facts_for(qid: str, rows: list[dict], params: dict, question: str = "") -> d
     if qid == "yield":
         r = rows[0] if rows else {}
         f.update({k: _int(r.get(k)) for k in ("boards", "passed", "failed", "review")})
+        if f["boards"]:
+            f["pass_rate_pct"] = round(100 * f["passed"] / f["boards"])
     elif qid in ("defect_counts", "severity_counts"):
         key = "defect" if qid == "defect_counts" else "severity"
         rs = sorted(rows, key=lambda r: (-_int(r["n"]), str(r[key])))
@@ -59,11 +88,19 @@ def facts_for(qid: str, rows: list[dict], params: dict, question: str = "") -> d
                     f[f"{name}_defect"], f[f"{name}_count"] = _words(rs[i]["defect"]), _int(rs[i]["n"])
             for r in rs:
                 f[f"count_{r['defect']}"] = _int(r["n"])
-            for t in named_types(question):      # a type the question names but nobody found: say 0, not nothing
+            named = named_types(question)
+            for t in named:                      # a type the question names but nobody found: say 0, not nothing
                 f.setdefault(f"count_{t}", 0)
+            if _asks_comparison(question, named):
+                a, b = named[:2]
+                f["comparison"] = comparison(TYPE_PLURAL[a], f[f"count_{a}"], TYPE_PLURAL[b], f[f"count_{b}"])
         else:
             by = {str(r["severity"]): _int(r["n"]) for r in rs}
             f.update({s: by.get(s, 0) for s in ("critical", "major", "minor")})
+            named = named_severities(question)
+            if _asks_comparison(question, named):
+                a, b = named[:2]
+                f["comparison"] = comparison(a, f[a], b, f[b])
     elif qid == "board_history":
         f["board"] = params.get("board_id", "")
         f["times_inspected"] = len(rows)
@@ -89,19 +126,26 @@ def required_fields(question: str, qid: str) -> set[str]:
             need.add("failed")
         if "pass" in q:
             need.add("passed")
-        if any(w in q for w in ("rate", "share", "yield", "percent", "%", "versus")):
+        if RATE.search(q):
+            return need | {"pass_rate_pct"}
+        if "versus" in q or " vs" in q:
             return (need or {"passed"}) | {"boards"}
         return need or {"boards"}
     if qid == "defect_counts":
-        need = {f"count_{t}" for t in named_types(question)}
+        named = named_types(question)
+        need = {f"count_{t}" for t in named}
+        if _asks_comparison(question, named):
+            need.add("comparison")
         if any(w in q for w in ("most", "common", "top", "main", "kept", "which")):
             need.add("top_defect")
         return need
     if qid == "severity_counts":
-        named = {s for s in ("critical", "major", "minor") if s in q}
+        named = named_severities(question)
+        if _asks_comparison(question, named):
+            return set(named) | {"comparison"}
         if any(w in q for w in ("split", "severity", "severe", "serious", "small", "how bad")):
             return {"critical", "major", "minor"}
-        return named
+        return set(named)
     if qid == "board_history":
         return {"times_inspected"}
     if qid == "open_alerts":
@@ -158,20 +202,21 @@ def standard_sentence(qid: str, f: dict) -> str:
     if qid == "yield":
         if not f.get("boards"):
             return f"No boards inspected{span}."
-        return (f"{f['boards']} boards inspected{span}: {f['passed']} passed, {f['failed']} failed, "
-                f"{f['review']} sent to a person.")
+        return (f"{f['boards']} boards inspected{span}: {f['passed']} passed ({f['pass_rate_pct']}%), "
+                f"{f['failed']} failed, {f['review']} sent to a person.")
     if qid == "defect_counts":
         if not f.get("total_defects"):
             return f"No defects{span}."
-        s = f"{f['total_defects']} defects{span}; most common: {f['top_defect']} ({f['top_count']})"
+        s = f"{f['total_defects']} defects{span}; " + (f"{f['comparison']}; " if "comparison" in f else "") + \
+            f"most common: {f['top_defect']} ({f['top_count']})"
         if "second_defect" in f:
             s += f", then {f['second_defect']} ({f['second_count']})"
         return s + "."
     if qid == "severity_counts":
         if not f.get("total_defects"):
             return f"No defects{span}."
-        return (f"{f['total_defects']} defects{span}: {f['critical']} critical, {f['major']} major, "
-                f"{f['minor']} minor.")
+        return (f"{f['total_defects']} defects{span}: " + (f"{f['comparison']}; " if "comparison" in f else "") +
+                f"{f['critical']} critical, {f['major']} major, {f['minor']} minor.")
     if qid == "board_history":
         if not f.get("times_inspected"):
             return f"No inspection of board {f.get('board', '')} in the log."

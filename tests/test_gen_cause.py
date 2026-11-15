@@ -19,6 +19,13 @@ def test_labels_are_the_exact_posterior_of_the_clues_the_example_shows(kb):
         assert abs(sum(ex["posterior"].values()) - 1) < 1e-9 and ex["true_cause"] in ex["posterior"]
 
 
+def test_dev_has_its_own_unseen_combinations():
+    train = {e["combo"] for e in examples(3000, seed=2, split="train")}
+    dev = {e["combo"] for e in examples(300, seed=7, split="dev")}
+    test = {e["combo"] for e in examples(300, seed=3, split="test")}
+    assert dev and not (dev & train) and not (dev & test)
+
+
 def test_held_out_clue_combinations_never_appear_in_training():
     train = {e["combo"] for e in examples(3000, seed=2, split="train")}
     test = {e["combo"] for e in examples(3000, seed=3, split="test")}

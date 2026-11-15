@@ -6,7 +6,7 @@ from pcbinspect.sentences import check_template, required_fields
 def test_naming_a_defect_type_requires_its_count():
     assert required_fields("How many shorts did we get in the last 8 hours?", "defect_counts") == {"count_short"}
     assert required_fields("Are we seeing more opens or more mouse bites?", "defect_counts") == \
-        {"count_open", "count_mouse_bite"}
+        {"count_open", "count_mouse_bite", "comparison"}
 
 
 def test_every_target_passes_the_checker_and_every_query_is_covered():

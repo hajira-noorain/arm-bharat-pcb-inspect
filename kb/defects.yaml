@@ -50,11 +50,15 @@ defects:
     process_step: etching
     causes:
       - {id: MBITE-C1, step: etching, short: "over-etching or undercut", text: "Over-etching or undercut at the conductor edges."}
-      - {id: MBITE-C2, step: imaging, short: "poor resist adhesion at edge", text: "Poor resist adhesion or a ragged phototool edge along the conductor."}
+      - {id: MBITE-C2, step: imaging, short: "poor resist adhesion at edge", text: "Poor resist adhesion or developer residue along the conductor edge."}
+      - {id: MBITE-C3, step: imaging, short: "phototool nick or dirt", text: "A nick, scratch or dirt on the phototool at this spot, printed onto every panel."}
+      - {id: MBITE-C4, step: plating, short: "bubbles in pattern plating", text: "Air bubbles from plating-tank agitation sat on the resist sidewall and left bites in the plated conductor edge."}
     actions:
       - {id: MBITE-A1, short: "compare width with IPC limit", text: "Compare the remaining conductor width with the IPC limit for the customer class; accept or reject on that basis."}
       - {id: MBITE-A2, short: "check etch time", text: "Check etch time and etchant activity for over-etching."}
       - {id: MBITE-A3, short: "check resist adhesion", text: "Check resist adhesion: surface preparation before lamination and lamination settings."}
+      - {id: MBITE-A4, short: "inspect phototool at this spot", text: "Inspect the phototool at this spot under magnification; clean or replace it if it is nicked or dirty."}
+      - {id: MBITE-A5, short: "check plating agitation", text: "Check pattern-plating agitation: air spargers can leave bubbles on the resist sidewall; eductors avoid this."}
 
   spur:
     name: "Spur (copper protrusion)"
@@ -63,10 +67,12 @@ defects:
     causes:
       - {id: SPUR-C1, step: etching, short: "under-etching", text: "Under-etching left copper attached to the conductor edge."}
       - {id: SPUR-C2, step: imaging, short: "incomplete development", text: "Incomplete resist development or resist residue along the edge."}
+      - {id: SPUR-C3, step: imaging, short: "phototool spot or scratch", text: "A spot or scratch on the phototool at this place, printed onto every panel."}
     actions:
       - {id: SPUR-A1, short: "measure spacing vs IPC limit", text: "Measure the remaining spacing to the nearest conductor and compare it with the IPC limit for the customer class."}
       - {id: SPUR-A2, short: "trim if class allows", text: "If the class allows repair, trim the protrusion following IPC-7721 and re-measure spacing."}
       - {id: SPUR-A3, short: "check developer and etch", text: "Check developer concentration and dwell time, and etch line parameters."}
+      - {id: SPUR-A4, short: "inspect phototool at this spot", text: "Inspect the phototool at this spot under magnification; clean or replace it if it has a spot or scratch."}
 
   spurious_copper:
     name: "Spurious copper (copper island)"

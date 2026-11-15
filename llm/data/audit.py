@@ -31,7 +31,7 @@ def _q(xs, ps=(0.1, 0.5, 0.9)):
 
 
 def audit_cause(n: int, kb, cm: CauseModel) -> dict:
-    train, dev = examples(n, 11, "train", kb), examples(n // 10, 12, "train", kb)
+    train, dev = examples(n, 11, "train", kb), examples(n // 10, 12, "dev", kb)
     test, alt = examples(n // 10, 13, "test", kb), alt_examples(n // 10, 14, kb)
     tgt = lambda e: next(d for d in e["record"]["defects"] if d["id"] == e["defect_id"])
     by_type = collections.Counter(tgt(e)["type"] for e in train)

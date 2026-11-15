@@ -28,7 +28,7 @@ ZONES = ["top-left", "top-centre", "top-right", "middle-left", "centre", "middle
          "bottom-centre", "bottom-right"]
 SEVERITIES = ["critical", "major", "minor"]
 UNKNOWN_P = {"same_spot": 0.15, "near_edge": 0.05, "trend": 0.40}
-HOLDOUT_MOD = 8          # one clue combination in eight is test-only
+HOLDOUT_MOD = 8          # clue combinations are bucketed by hash: bucket 0 is test-only, bucket 1 dev-only
 
 
 class Generator:
@@ -105,15 +105,23 @@ class Generator:
 
 
 def held_out(combo: str) -> bool:
-    return zlib.crc32(combo.encode()) % HOLDOUT_MOD == 0
+    return split_of(combo) == "test"
+
+
+def split_of(combo: str) -> str:
+    """Which split a clue combination belongs to. Dev has its own unseen combinations, so choosing the best
+    checkpoint measures generalisation, not fit on combinations already trained on."""
+    b = zlib.crc32(combo.encode()) % HOLDOUT_MOD
+    return "test" if b == 0 else "dev" if b == 1 else "train"
 
 
 def examples(n: int, seed: int = 0, split: str = "train", kb=None) -> list[dict]:
+    assert split in ("train", "dev", "test"), split
     g, rng, out, i = Generator(kb), random.Random(seed), [], 0
     while len(out) < n:
         ex = g.example(rng, i)
         i += 1
-        if held_out(ex["combo"]) == (split == "test"):
+        if split_of(ex["combo"]) == split:
             out.append(ex)
     return out
 
@@ -138,10 +146,11 @@ def main() -> int:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     kb = default_kb()
-    sets = {"train": examples(a.n, 11, "train", kb), "dev": examples(a.n // 10, 12, "train", kb),
+    sets = {"train": examples(a.n, 11, "train", kb), "dev": examples(a.n // 10, 12, "dev", kb),
             "test": examples(a.n // 10, 13, "test", kb), "alt": alt_examples(a.n // 10, 14, kb)}
     train_combos = {e["combo"] for e in sets["train"]}
     assert not (train_combos & {e["combo"] for e in sets["test"]})
+    assert not (train_combos & {e["combo"] for e in sets["dev"]})
     for name, exs in sets.items():
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:
             for e in exs:

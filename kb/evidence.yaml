@@ -71,30 +71,48 @@ causes:
     confirm: "Look for a scratch that runs past the conductor onto the laminate; check racks, stacking and gloves."
   # ---------------- mouse bite ----------------
   MBITE-C1:   # over-etching or undercut
-    prior: 0.55
+    prior: 0.40
     p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC etching symptoms: undercut affects edges across the board"
     confirm: "Section or measure a few conductors: undercut on many edges means etch time or etchant activity."
   MBITE-C2:   # poor resist adhesion at edge
-    prior: 0.45
-    p: {same_spot: 0.30, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.45, rising: 0.40}
+    prior: 0.30
+    p: {same_spot: 0.15, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.45, rising: 0.40}
     provenance: sourced
     source: "Carano 2018: mouse bites traced to developer residue (clogged nozzles, soft rinse water) and resist adhesion"
     confirm: "Check developer nozzles and spray pressure (25-35 psi) and rinse; look for resist residue on the next panel."
+  MBITE-C3:   # phototool nick or dirt
+    prior: 0.15
+    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30}
+    provenance: sourced
+    source: "Dietz 2011: a defect at the same coordinates on consecutive panels = phototool or exposure-frame dirt"
+    confirm: "Inspect the phototool at this exact spot; if the next board has the bite in the same place, it is the phototool."
+  MBITE-C4:   # bubbles in pattern plating
+    prior: 0.15
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.35, many: 0.70, rising: 0.40}
+    provenance: sourced
+    source: "Carano 2018, PCB007 case study (pits and mouse bites, part 2): air-sparger bubbles on the resist sidewall in pattern plating; eductors removed them"
+    confirm: "Look at the plated edge under magnification for rounded bites; check plating-tank agitation (air spargers) and whether bites appear across the whole panel."
   # ---------------- spur ----------------
   SPUR-C1:    # under-etching
-    prior: 0.50
+    prior: 0.45
     p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50}
     provenance: sourced
     source: "Carano 2020: copper left at conductor edges = under-etch"
     confirm: "Check etch speed, temperature and spray pressure; spurs from under-etch appear along many edges."
   SPUR-C2:    # incomplete development
-    prior: 0.50
-    p: {same_spot: 0.35, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.55, rising: 0.45}
+    prior: 0.35
+    p: {same_spot: 0.20, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.55, rising: 0.45}
     provenance: sourced
     source: "Carano 2020: late breakpoint / under-development leaves residue; Dietz 2011: a lane of defects = a plugged nozzle"
     confirm: "Check the developer breakpoint and spray nozzles; spurs lined up along the conveyor direction point to one nozzle."
+  SPUR-C3:    # phototool spot or scratch
+    prior: 0.20
+    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30}
+    provenance: sourced
+    source: "Dietz 2011: a defect at the same coordinates on consecutive panels = phototool or exposure-frame dirt"
+    confirm: "Inspect the phototool at this exact spot; if the next board has the spur in the same place, it is the phototool."
   # ---------------- spurious copper ----------------
   SPCU-C1:    # incomplete etching
     prior: 0.40

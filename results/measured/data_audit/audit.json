@@ -7,121 +7,123 @@
    "alt": 600
   },
   "examples_per_defect_type": {
-   "hole_breakout": 440,
-   "unknown_anomaly": 428,
-   "pin_hole": 425,
-   "missing_hole": 424,
-   "open": 424,
-   "scratch": 424,
-   "spur": 423,
-   "foreign_object": 408,
-   "spurious_copper": 403,
-   "missing_pad": 394,
-   "missing_part": 384,
-   "short": 381,
-   "changed_part": 366,
-   "mouse_bite": 339,
-   "extra_part": 337
+   "changed_part": 456,
+   "scratch": 456,
+   "missing_part": 422,
+   "hole_breakout": 422,
+   "open": 404,
+   "spur": 399,
+   "short": 398,
+   "foreign_object": 397,
+   "spurious_copper": 395,
+   "missing_pad": 393,
+   "extra_part": 391,
+   "mouse_bite": 383,
+   "unknown_anomaly": 380,
+   "pin_hole": 368,
+   "missing_hole": 336
   },
   "examples_per_true_cause": {
-   "min": 60,
-   "max": 232,
+   "min": 62,
+   "max": 224,
    "causes_with_none": [],
    "causes_under_20": []
   },
   "clue_combinations": {
-   "train_distinct": 1310,
-   "test_distinct": 145,
+   "train_distinct": 1172,
+   "test_distinct": 148,
    "examples_per_combination": {
     "p10": 1,
-    "p50": 2,
-    "p90": 11
+    "p50": 3,
+    "p90": 13
    },
    "test_combinations_in_train": 0,
-   "dev_combinations_in_train": 371,
+   "dev_combinations_in_train": 0,
    "train_held_out_flag": 0
   },
   "labels": {
-   "bayes_top1_on_train": 0.666,
+   "bayes_top1_on_train": 0.645,
    "bayes_top1_by_defect_type": {
-    "changed_part": 0.557,
-    "extra_part": 0.73,
-    "foreign_object": 0.596,
-    "hole_breakout": 0.609,
-    "missing_hole": 0.828,
-    "missing_pad": 0.746,
-    "missing_part": 0.625,
-    "mouse_bite": 0.655,
-    "open": 0.663,
-    "pin_hole": 0.675,
-    "scratch": 0.597,
-    "short": 0.774,
-    "spur": 0.634,
-    "spurious_copper": 0.725,
-    "unknown_anomaly": 0.586
+    "changed_part": 0.566,
+    "extra_part": 0.747,
+    "foreign_object": 0.544,
+    "hole_breakout": 0.6,
+    "missing_hole": 0.801,
+    "missing_pad": 0.753,
+    "missing_part": 0.618,
+    "mouse_bite": 0.499,
+    "open": 0.673,
+    "pin_hole": 0.658,
+    "scratch": 0.583,
+    "short": 0.766,
+    "spur": 0.612,
+    "spurious_copper": 0.734,
+    "unknown_anomaly": 0.568
    },
    "max_probability": {
-    "p10": 0.445,
-    "p50": 0.638,
-    "p90": 0.899
+    "p10": 0.442,
+    "p50": 0.63,
+    "p90": 0.882
    },
    "normalised_entropy": {
-    "p10": 0.367,
-    "p50": 0.814,
-    "p90": 0.978
+    "p10": 0.379,
+    "p50": 0.764,
+    "p90": 0.957
    },
-   "share_with_max_p_under_0.5": 0.187,
-   "causes_never_most_probable": [],
-   "causes_never_most_probable_share": "0/42"
+   "share_with_max_p_under_0.5": 0.244,
+   "causes_never_most_probable": [
+    "MBITE-C4"
+   ],
+   "causes_never_most_probable_share": "1/45"
   },
   "unknown_clue_rate": {
-   "repeat_same_spot": 0.143,
-   "near_edge": 0.052,
-   "trend": 0.385
+   "repeat_same_spot": 0.155,
+   "near_edge": 0.053,
+   "trend": 0.403
   },
   "true_cause_provenance": {
-   "inferred": 3139,
-   "sourced": 2861
+   "sourced": 3004,
+   "inferred": 2996
   }
  },
  "sentences": {
   "size": 3000,
   "examples_per_question_type": {
-   "defect_counts": 738,
-   "severity_counts": 683,
-   "board_history": 571,
-   "open_alerts": 521,
-   "yield": 487
+   "severity_counts": 735,
+   "defect_counts": 729,
+   "board_history": 598,
+   "yield": 495,
+   "open_alerts": 443
   },
-  "distinct_questions": 634,
-  "distinct_targets": 86,
+  "distinct_questions": 649,
+  "distinct_targets": 217,
   "most_repeated_targets": [
    [
-    "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
-    350
-   ],
-   [
     "{board} has been through the station {times_inspected|time}, ending with {last_verdict} and {last_defects|defect}.",
-    299
-   ],
-   [
-    "There are {n_alerts|open alert}; the latest says: {latest_alert}",
-    273
+    209
    ],
    [
     "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
-    272
+    199
    ],
    [
-    "Open alerts: {n_alerts}. The latest says: {latest_alert}",
-    248
+    "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+    190
+   ],
+   [
+    "There are {n_alerts|open alert}; the latest says: {latest_alert}",
+    154
+   ],
+   [
+    "The station has {n_alerts|open alert}. The newest: {latest_alert}",
+    148
    ]
   ],
   "held_out_questions_in_training": 0,
   "prompt_chars": {
-   "p10": 483,
-   "p50": 522,
-   "p90": 626
+   "p10": 492,
+   "p50": 523,
+   "p90": 633
   }
  }
 }
