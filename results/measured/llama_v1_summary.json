@@ -1,0 +1,21 @@
+{
+ "what": "First LoRA run of Llama 3.2 1B Instruct (rank 16, 2 epochs, 6000 cause + 3000 sentence examples), before the data-audit fixes (rules as of commit 076976e). Read from /content/res and /content/lora1b on Colab (A100), 2026-11-15/16. The per-case JSON files stay on the Colab runtime and the HF model repo.",
+ "cause_top1_top2": {
+  "tuned_1b_bf16 (n=600 test/alt, 8 real)": {"test": [0.622, 0.920], "alt": [0.598, 0.878], "real": [0.625, 0.875]},
+  "tuned_1b_8da4w_pte (n=300, 8 real)": {"test": [0.593, 0.917], "alt": [0.607, 0.893], "real": [0.625, 0.750]},
+  "base_1b_8da4w_pte (n=300)": {"test": [0.410, 0.757], "alt": [0.370, 0.740], "real": [0.125, 0.625]},
+  "prompted_1b_spinquant_pte (n=300)": {"test": [0.383, 0.770], "alt": [0.353, 0.740], "real": [0.375, 0.750]},
+  "prompted_3b_spinquant_pte (n=300)": {"test": [0.400, 0.757], "alt": [0.390, 0.727], "real": [0.125, 0.500]},
+  "bayes_lookup_table (n=1000, same rules)": {"test": [0.618, 0.916], "alt": [0.566, null], "real": [0.625, null]}
+ },
+ "sentences_accepted_by_checker": {
+  "tuned_1b_8da4w_pte": {"heldout_n51": 0.863, "demo_n6": 1.0, "rejections": {"fields that do not exist": 1, "does not say what was asked": 7}},
+  "prompted_3b_spinquant_pte": {"heldout_n51": 0.373, "demo_n6": 0.167, "rejections": {"does not say what was asked": 18, "the answer gives no fact": 16, "fields that do not exist": 11, "says 'most' without the top defect": 4}},
+  "prompted_1b_spinquant_pte": {"heldout_n51": 0.0, "demo_n6": 0.0, "rejections": {"the answer gives no fact": 55, "does not say what was asked": 1, "fields that do not exist": 1}}
+ },
+ "notes": [
+  "Rejected sentences are replaced by the station's standard sentence, so a rejection costs wording, not correctness.",
+  "Dev split overlapped training combinations in this run (fixed in b3a167b); test, alt and real were held out.",
+  "The 8da4w export merged the adapter into Meta's checkpoint (112 matrices) and quantised with group size 32."
+ ]
+}
