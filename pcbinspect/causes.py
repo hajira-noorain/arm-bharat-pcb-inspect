@@ -46,10 +46,18 @@ class CauseModel:
 
     def likelihood(self, cause: str, feats: dict[str, bool]) -> float:
         ev = self.evidence[cause]
+        p = ev["p"]
         lk = ev["prior"]
         for k, v in feats.items():
-            if k in ev["p"]:
-                lk *= ev["p"][k] if v else 1.0 - ev["p"][k]
+            if k in ("long_thin", "round"):
+                continue
+            if k in p:
+                lk *= p[k] if v else 1.0 - p[k]
+        # shape is one clue with three values: long and thin, else round, else irregular
+        if feats.get("long_thin") is True:
+            lk *= p["long_thin"]
+        elif "long_thin" in feats or "round" in feats:
+            lk *= (1.0 - p["long_thin"]) * (p["round"] if feats.get("round") else 1.0 - p["round"])
         return lk
 
     def posterior(self, cls: str, feats: dict[str, bool]) -> dict[str, float]:

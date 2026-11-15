@@ -1,0 +1,45 @@
+# Real, published troubleshooting cases, paraphrased into the station's record format. Test only: never used to
+# build, tune or train anything. Each gives the defect, the pattern the station could have measured, and the root
+# cause the authors confirmed. Clues the source does not state are "unknown". Sources: see kb/evidence.yaml header
+# and docs/RESEARCH_AND_DECISIONS.md section 6.
+cases:
+  - id: real-1
+    source: "Dietz 2011, Repeat Defects: opens at the same coordinates on consecutive panels; phototool dirt"
+    defect: {type: open, severity: critical, size_mm: 0.3, location: centre}
+    evidence: {repeat_same_spot: {boards: 6, of: 10}, near_edge: false, shape: irregular, count_on_board: 1, trend: unknown}
+    true_cause: OPEN-C2
+  - id: real-2
+    source: "Ball 2025 (PCB007): tiny breaks in 3 mil lines at random places, rising when the exposure area was dusty; cleaning the exposure area raised yield from about 80% to over 95%"
+    defect: {type: open, severity: critical, size_mm: 0.1, location: middle-left}
+    evidence: {repeat_same_spot: {boards: 0, of: 20}, near_edge: false, shape: round, count_on_board: 2, trend: rising}
+    true_cause: OPEN-C2
+  - id: real-3
+    source: "Ball 2023 (PCB007): shorts across 0.004 inch spaces on many panels, yield under 50%; the phototool was not seated at full vacuum"
+    defect: {type: short, severity: critical, size_mm: 0.15, location: centre}
+    evidence: {repeat_same_spot: unknown, near_edge: false, shape: irregular, count_on_board: 4, trend: rising}
+    true_cause: SHORT-C2
+  - id: real-4
+    source: "Dietz 2011: damage in a lane along the conveyor direction; a damaged conveyor wheel in the developer"
+    defect: {type: scratch, severity: major, size_mm: 3.0, location: top-centre}
+    evidence: {repeat_same_spot: {boards: 4, of: 10}, near_edge: false, shape: long_thin, count_on_board: 3, trend: unknown}
+    true_cause: SCR-C2
+  - id: real-5
+    source: "TB-0173 laminator bulletin: voids (light spots) repeating at the laminator roll circumference, so their place on the board shifts; a pit in the roll"
+    defect: {type: pin_hole, severity: minor, size_mm: 0.2, location: middle-right}
+    evidence: {repeat_same_spot: {boards: 1, of: 12}, near_edge: false, shape: round, count_on_board: 2, trend: steady}
+    true_cause: PHOLE-C1
+  - id: real-6
+    source: "Carano 2018, Pits and Mouse Bites Part 3: mouse bites across panels from clogged developer nozzles (under 20 psi) and soft rinse water"
+    defect: {type: mouse_bite, severity: major, size_mm: 0.2, location: centre}
+    evidence: {repeat_same_spot: {boards: 2, of: 10}, near_edge: false, shape: irregular, count_on_board: 4, trend: rising}
+    true_cause: MBITE-C2
+  - id: real-7
+    source: "Ball 2022, the puddle problem: copper left in the centre of large panels (top side) while the edges etched clean; etch puddling"
+    defect: {type: spurious_copper, severity: major, size_mm: 0.4, location: centre}
+    evidence: {repeat_same_spot: unknown, near_edge: false, shape: irregular, count_on_board: 5, trend: unknown}
+    true_cause: SPCU-C1
+  - id: real-8
+    source: "Omron AOI white paper: about 1% of boards with the same chip capacitor tilted, all picked by the same 1.0 mm nozzle; a 0.7 mm nozzle fixed it"
+    defect: {type: changed_part, severity: major, size_mm: 1.0, location: middle-left}
+    evidence: {repeat_same_spot: {boards: 2, of: 20}, near_edge: false, shape: irregular, count_on_board: 1, trend: steady}
+    true_cause: CPART-C2

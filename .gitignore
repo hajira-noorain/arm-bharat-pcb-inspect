@@ -20,6 +20,7 @@ venv/
 *.tar
 *.zip
 data/
+!llm/data/
 runs/
 models/*
 # ...except the small files the station needs and that are not model weights:
