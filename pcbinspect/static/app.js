@@ -396,12 +396,35 @@ function groupAdvice(steps, defects) {
     const d = byKey.get(String(s.defect));
     const cls = d ? d.cls : "";
     const k = `${cls}|${s.cause_id}|${s.action_id}`;
-    if (!groups.has(k)) groups.set(k, { ids: [], cls, action: s.action, cause: s.cause, step: s.process_step, cause_id: s.cause_id, action_id: s.action_id });
+    if (!groups.has(k)) groups.set(k, { ids: [], cls, action: s.action, cause: s.cause, step: s.process_step, cause_id: s.cause_id, action_id: s.action_id,
+      p: s.p ? s.p[s.cause_id] : null, abstain: !!s.abstain, alternatives: s.alternatives || [], confirm: s.confirm, provenance: s.provenance, evidence: s.evidence });
     groups.get(k).ids.push(d ? num(d) : String(s.defect));
   }
   return [...groups.values()].map((g) => ({ ...g, ids: g.ids.sort((a, b) => a - b) }));
 }
 window.groupAdvice = groupAdvice;
+
+const pct = (x) => `${Math.round(x * 100)}%`;
+// the clues the station measured for a defect, in plain words (pcbinspect/evidence.py)
+function clueWords(ev) {
+  if (!ev) return "";
+  const out = [], rs = ev.repeat_same_spot;
+  out.push(rs === "unknown" || !rs ? "same spot: not enough history" : `same spot on ${rs.boards} of the last ${rs.of} boards`);
+  if (ev.near_edge !== "unknown") out.push(ev.near_edge ? "near the board edge" : "away from the edge");
+  if (ev.shape) out.push(String(ev.shape).replace("_", " "));
+  if (ev.count_on_board) out.push(`${ev.count_on_board} of this type on the board`);
+  if (ev.trend && ev.trend !== "unknown") out.push(`${ev.trend} on recent boards`);
+  return out.join("; ");
+}
+const bare = (t) => String(t || "").replace(/\.\s*$/, "");
+function causeLine(g) {
+  if (g.abstain && g.alternatives.length > 1) {
+    const [a, b] = g.alternatives;
+    return `<span>Likely cause: ${esc(bare(a.cause))} (${pct(a.p)}) or ${esc(bare(b.cause))} (${pct(b.p)}). The clues do not settle it.</span>
+      <span class="confirm">To tell them apart: ${esc(a.confirm)} ${esc(b.confirm)}</span>`;
+  }
+  return `<span>Likely cause: ${esc(g.p != null ? bare(g.cause) : g.cause)}${g.p != null ? ` (${pct(g.p)})` : ""}</span>${g.confirm ? `<span class="confirm">To confirm: ${esc(g.confirm)}</span>` : ""}`;
+}
 
 function renderAdvice(r) {
   $("#advice-card").hidden = !r.defects.length;
@@ -412,10 +435,13 @@ function renderAdvice(r) {
     $("#advice").innerHTML = `<p class="${r.advice_timed_out ? "" : "pending"}">${r.advice_timed_out ? "Advice did not arrive. The verdict is not affected: follow your standard procedure for these defects." : `${state?.llm ? L.modelName(state.llm) : "The station"} is writing advice`}</p>`;
     return;
   }
-  const adv = a.advice, llama = a.backend === "llama-executorch", swapped = llama && adv.summary_by === "template";
+  const adv = a.advice, llama = a.backend === "llama-executorch";
+  const judged = llama && (adv.steps || []).some((s) => s.p);          // evidence mode: Llama never writes the summary
+  const swapped = llama && !judged && adv.summary_by === "template";
   $("#advice-by").textContent = llama ? `${L.modelName(a.model)} · ${(a.latency_ms / 1000).toFixed(1)} s` : "Standard advice";
   const groups = groupAdvice(adv.steps || [], r.defects);
-  const note = llama ? `${swapped ? "Causes and actions chosen" : "Written"} by ${esc(L.modelName(a.model))} on this device. Every cause and action is checked against the defect knowledge base.${swapped ? ` Llama's summary sentence was replaced by the standard one${a.rejected_reason ? ` (${esc(a.rejected_reason)})` : ""}.` : ""}`
+  const note = judged ? `Causes judged by ${esc(L.modelName(a.model))} on this device from the clues the station measured; percentages are its confidence. Every cause and action is checked against the defect knowledge base.`
+    : llama ? `${swapped ? "Causes and actions chosen" : "Written"} by ${esc(L.modelName(a.model))} on this device. Every cause and action is checked against the defect knowledge base.${swapped ? ` Llama's summary sentence was replaced by the standard one${a.rejected_reason ? ` (${esc(a.rejected_reason)})` : ""}.` : ""}`
     : /busy with newer boards/.test(a.rejected_reason || "") ? "Standard advice from the defect knowledge base: Llama was busy with newer boards on this shared demo."
     : `From the defect knowledge base${a.rejected_reason ? `. Llama's answer was not used: ${esc(a.rejected_reason)}` : ""}.`;
   const rate = r.upload || RECORDED ? "" : a.operator_rating == null
@@ -423,7 +449,7 @@ function renderAdvice(r) {
     : `Rated ${a.operator_rating > 0 ? "useful" : "not useful"}.`;
   $("#advice").innerHTML = `<p class="summary">${esc(adv.summary)}</p>
     ${groups.map((g) => `<div class="adv-group"><b>${esc(L.typeName(g.cls, g.ids.length))} ${g.ids.join(", ")}</b> · ${esc(g.action)}<br>
-      <span>Likely cause: ${esc(g.cause)}</span><div class="kb" hidden>${esc(g.cause_id)}, ${esc(g.action_id)}${g.step ? `, ${esc(String(g.step).split(":")[0])}` : ""}</div></div>`).join("")}
+      ${causeLine(g)}<div class="kb" hidden>${esc(g.cause_id)}, ${esc(g.action_id)}${g.step ? `, ${esc(String(g.step).split(":")[0])}` : ""}${g.provenance ? ` · rule ${g.provenance === "sourced" ? "from a published source" : "our own inference"}` : ""}${g.evidence ? `<br>Clues: ${esc(clueWords(g.evidence))}` : ""}</div></div>`).join("")}
     <p class="meta">${note} <button class="btn link" type="button" id="kb-toggle">details</button></p>
     <div class="actions meta">${rate}</div>`;
 }

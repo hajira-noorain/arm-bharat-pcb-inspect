@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import BaseModel
 
 from . import ask as ask_mod
+from .evidence import attach_evidence
 from .advisor import Advisor
 from .anomaly import enrol
 from .camera import ReplayCamera, open_camera
@@ -70,7 +71,9 @@ class Station:
         for name, d in self.designs.items():
             self.store.upsert_design(name, d.kind, d.rules.min_trace_width_mm, d.rules.min_spacing_mm)
         self.llm = self._load_llm()
-        self.advisor = Advisor(self.llm, self.kb, cause_mode=cfg.get("advice_cause_mode", "list"))
+        self.advisor = Advisor(self.llm, self.kb, cause_mode=cfg.get("advice_cause_mode", "list"),
+                               abstain_gap=float(cfg.get("advice_abstain_gap", 0.15)),
+                               temperature=float(cfg.get("advice_temperature", 1.0)))
         self.camera = self._open_camera()
         self.cache: OrderedDict[int, tuple] = OrderedDict()   # iid -> (insp, analysis, bgr)
         self.buffers: dict[str, FeedbackBuffer] = {}
@@ -420,8 +423,9 @@ class Station:
         self.store.conn.execute("UPDATE inspections SET latency_json=? WHERE id=?",
                                 (json.dumps(insp.latency_ms), iid))
         cv2.imwrite(str(self._overlay_path(iid)), render(bgr, insp, analysis))
-        if insp.defects:
-            self._queue_advice(iid, insp.to_llm_record(), design)
+        if insp.defects:     # each defect goes to Llama with the clues the log gives (same spot, edge, shape, trend)
+            rec = attach_evidence(insp.to_llm_record(), self.store, iid, bgr.shape[1], bgr.shape[0], insp.mm_per_px)
+            self._queue_advice(iid, rec, design)
         return self.inspection_json(iid)
 
     # ---------------- detection-limit eye test ----------------

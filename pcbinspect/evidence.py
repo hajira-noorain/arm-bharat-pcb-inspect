@@ -81,3 +81,14 @@ def board_evidence(store, iid: int, img_w: int | None, img_h: int | None, mm_per
             "co_occurring": sorted(set(types) - {r["cls"]}),
         }
     return out
+
+
+def attach_evidence(record: dict, store, iid: int | None, img_w: int | None, img_h: int | None,
+                    mm_per_px: float | None) -> dict:
+    """A copy of the Llama record with each defect's evidence added. A board that is not in the log (a demo upload)
+    has no history, so its record goes to Llama unchanged and the prompt says the clues are unknown."""
+    if iid is None:
+        return record
+    ev = board_evidence(store, iid, img_w, img_h, mm_per_px)
+    return {**record, "defects": [{**d, **({"evidence": ev[d["id"]]} if d["id"] in ev else {})}
+                                  for d in record.get("defects", [])]}

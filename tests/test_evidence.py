@@ -64,3 +64,17 @@ def test_trend_rising_when_the_type_appears_on_more_recent_boards(tmp_path):
         _log(s2, [("spur", (300, 300, 310, 310))] if k % 4 == 0 else [("open", (50, 50, 60, 60))])
     iid2 = _log(s2, [("spur", (700, 200, 710, 210))])
     assert board_evidence(s2, iid2, 1000, 800, MMPP)["D1"]["trend"] == "steady"
+
+
+def test_the_llm_record_carries_each_defects_evidence(tmp_path):
+    from pcbinspect.evidence import attach_evidence
+    s = Store(tmp_path)
+    for _ in range(3):
+        _log(s, [("open", (500, 400, 520, 410))])
+    iid = _log(s, [("open", (505, 402, 522, 411)), ("short", (10, 10, 30, 20))])
+    rec = {"board_id": "B", "defects": [{"id": "D1", "type": "open"}, {"id": "D2", "type": "short"}]}
+    out = attach_evidence(rec, s, iid, 1000, 800, MMPP)
+    assert out["defects"][0]["evidence"]["repeat_same_spot"] == {"boards": 3, "of": 3}
+    assert out["defects"][1]["evidence"]["co_occurring"] == ["open"]
+    assert "evidence" not in rec["defects"][0]                        # the caller's record is not changed
+    assert attach_evidence(rec, s, None, 1000, 800, MMPP) == rec      # not logged (demo upload): no history

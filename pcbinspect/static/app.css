@@ -190,6 +190,8 @@ tr.hot .bn { background: var(--blue); color: #fff; }
 .adv-group { border-left: 3px solid var(--blue); padding: 2px 0 2px 11px; margin: 9px 0; }
 .adv-group b { font-weight: 700; }
 .adv-group .kb { font-family: var(--narrow); color: var(--soft); font-size: 12.5px; }
+.adv-group span { display: block; }
+.adv-group .confirm { color: var(--soft); font-size: 13px; }
 .pending { color: var(--soft); }
 .pending::after { content: "…"; }
 .known { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
