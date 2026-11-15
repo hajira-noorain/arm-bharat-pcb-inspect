@@ -11,7 +11,7 @@ import re
 import time
 
 from .grounding import NUM_RE, extract_json
-from .sentences import check_template, facts_for, render, standard_sentence, template_prompt
+from .sentences import check_template, facts_for, nothing_to_say, render, standard_sentence, template_prompt
 
 DIGITS_RE = re.compile(r"\d+(?:\.\d+)?")
 
@@ -162,10 +162,10 @@ def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
         except Exception as exc:  # routing failure falls back to keywords
             out["route_error"] = repr(exc)
     rows = run_query(conn, qid, params)
-    facts = facts_for(qid, rows, params)
+    facts = facts_for(qid, rows, params, question)
     out.update({"query": qid, "params": params, "rows": rows, "facts": facts,
                 "answer": standard_sentence(qid, facts)})
-    if backend is not None and rows:
+    if backend is not None and rows and not nothing_to_say(qid, facts):
         # Llama writes the sentence with {field} placeholders; the station fills in the numbers (pcbinspect/sentences.py)
         try:
             p = template_prompt(question, facts)

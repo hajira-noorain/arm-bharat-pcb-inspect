@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import re
 
-PLACEHOLDER = re.compile(r"\{([a-z_][a-z0-9_]*)\}")
+# {field} or {field|noun}: with a noun the station writes the number and the noun, singular or plural
+PLACEHOLDER = re.compile(r"\{([a-z_][a-z0-9_]*)(?:\|([a-z][a-z ]*))?\}")
 DIGIT = re.compile(r"\d")
 SUPERLATIVE = re.compile(r"\b(most|top|highest|largest|biggest|commonest|main)\b", re.I)
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
@@ -27,7 +28,21 @@ def _words(s) -> str:
     return str(s).replace("_", " ")
 
 
-def facts_for(qid: str, rows: list[dict], params: dict) -> dict:
+# words an operator uses for each defect type (plural forms included by the regex below)
+TYPE_WORDS = {"open": "opens?", "short": "shorts?", "mouse_bite": "mouse ?bites?|nicks?", "spur": "spurs?",
+              "spurious_copper": "spurious copper|copper islands?", "pin_hole": "pin ?holes?",
+              "missing_hole": "missing holes?", "missing_pad": "missing pads?|damaged pads?",
+              "hole_breakout": "hole breakouts?|breakouts?", "scratch": "scratch(?:es)?",
+              "foreign_object": "foreign objects?", "missing_part": "missing parts?", "extra_part": "extra parts?",
+              "changed_part": "changed parts?|wrong parts?"}
+
+
+def named_types(question: str) -> list[str]:
+    q = question.lower()
+    return [t for t, pat in TYPE_WORDS.items() if re.search(rf"\b(?:{pat})\b", q)]
+
+
+def facts_for(qid: str, rows: list[dict], params: dict, question: str = "") -> dict:
     hours = params.get("hours")
     f: dict = {} if hours is None else {"hours": int(hours)}
     if qid == "yield":
@@ -44,6 +59,8 @@ def facts_for(qid: str, rows: list[dict], params: dict) -> dict:
                     f[f"{name}_defect"], f[f"{name}_count"] = _words(rs[i]["defect"]), _int(rs[i]["n"])
             for r in rs:
                 f[f"count_{r['defect']}"] = _int(r["n"])
+            for t in named_types(question):      # a type the question names but nobody found: say 0, not nothing
+                f.setdefault(f"count_{t}", 0)
         else:
             by = {str(r["severity"]): _int(r["n"]) for r in rs}
             f.update({s: by.get(s, 0) for s in ("critical", "major", "minor")})
@@ -65,20 +82,21 @@ def required_fields(question: str, qid: str) -> set[str]:
     """What the question asks for, which the answer must therefore contain."""
     q = question.lower()
     if qid == "yield":
-        if "pass rate" in q or "yield" in q or "share" in q or "rate" in q:
-            return {"passed", "boards"}
         need = set()
-        if any(w in q for w in ("person", "check", "review", "manual")):
+        if any(w in q for w in ("person", "check", "review", "manual", "operator", "second look")):
             need.add("review")
         if any(w in q for w in ("fail", "reject")):
             need.add("failed")
         if "pass" in q:
             need.add("passed")
+        if any(w in q for w in ("rate", "share", "yield", "percent", "%", "versus")):
+            return (need or {"passed"}) | {"boards"}
         return need or {"boards"}
     if qid == "defect_counts":
+        need = {f"count_{t}" for t in named_types(question)}
         if any(w in q for w in ("most", "common", "top", "main", "kept", "which")):
-            return {"top_defect"}
-        return set()
+            need.add("top_defect")
+        return need
     if qid == "severity_counts":
         named = {s for s in ("critical", "major", "minor") if s in q}
         if any(w in q for w in ("split", "severity", "severe", "serious", "small", "how bad")):
@@ -93,7 +111,7 @@ def required_fields(question: str, qid: str) -> set[str]:
 
 def check_template(tpl: str, question: str, qid: str, facts: dict) -> list[str]:
     t = (tpl or "").strip()
-    used = PLACEHOLDER.findall(t)
+    used = [m.group(1) for m in PLACEHOLDER.finditer(t)]
     out = []
     if not t or not used:
         return ["the answer gives no fact" if t else "empty answer"]
@@ -112,8 +130,26 @@ def check_template(tpl: str, question: str, qid: str, facts: dict) -> list[str]:
     return out
 
 
+def plural(noun: str, n) -> str:
+    if n == 1:
+        return noun
+    return noun + ("es" if re.search(r"(s|x|ch|sh)$", noun) else "s")
+
+
 def render(tpl: str, facts: dict) -> str:
-    return PLACEHOLDER.sub(lambda m: str(facts[m.group(1)]), tpl.strip())
+    def one(m):
+        v = facts[m.group(1)]
+        return f"{v} {plural(m.group(2), v)}" if m.group(2) else str(v)
+    out = PLACEHOLDER.sub(one, tpl.strip())
+    return out[:1].upper() + out[1:]
+
+
+def nothing_to_say(qid: str, f: dict) -> bool:
+    """Nothing inspected or found: the standard sentence says so; Llama is not asked."""
+    return ((qid == "yield" and not f.get("boards")) or
+            (qid in ("defect_counts", "severity_counts") and not f.get("total_defects")) or
+            (qid == "board_history" and not f.get("times_inspected")) or
+            (qid == "open_alerts" and not f.get("n_alerts")))
 
 
 def standard_sentence(qid: str, f: dict) -> str:

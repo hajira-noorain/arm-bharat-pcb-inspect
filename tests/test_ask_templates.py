@@ -107,3 +107,25 @@ def test_without_llama_the_answer_is_the_standard_sentence(tmp_path):
     from pcbinspect import ask
     out = ask.answer("What is the pass rate today?", _store(tmp_path).conn, backend=None)
     assert out["answer"].startswith("4 boards inspected in the last 24 hours: 1 passed")
+
+
+def test_a_placeholder_can_carry_its_noun_so_the_station_gets_the_plural_right():
+    f = {"n_alerts": 1, "times_inspected": 3, "count_scratch": 2, "n_types": 1}
+    assert render("There is {n_alerts|alert} open; seen {times_inspected|time}.", f) == \
+        "There is 1 alert open; seen 3 times."
+    assert render("{count_scratch|scratch} of {n_types|type}.", f) == "2 scratches of 1 type."
+    assert check_template("There are {n_alerts|alert} open.", "Any open alerts?", "open_alerts", f) == []
+    assert check_template("There are {n_alrts|alert} open.", "Any open alerts?", "open_alerts", f)
+
+
+def test_when_nothing_was_inspected_llama_is_not_asked(tmp_path):
+    from pcbinspect import ask
+    from pcbinspect.store import Store
+    be = TemplateWriter("yield", "{failed} boards failed out of {boards}.")
+    out = ask.answer("How many boards failed in the last 4 hours?", Store(tmp_path).conn, backend=be)
+    assert out["answer"] == "No boards inspected in the last 4 hours." and out["summary_by"] == "template"
+    assert not any("Facts:" in p for p in be.prompts)
+
+
+def test_a_sentence_starting_with_a_filled_in_name_starts_with_a_capital():
+    assert render("{top_defect} is the most frequent defect.", {"top_defect": "scratch"}) == "Scratch is the most frequent defect."
