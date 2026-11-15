@@ -113,3 +113,49 @@ Three literature and practice reviews were run before and while building `pcbins
 - A share of real assembly defects covered: no citable breakdown was found.
 - That the FPIC detector numbers are comparable with other papers' numbers (different data, classes and metrics), or that they hold on other boards and cameras before the VisA result says so.
 - Knowledge-base causes for missing and tombstoned parts follow published troubleshooting notes (nozzle, vacuum, feeder, programme coordinates; paste, pad geometry and heating for tombstones: G. Smith, "SMT Stencils 101", I-Connect007, 2019). The causes listed for an unexpected part and for a part that looks different are our own engineering judgement: no source was found for them.
+
+## 6. Llama: cause rules, training data and fine-tuning (research of 16 Nov 2026, and what it changed)
+
+Three research passes covered papers, datasets, open models and process literature for the Llama half of the problem statement. Sources that were read only in search summaries are marked so.
+
+**What the evidence says**
+
+- **No public data links PCB defects to confirmed root causes.** We found no dataset, rule set or probability table connecting a defect, the clues around it and a confirmed cause. Open models trained for this do not exist at our size:
+  - DiagnosticSLM released no weights.
+  - TableLlama is a 7B model.
+- **Placeholder sentences are faithful, free text is not.** Template-based generation gave 0% unfaithful facts against 83% for free text out of domain (TempLM, arXiv 2205.11055).
+- **Weak models need training to use placeholders.** Weak models handle placeholder syntax poorly until trained on a fixed scheme (SymGen, arXiv 2311.09188).
+- **Clean inputs help.** Clean, labelled inputs remove most number errors in table-to-text (arXiv 2404.04103).
+- **Train on labels, not rationales.** Training a small model on the label or the probability distribution, rather than on a teacher's written reasoning, generalises better (arXiv 2606.10279).
+- **Export constraint.** Meta's SpinQuant and QAT checkpoints cannot take a LoRA adapter. A fine-tune must start from the BF16 weights and be quantised after (ExecuTorch `export_llm` source).
+- **Process sources for the clue-to-cause rules** (the directions in `kb/evidence.yaml` marked `sourced`):
+
+  | Short name | Reference | What it gives us |
+  |---|---|---|
+  | Dietz 2011 | K. Dietz, "Repeat Defects", PCB Magazine (I-Connect007), June 2011 | A defect at the same coordinates on consecutive panels comes from the phototool or exposure-frame dirt. A lane along the conveyor comes from a wheel or nozzle. |
+  | TB-0173 | "Avoiding Repetitive Lamination Defects", laminator-roll technical bulletin, 2023 | Repeats at the roll circumference, 190–264 mm. |
+  | Carano 2018 | M. Carano, "Case Study: Pits and Mouse Bite Issues, Part 2" and "Trouble in Your Tank: Pits and Mouse Bites, Part 3", PCB007, 2018 | Part 2: mouse bites from air-sparger bubbles in pattern plating, removed by switching to eductors. Part 3: mouse bites from developer residue. |
+  | Carano 2020 | M. Carano, "A Process Engineer's Guide to Advanced Troubleshooting, Part 2", PCB007, July 2020 | Under-etch and under-development signatures. |
+  | Ball 2022–25 | PCB007 process columns | Etch puddling at the panel centre (2022), phototool vacuum seating (2023), an exposure vacuum leak (2024), exposure dust (2025). |
+  | Omron white paper | Omron AOI white paper | One nozzle size causing tilted chips. |
+  | Padnos 2011 | "Improved Efficiency Using Root Cause Failure Analysis", APEX 2011 | Feeder and nozzle repeats. |
+  | Kester 2005 | Rajewski, Kester SMT defect guide | Paste and stencil causes. |
+  | IPC-9121A | Public table of contents only | Symptom names. |
+  | Wafer maps | The semiconductor wafer-map literature | Edge and scratch-line patterns point to handling. Used by analogy for the `inferred` handling rules. |
+
+- **Real confirmed cases are scarce in open sources.** Eight were found and paraphrased (`llm/data/real_cases.yaml`). A second search found only two more, both shifted LEDs from an SMTA 2021 paper whose fit to our causes was loose, so they were not added. The same search found that real-2's source calls its cause suspected, not confirmed. Growing the set needs conference proceedings that are not openly available.
+
+**What it changed in the design**
+
+1. The station measures clues for each defect from its own log (`pcbinspect/evidence.py`): same spot, edge, shape, count, trend and co-occurring types. Llama judges the cause from these clues instead of from a single "is it repeating" flag.
+2. A rule table covers every defect type: 45 causes, each labelled `sourced` (22) or `inferred` (23), with a check the operator can do to confirm it.
+3. Training labels are the table's exact probabilities over causes. They are tested on unseen clue combinations, on a second generator and on the real cases, always beside the plain lookup table.
+4. Shift answers are fill-in sentences checked by code. Rankings, rates and comparisons are computed by the station.
+5. When the top two causes are close, the screen shows both and the check that separates them.
+6. Llama 3.2 1B is fine-tuned with LoRA on the BF16 weights, merged into Meta's checkpoint and exported at 8da4w. Results are in technical report section 6.6.
+
+**What the documentation must not claim**
+
+- That the cause probabilities come from data. They are our estimates, with published directions for 22 rules.
+- That the tuned model is more accurate than the rule table it learned, or that it has been validated on a real line.
+- Any accuracy on real cases beyond "n of 8".

@@ -9,7 +9,7 @@ Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5: real-time industrial d
 1. A board is placed under the camera of a Raspberry Pi 5. Nothing leaves the Pi.
 2. The picture is compared with a known-good board of the same design. Every difference is named (open, short, mouse bite and eight more types), measured in millimetres and graded.
 3. The board gets PASS, FAIL or CHECK, and a green, red or amber light. CHECK means the station is not sure and a person decides.
-4. Llama 3.2 on ExecuTorch reads the findings, never the picture, and tells the operator the likely cause and the next action, in knowledge-base wording.
+4. Llama 3.2 1B on ExecuTorch, fine-tuned for this station, reads the findings and the clues from the log, never the picture. It tells the operator the likely cause (or the two most likely, with the check that separates them) and the next action, in knowledge-base wording.
 5. The inspection is logged on the device.
 
 On boards it had never seen, with the miss rate set to 5%, it missed 4.0% of defects and raised 0.29 false calls per board (section 3.3).
@@ -74,7 +74,7 @@ PS5 asks for the vision and Llama pipelines to be documented separately, so they
 
 **Reasoning pipeline (ExecuTorch, Llama 3.2 Instruct SpinQuant INT4, Arm CPU)**
 
-One Llama 3.2 3B model does all three jobs; the 1B model is the fallback.
+The fine-tuned Llama 3.2 1B gives the advice and words the shift answers; Llama 3.2 3B reads customer rules and is loaded only when a rule sheet arrives.
 
 1. **Advice.** Llama reads a structured defect record (type, size, severity, location, recent history), never pixels, and chooses causes and actions from knowledge-base options. Its choices are read from next-token scores, not parsed from text. A grounding checker validates the answer.
 2. **Customer rules.** Llama fills a fixed rule form from each plain-English clause. The rule is verified and compared with the measured detection limit.
@@ -334,50 +334,147 @@ On deliberately corrupted correct rules, the checks caught every corrupted value
 
 ## 6. Llama on ExecuTorch: advice the operator can check
 
-**Model.** Llama 3.2 3B Instruct, Meta's SpinQuant INT4 checkpoint, exported with ExecuTorch's `export_llm` (8da4w, XNNPACK, KV cache, custom SDPA; `llm/export_llama.sh`) to a 2.4 GB `.pte`. One loaded copy serves advice, shift questions and the customer-rule reader of section 5.3. The 1B model (1.07 GB) is packaged as the fallback and is what the first version used; the measurements below are the reason it was replaced.
+**What Llama does.** It has two jobs:
+- For each defect, judge which process cause is likely, from clues the station measured, and choose the next action.
+- Word the answer to an operator's shift question.
 
-**Design principle.** The mentor guidance was to give Llama structured findings, not raw pixels. We go one step further: **Llama decides, but what the operator acts on is always something the station can check.** For each defect the knowledge base (`kb/defects.yaml`) lists 2 to 4 possible causes and 3 to 4 actions, each tied to a process step. Llama's job is to choose between them from the evidence, and to word a short summary.
+It never sees the picture. What the operator acts on is always text from the knowledge base or a number the station computed. Llama chooses and phrases; it never invents an instruction or a figure.
 
-**How a decision is read.** The station does not ask Llama to write its choice as text and then parse it. It runs the same `.pte` through `executorch.runtime` and reads the next-token scores directly (`pcbinspect/llm_logits.py`):
+**Model.** Llama 3.2 1B Instruct, fine-tuned for these two jobs with LoRA, merged into Meta's checkpoint and exported with ExecuTorch's `export_llm`:
+- 8da4w quantisation, group size 32;
+- XNNPACK;
+- KV cache and custom SDPA.
 
-1. **Context.** The defect record is fed once: type, severity, size, location, and for each defect whether that type keeps repeating on recent boards or is a one-off. A repeating defect points to a process cause (imaging, etching, drilling, plating); a one-off points to handling.
-2. **Cause.** Each candidate cause is put to Llama alone, as a yes/no question, and the station reads how much more likely "yes" is than "no". The cause with the strongest yes wins. There is no list in the prompt, so there is no first entry to copy.
-3. **Action.** The actions for that defect are scored by the probability of their own text, and the most probable one is taken.
-4. **Summary.** Llama writes one or two sentences freely, with two limits applied while it writes: a number that is not in the findings cannot be produced, and the text cannot end before it says something.
+The result is one 861 MB `.pte`. Before the fine-tune, the station ran Llama 3.2 3B (Meta's SpinQuant checkpoint, 2.4 GB) with careful prompting; section 6.6 shows why the tuned 1B replaced it. The 3B still reads customer rules (section 5.3).
 
-**Grounding checker.** It still runs on the finished answer. It rejects a cause or action that does not belong to that defect type, a summary containing a number not in the record or its history, and a summary naming a defect type that is not on the board (the words of the cause Llama itself chose are allowed: "handling scratch" is a cause of an open, not a claim that a scratch was found). A rejected answer is replaced by standard knowledge-base advice; the reason is logged and shown. The operator always reads knowledge-base text verbatim for every cause and action, so instructions are never invented. The summary is stored with the inspection and goes into the exported log as the note for that board, with who wrote it (Llama or the fallback).
+### 6.1 The clues the station measures
 
-**Measured: does the advice follow the evidence?** 150 seeded defect records were used to develop the method and a second 150 were run once, afterwards. Candidate causes are shuffled per record, so a model that ignores the evidence scores the "chance" figure.
+`pcbinspect/evidence.py` computes these for every defect from the station's own log, using the same design's recent boards. A clue the log cannot support is passed to Llama as "unknown", never guessed.
 
-| How Llama decides | Records | Advice shown | First-listed cause chosen (chance) | Repeating defect gets a process cause (chance) | One-off gets a handling cause (chance) |
-|---|---|---|---|---|---|
-| 1B writes JSON text | development | 89.3% | 68% (39%) | at chance | at chance |
-| 1B, listed causes scored by their text | development | 97.3% | 75% (39%) | at chance | at chance |
-| 3B, each cause judged alone | development | 100% | 37.5% (39.1%) | 89.2% (51.8%) | 90.4% (47.7%) |
-| 1B writes JSON text | held out | 87.3% | 71% (37%) | at chance | at chance |
-| **3B, each cause judged alone (deployed)** | **held out** | **100%** | **35.2% (36.9%)** | **95.3% (51.0%)** | **88.4% (46.6%)** |
+| Clue | How it is measured |
+|---|---|
+| Same spot | Same type within 1.5 mm on earlier boards of the design: "6 of the last 10 boards" |
+| Near the edge | Within 2 mm of the board edge |
+| Shape | Long and thin (3:1 or more), round (under 1.4:1) or irregular |
+| Count | How many of this type are on the board |
+| Trend | Rising if this type appears on at least 3 of the last 10 boards and at least twice as often as on the 10 before |
+| Also on the board | The other defect types found with it |
 
-What this shows, plainly:
+Why these clues: a defect at the same coordinates on consecutive panels points to the phototool or exposure frame, and defects spread across the panel point to a bath, etch or development setting (Dietz 2011; full sources in `docs/RESEARCH_AND_DECISIONS.md` section 6).
 
-- **The 1B model does not use the evidence.** However it is asked, it mostly picks whichever cause is listed first. Scoring its choices instead of parsing its text made the output valid more often, but not better informed. We tested it one cause at a time as well, and it still could not tell a repeating defect from a one-off.
-- **The 3B model does.** Asked one cause at a time, it follows the repeating/one-off evidence about nine times in ten and shows no pull towards the first option.
-- **Two faults were found on the development records and fixed before the held-out run.** One in five answers was thrown away because the summary came out empty, and others because the summary repeated the chosen cause's own words. Advice shown went from 78.7% to 100% on the development records, and stayed at 100% on the held-out ones.
-- **The summary must agree with the chosen causes.** Running the station showed a summary blaming handling for two defects whose chosen causes were imaging steps. The checker now also refuses a summary that blames handling where the chosen cause is a process step, or the reverse. When only the sentence is at fault, Llama's checked choices are kept and the sentence is replaced by the knowledge base's own summary, and the screen says so. Applied to the recorded runs, this replaces the sentence in 22 of 150 development records and 20 of 150 held-out records; the cause and action choices above are unchanged.
-- **What is not checked.** Beyond numbers, defect types and which kind of cause it names, the summary's wording is not verified. One development summary said two shorts were "one on each side", which the record does not say. The causes and actions the operator acts on are immune to this, because they are knowledge-base text.
+### 6.2 The rule table and where the labels come from
 
-Median time per board in these runs was about 7 s (11.7 tokens/s while writing) on the x86 server CPU of the Colab machine used for evaluation; on a laptop CPU the station took 25 to 48 s. The Pi figure is measured by `bench/bench_device.py`; the verdict never waits for it.
+**No public data links PCB defects to confirmed causes, so we wrote the rules ourselves.** `kb/evidence.yaml` holds 45 causes across 15 defect types. For each cause it gives:
+- its share of that defect type;
+- the likelihood of each clue if that cause is the real one;
+- the source, and a check the operator can do to confirm it.
 
-**Shift questions.** The operator can type a question ("how many boards failed in the last 3 hours?"). Llama may only choose one of the station's fixed read-only database queries and its settings, by the same scored choice, and then words the rows it gets back with the same number limit. If its choice cannot be used, a keyword rule chooses instead.
+**Sourced and inferred rules.** 22 rules take their direction from a published source (PCB007 process columns, Dietz, Carano, Ball, Omron, Kester). The other 23 are our own inference and are labelled `inferred` on the screen.
+- The numbers themselves are our estimates for every rule. No source publishes them.
+- The direction is what is sourced: for example, that a repeat at the same spot points to the phototool.
 
-| How the query is chosen | Questions | Right query | Keyword rule alone | Answer worded by Llama |
+**Data generators** (`llm/data/`). A generator draws a cause, then clues from that cause's likelihoods, with missing clues and unrelated defects mixed in. Each example is labelled with the exact probability over causes that the table gives. Three things keep the test honest:
+- Whole clue combinations are hashed into training, development and test buckets, so the test only contains combinations never trained on.
+- A second, differently built generator is used for testing only. It correlates the clues through a hidden fault strength, flips 8% of clues and flattens the shares.
+- 8 confirmed real cases from published accounts are used for testing only.
+
+**Data audit.** Before the second training run, an audit (`llm/data/audit.py`, findings in `results/measured/data_audit/FINDINGS.md`) found four problems, all fixed:
+- Two causes were missing: mouse bites and spurs had no phototool cause.
+- A mouse-bite cause from a published case was missing: bubbles in pattern plating.
+- The development split shared clue combinations with training.
+- Shift-question targets were repetitive, and some dodged rate and comparison questions.
+
+The audit also measured the ceiling: the clues alone pick the right cause about 60% of the time. Some causes cannot be told apart by any clue the station measures. Bubbles in pattern plating look exactly like over-etching. There, the operator's confirm check is what decides.
+
+### 6.3 How a decision is read
+
+The station does not parse text. It runs the `.pte` through `executorch.runtime` and reads next-token scores directly (`pcbinspect/llm_logits.py`, `pcbinspect/advisor.py`).
+
+1. **Context.** The board's defects and their clues are fed once.
+2. **Cause.** Each candidate cause is asked as its own yes/no question. The station reads how much more likely "yes" is than "no", and turns these into probabilities over the causes.
+3. **Close calls.** If the top two causes are within 15 points, the screen shows both, with their probabilities and the check that tells them apart. It does not pretend to know.
+4. **Action.** The actions for that defect are scored by the probability of their own text, and the most probable is taken.
+5. **Checked.** Causes and actions must belong to that defect type. The board summary is the knowledge base's standard sentence, so no free text can contradict the chosen causes.
+
+Under "details" the screen shows:
+- the clues behind the choice;
+- whether each rule is published or our own inference.
+
+### 6.4 Shift questions: fill-in sentences
+
+Llama picks one of the station's fixed read-only queries (scored choice, as before). It then writes the answer as a sentence with placeholders, and the station fills in the numbers:
+
+> "The pass rate is {pass_rate_pct}%: {passed} of {boards|board} passed."
+
+The station computes rankings, rates and comparisons itself, never Llama (`top_defect`, `pass_rate_pct`, "more minor than major"). A checker (`pcbinspect/sentences.py`) refuses a sentence that does any of the following:
+- types a number;
+- uses a field that does not exist;
+- leaves out what the question asked;
+- says "most" without the top field;
+- runs past two sentences.
+
+A refused sentence is replaced by the standard sentence. A wrong number therefore cannot reach the screen: a refusal costs wording, never correctness. This replaced free wording after the recorded demo showed a 3B answer naming the wrong column ("28 boards sent for checking" when 25 were) and the wrong top row.
+
+The design follows template-based generation work: placeholder answers were 0% unfaithful against 83% for free text out of domain (TempLM, arXiv 2205.11055). It also follows symbolic-reference generation (SymGen, arXiv 2311.09188), where small models struggled with placeholder syntax until trained on it.
+
+### 6.5 Training and export
+
+| Setting | Value |
+|---|---|
+| Method | LoRA (PEFT) on BF16 Llama 3.2 1B Instruct |
+| Rank | 16, on all seven projection matrices |
+| Schedule | Two epochs, one-cycle learning rate up to 2e-4 |
+| Cause job loss | Cross-entropy against the table's soft yes/no probability (the labels, not written rationales) |
+| Sentence job loss | Ordinary next-token loss on the target sentence only |
+| Checkpoint kept | The one with the lowest development loss |
+| Hardware | Colab A100 (`training/colab/job_llama_b*.sh`) |
+
+**Merge and export** (`llm/merge_lora_meta.py`, `job_llama_c_export.sh`):
+- The adapter is merged into Meta's original checkpoint: 112 matrices.
+- Hugging Face stores the query and key rows in a different order. The merge puts them back before adding the update; unit tests cover this.
+- The merged model is then quantised exactly like a stock export.
+- Meta's SpinQuant and QAT checkpoints cannot take an adapter, so the tuned model uses plain 8da4w quantisation. The table below shows it kept the gains.
+
+### 6.6 Measured results
+
+**Cause choice.** Top-1 / top-2 accuracy. Tuned models and the lookup table were scored on 600 examples per set; the `.pte` rows on 300. Run v1 used the rules before the audit fixes; the lookup row in the v1 block is on those rules. The v2 block uses the fixed rules, with its own lookup row.
+
+| System | Rules | Test (new clue combinations) | Second generator | Real cases (of 8) |
 |---|---|---|---|---|
-| 1B writes JSON text | 30 development | 83.3% (Llama's own choice usable for 6.7%) | 83.3% | |
-| 3B, scored choice | 30 development | 90.0% | 83.3% | 100% |
-| **3B, scored choice (deployed)** | **20 held out** | **80.0%** | **75.0%** | **100%** |
+| Prompted 1B, SpinQuant `.pte` | v1 | 38.3% / 77.0% | 35.3% / 74.0% | 3 / 6 |
+| Prompted 3B, SpinQuant `.pte` (previous station) | v1 | 40.0% / 75.7% | 39.0% / 72.7% | 1 / 4 |
+| Tuned 1B v1, BF16 | v1 | 62.2% / 92.0% | 59.8% / 87.8% | 5 / 7 |
+| **Tuned 1B v1, 8da4w `.pte`** | v1 | **59.3% / 91.7%** | **60.7% / 89.3%** | 5 / 6 |
+| Lookup table, same rules (the ceiling) | v1 | 61.8% / 91.6% | 56.6% / – | 5 / – |
+| Tuned 1B v2, 6,000 examples, BF16 | v2 | 61.3% / 89.5% | 59.0% / 86.0% | 4 / 7 |
+| Tuned 1B v2, 8da4w `.pte` (shipped) | v2 | pending | pending | pending |
+| Lookup table, same rules (the ceiling) | v2 | 60.0% / 87.6% | 55.8% / 85.3% | 5 / 7 |
 
-The gain over the keyword rule is small and the held-out set is only 20 questions, so we claim no more than this: Llama is at least as good as the rule, and every answer it words contains only numbers from the rows.
+**What this shows:**
+- **Fine-tuning moved the 1B from near-guessing to the ceiling.** The tuned 1B is about 20 points better than the prompted 3B at top-1, from a model less than half its size.
+- **It does not beat the rule table, and cannot.** It learned the table. Its value is that Llama now reads the clues as written text and gives calibrated probabilities, so it can say "one of these two". It also does better than the table on the second generator, whose data the table did not produce.
+- **Quantising to 8da4w kept the result.** The shift from BF16 is within the noise of a 300-example test.
+- **Eight real cases are too few to rank systems.** One case is 12.5 points.
+- **The learning curve settled the data size.** At 3,000 cause examples the tuned model reached only 44.3% on test; at 6,000 it reached the ceiling. A 12,000 run is pending.
 
-`docs/RESULTS.md` has the full tables, including the earlier 1B variants. What failed on the way: asking for knowledge-base IDs as strings mostly failed grounding (an early run whose result file was not kept, so no figure is quoted), and an unshuffled "100% chose a process cause" result was an artefact of option order, so it is not claimed.
+**Shift answers accepted by the checker** (the rest fall back to the standard sentence):
+
+| System | 51 held-out questions | 6 demo questions |
+|---|---|---|
+| Prompted 1B | 0% (writes no placeholders) | 0 of 6 |
+| Prompted 3B | 37% | 1 of 6 |
+| **Tuned 1B v1, 8da4w `.pte`** | **86%** | **6 of 6** |
+| Tuned 1B v2, 8da4w `.pte` | pending | pending |
+
+### 6.7 What came before, and what failed
+
+The first station asked Llama to write its advice as JSON text. Version two scored the listed options. The 1B model mostly picked whichever cause was listed first, however it was asked.
+
+The prompted 3B, judging each cause alone, did follow the one clue it was then given (does this type keep repeating?). Held out, it gave a repeating defect a process cause 95.3% of the time (chance 51.0%) and a one-off a handling cause 88.4% of the time (chance 46.6%). It could not tell process causes apart, because nothing in that record separated them; hence the clues in section 6.1.
+
+Its free-written summaries had to be replaced about one time in seven for contradicting its own causes. The fill-in sentences and the knowledge-base summary removed that failure.
+
+The full earlier tables are in `docs/RESULTS.md`. An unshuffled "100% chose a process cause" result was an artefact of option order and is not claimed.
 
 If Llama fails to load on the device, the dashboard shows a red banner and the functional check (`deploy/arm_check.py`) fails loudly. The station never silently pretends to run Llama.
 
@@ -463,7 +560,7 @@ The brief asked for a model trained beforehand that also learns during use. Noth
 - A larger detector is not automatically safer: YOLO26s scored higher mAP but missed more at the station's setting than the first detector. Which size ships is decided by the Pi timings among the sizes whose operating-point results hold (YOLO26n, YOLO26m).
 - IPC limits come from secondary sources and are configurable.
 - The eye-test card measures the limit for printed defects on paper. Etched copper on a real board may differ; a real board with a measured knife cut is shown in the demo as a cross-check, not as a statistic.
-- Llama's advice was measured on seeded records with a stated repeat history, not on a real line's history. The 3B model follows that evidence about nine times in ten; the 1B fallback does not follow it at all, so on a device that can only hold 1B the knowledge base, not Llama, orders the causes. The summary's wording is checked for numbers, defect types and the kind of cause it names (handling or process); about one summary in seven is replaced by standard wording for contradicting its own causes. The 3B rule reader sends many clauses to the operator rather than guessing.
+- Llama's cause choice is only as good as the rule table it learned. The table's numbers are our estimates; 23 of 45 rules are our own inference rather than a published source, and nobody with shop-floor experience has reviewed them yet. The clues settle the cause only about 60% of the time even when used perfectly, so the station shows two causes and a check whenever it is a close call. It was tested on 8 real published cases, too few to rank systems. The 3B rule reader sends many clauses to the operator rather than guessing.
 - A taught board's gate is calibrated on drawn defects, not real ones, and from a handful of captures of one or a few boards; board-to-board etch variation is not in it until more good boards are captured.
 - The detector alone certifies no defect size on the card. Without a reference picture the station is a triage tool that marks suspects for a person; with one it can pass and fail.
 - HRIPCB's physical scale is not published, so its severities use defect-type defaults rather than millimetres.
