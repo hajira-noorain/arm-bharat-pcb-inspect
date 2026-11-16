@@ -72,3 +72,23 @@ def test_what_this_line_confirmed_shifts_the_choice_and_says_so():
     plain = Advisor(Judge({"dust or hair on phototool": 1.0, "resist scratch or poor adhesion": 0.6}), kb,
                     cause_mode="evidence").advise(rec()).steps[0]
     assert plain["cause_id"] == "OPEN-C2" and plain["learned_from"] == 0
+
+
+class Writer(Judge):
+    """A judge that also writes the why sentence it is given."""
+    def __init__(self, logodds, sentence):
+        super().__init__(logodds)
+        self.sentence = sentence
+
+    def write(self, *a, **k):
+        return self.sentence
+
+
+def test_the_why_line_is_llamas_when_it_names_the_clue_and_standard_when_not():
+    kb = default_kb()
+    lo = {"dust or hair on phototool": 3.0}
+    good = "The defect sits at the same place on {same_spot_boards} of the last {same_spot_of} boards, which points to {cause}."
+    s = Advisor(Writer(lo, good), kb, cause_mode="evidence", why=True).advise(rec()).steps[0]
+    assert s["why_by"] == "llama" and "6 of the last 10 boards" in s["why"]
+    s = Advisor(Writer(lo, "It points to {cause}."), kb, cause_mode="evidence", why=True).advise(rec()).steps[0]
+    assert s["why_by"] == "standard" and "6 of the last 10 boards" in s["why"]

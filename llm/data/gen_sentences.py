@@ -211,11 +211,15 @@ def main() -> int:
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    for name, exs in (("sentences_train", examples(a.n, 21)), ("sentences_dev", examples(a.n // 10, 22))):
+    from llm.data import gen_why
+    for name, exs, whys in (("sentences_train", examples(a.n, 21), gen_why.examples(a.n // 3, 31)),
+                            ("sentences_dev", examples(a.n // 10, 22), gen_why.examples(a.n // 30, 32))):
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:
             for e in exs:
                 f.write(json.dumps({**e, **training_rows(e)}) + "\n")
-        print(name, len(exs))
+            for e in whys:            # the "why" line under each cause (pcbinspect/why.py)
+                f.write(json.dumps({**e, "qid": "why", **gen_why.training_rows(e)}) + "\n")
+        print(name, len(exs), "+", len(whys), "why")
     return 0
 
 

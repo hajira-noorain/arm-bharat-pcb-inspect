@@ -397,8 +397,10 @@ function groupAdvice(steps, defects) {
     const cls = d ? d.cls : "";
     const k = `${cls}|${s.cause_id}|${s.action_id}`;
     if (!groups.has(k)) groups.set(k, { ids: [], cls, action: s.action, cause: s.cause, step: s.process_step, cause_id: s.cause_id, action_id: s.action_id,
-      p: s.p ? s.p[s.cause_id] : null, abstain: !!s.abstain, alternatives: s.alternatives || [], confirm: s.confirm, provenance: s.provenance, evidence: s.evidence });
+      p: s.p ? s.p[s.cause_id] : null, abstain: !!s.abstain, alternatives: s.alternatives || [], confirm: s.confirm, provenance: s.provenance, evidence: s.evidence,
+      candidates: s.candidates || [], learned_from: s.learned_from || 0, keys: [], why: s.why || "" });
     groups.get(k).ids.push(d ? num(d) : String(s.defect));
+    groups.get(k).keys.push(String(s.defect));
   }
   return [...groups.values()].map((g) => ({ ...g, ids: g.ids.sort((a, b) => a - b) }));
 }
@@ -417,13 +419,25 @@ function clueWords(ev) {
   return out.join("; ");
 }
 const bare = (t) => String(t || "").replace(/\.\s*$/, "");
+// after the check: what the cause turned out to be. The station learns this line's causes from the answers.
+function confirmRow(g, r) {
+  if (!g.candidates.length || r.upload || RECORDED) return "";
+  const done = (r.confirmed_causes || {})[g.keys[0]];
+  if (done) {
+    const c = g.candidates.find((x) => x.cause_id === done);
+    return `<span class="confirm">Confirmed: ${esc(c ? c.short : done)}. The station learns this line's causes from these answers.</span>`;
+  }
+  return `<span class="confirm-row">What was it, once checked? <select aria-label="Confirmed cause" data-confirm-keys="${g.keys.join(",")}">
+    <option value="">choose</option>${g.candidates.map((c) => `<option value="${esc(c.cause_id)}">${esc(c.short)}</option>`).join("")}</select>
+    <button class="btn small" type="button" data-confirm-save>Save</button></span>`;
+}
 function causeLine(g) {
   if (g.abstain && g.alternatives.length > 1) {
     const [a, b] = g.alternatives;
     return `<span>Likely cause: ${esc(bare(a.cause))} (${pct(a.p)}) or ${esc(bare(b.cause))} (${pct(b.p)}). The clues do not settle it.</span>
       <span class="confirm">To tell them apart: ${esc(a.confirm)} ${esc(b.confirm)}</span>`;
   }
-  return `<span>Likely cause: ${esc(g.p != null ? bare(g.cause) : g.cause)}${g.p != null ? ` (${pct(g.p)})` : ""}</span>${g.confirm ? `<span class="confirm">To confirm: ${esc(g.confirm)}</span>` : ""}`;
+  return `<span>Likely cause: ${esc(g.p != null ? bare(g.cause) : g.cause)}${g.p != null ? ` (${pct(g.p)})` : ""}</span>${g.why ? `<span class="why">${esc(g.why)}</span>` : ""}${g.confirm ? `<span class="confirm">To confirm: ${esc(g.confirm)}</span>` : ""}`;
 }
 
 function renderAdvice(r) {
@@ -449,11 +463,26 @@ function renderAdvice(r) {
     : `Rated ${a.operator_rating > 0 ? "useful" : "not useful"}.`;
   $("#advice").innerHTML = `<p class="summary">${esc(adv.summary)}</p>
     ${groups.map((g) => `<div class="adv-group"><b>${esc(L.typeName(g.cls, g.ids.length))} ${g.ids.join(", ")}</b> · ${esc(g.action)}<br>
-      ${causeLine(g)}<div class="kb" hidden>${esc(g.cause_id)}, ${esc(g.action_id)}${g.step ? `, ${esc(String(g.step).split(":")[0])}` : ""}${g.provenance ? ` · rule ${g.provenance === "sourced" ? "from a published source" : "our own inference"}` : ""}${g.evidence ? `<br>Clues: ${esc(clueWords(g.evidence))}` : ""}</div></div>`).join("")}
+      ${causeLine(g)}${confirmRow(g, r)}<div class="kb" hidden>${esc(g.cause_id)}, ${esc(g.action_id)}${g.step ? `, ${esc(String(g.step).split(":")[0])}` : ""}${g.provenance ? ` · rule ${g.provenance === "sourced" ? "from a published source" : "our own inference"}` : ""}${g.evidence ? `<br>Clues: ${esc(clueWords(g.evidence))}` : ""}${g.learned_from ? `<br>Adjusted by ${g.learned_from} cause${g.learned_from === 1 ? "" : "s"} confirmed on this line` : ""}</div></div>`).join("")}
     <p class="meta">${note} <button class="btn link" type="button" id="kb-toggle">details</button></p>
     <div class="actions meta">${rate}</div>`;
 }
-$("#advice").addEventListener("click", (e) => { if (e.target.id === "kb-toggle") $$("#advice .kb").forEach((k) => k.hidden = !k.hidden); });
+$("#advice").addEventListener("click", async (e) => {
+  if (e.target.id === "kb-toggle") $$("#advice .kb").forEach((k) => k.hidden = !k.hidden);
+  if (e.target.matches("[data-confirm-save]")) {
+    const sel = e.target.previousElementSibling;
+    if (!sel.value) { toast("Choose what the cause turned out to be first."); sel.focus(); return; }
+    e.target.disabled = true;
+    try {
+      let res;
+      for (const key of sel.dataset.confirmKeys.split(",")) {
+        res = await api("/api/cause/confirm", { method: "POST", body: JSON.stringify({ inspection_id: current.id, defect_key: key, cause_id: sel.value, operator: $("#operator").value.trim() || null }) });
+      }
+      toast(`Saved. Advice on this line now draws on ${res.learned_from} confirmed cause${res.learned_from === 1 ? "" : "s"} for this defect type.`);
+      refreshCurrent();
+    } catch (err) { toast(`Not saved: ${err.message || err}`); e.target.disabled = false; }
+  }
+});
 
 function renderKnown(r) {
   const k = r.known;

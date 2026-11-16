@@ -73,7 +73,8 @@ class Station:
         self.llm = self._load_llm()
         self.advisor = Advisor(self.llm, self.kb, cause_mode=cfg.get("advice_cause_mode", "list"),
                                abstain_gap=float(cfg.get("advice_abstain_gap", 0.15)),
-                               temperature=float(cfg.get("advice_temperature", 1.0)))
+                               temperature=float(cfg.get("advice_temperature", 1.0)),
+                               why=bool(cfg.get("advice_why", True)))
         self._refresh_line()
         self.camera = self._open_camera()
         self.cache: OrderedDict[int, tuple] = OrderedDict()   # iid -> (insp, analysis, bgr)

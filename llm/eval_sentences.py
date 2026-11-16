@@ -52,6 +52,9 @@ def cases(seed: int = 31, per_question: int = 3) -> list[tuple]:
     for q, qid, rows in DEMO:
         params = {**QUERIES[qid]["params"], **question_params(q, qid)}
         out.append(("demo", qid, q, facts_for(qid, rows, params, q)))
+    from llm.data.gen_why import examples as why_examples
+    for e in why_examples(60, seed, "test"):       # the why line, on clue combinations never trained on
+        out.append(("why", "why", e["key"], e["facts"]))
     return out
 
 
@@ -66,17 +69,23 @@ def main() -> int:
     be = LogitLlama(a.pte, a.tok)
     rows, reasons = [], collections.Counter()
     t0 = time.perf_counter()
+    from pcbinspect.why import check_why, why_prompt
     for group, qid, q, facts in cases():
         be.reset()
-        be.feed(template_prompt(q, facts))
-        tpl = be.write(a.max_new_tokens, stop=("\n\n",), allow=_no_digits, nonempty=True).strip()
-        bad = check_template(tpl, q, qid, facts)
+        if group == "why":                          # q holds the clue the sentence must name
+            be.feed(why_prompt(facts))
+            tpl = be.write(a.max_new_tokens, stop=("\n",), allow=_no_digits, nonempty=True).strip()
+            bad = check_why(tpl, facts, q)
+        else:
+            be.feed(template_prompt(q, facts))
+            tpl = be.write(a.max_new_tokens, stop=("\n\n",), allow=_no_digits, nonempty=True).strip()
+            bad = check_template(tpl, q, qid, facts)
         for r in bad:
             reasons[r.split(":")[0]] += 1
         rows.append({"group": group, "qid": qid, "question": q, "template": tpl, "ok": not bad, "reasons": bad,
                      "answer": render(tpl, facts) if not bad else None})
     summary = {}
-    for g in ("heldout", "demo"):
+    for g in ("heldout", "demo", "why"):
         rs = [r for r in rows if r["group"] == g]
         summary[g] = {"n": len(rs), "accepted": sum(r["ok"] for r in rs) / max(len(rs), 1)}
     out = {"model": be.model, "seconds": round(time.perf_counter() - t0, 1), "summary": summary,

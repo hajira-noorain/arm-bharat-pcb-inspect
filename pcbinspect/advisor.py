@@ -293,7 +293,7 @@ class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
                  option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list",
-                 abstain_gap: float = 0.15, temperature: float = 1.0, line=None):
+                 abstain_gap: float = 0.15, temperature: float = 1.0, line=None, why: bool = False):
         self.cause_mode = cause_mode      # scored path: 'list' (score the listed options), 'pointwise'
         #                                   (one yes/no question per candidate cause, no list in the prompt) or
         #                                   'evidence' (the station's clues in the prompt, probabilities over the
@@ -301,6 +301,7 @@ class Advisor:
         self.abstain_gap = abstain_gap    # evidence mode: show the top two when their probabilities are this close
         self.temperature = temperature    # evidence mode: calibration of the yes/no log-odds (set on dev data)
         self.line = line                  # evidence mode: causes this line's operators confirmed (pcbinspect/learned.py)
+        self.why = why                    # evidence mode: Llama words a checked "why" line per cause (pcbinspect/why.py)
         self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
         self.last_forwards = 0
         self.fewshot = fewshot
@@ -369,12 +370,16 @@ class Advisor:
             steps.append({"defect": d["id"], "cause": order[0], "action": action})
             abstain = len(order) > 1 and p[order[0]] - p[order[1]] < self.abstain_gap
             ev = cm.evidence[order[0]]
-            extra.append({"p": p, "abstain": abstain, "learned_from": learned, "evidence": d.get("evidence"), "provenance": ev["provenance"],
+            extra.append({"p": p, "abstain": abstain, "learned_from": learned,
+                          "candidates": [{"cause_id": c, "short": kb.by_id[c]["short"]} for c in order], "evidence": d.get("evidence"), "provenance": ev["provenance"],
                           "source": ev["source"], "confirm": ev["confirm"],
                           "alternatives": [{"cause_id": c, "cause": kb.by_id[c]["text"], "p": p[c],
                                             "confirm": cm.evidence[c]["confirm"],
                                             "provenance": cm.evidence[c]["provenance"]} for c in order[:2]]
                           if abstain else []})
+        if self.why:
+            for d, st, x in zip(defects, steps, extra):
+                x.update(self._why(d, st["cause"], cm))
         summary = template_advice(record, kb)["summary"]
         res: GroundingResult = check(json.dumps({"steps": steps, "summary": summary}), record, kb)
         if not res.ok:
@@ -389,6 +394,26 @@ class Advisor:
         total = GenResult("", (time.perf_counter() - t0) * 1e3, 0.0, 0.0, 0, 0)
         return Advice(LLAMA_BACKEND, be.model, summary, rendered, True, [], [s["defect"] for s in rest], None,
                       total, [], "template")
+
+    def _why(self, d: dict, cause: str, cm) -> dict:
+        """One sentence naming the clue that points to the cause: Llama's wording if the checker accepts it,
+        otherwise the standard sentence. Which clue to name is decided by code, never by Llama."""
+        from .ask import _no_digits
+        from .sentences import render as fill
+        from .why import check_why, standard_why, why_facts, why_prompt
+        f, key = why_facts(d["type"], d.get("evidence") or {}, cause, cm, self.kb)
+        if key is None:
+            return {}
+        be = self.backend
+        tpl, reasons = "", ["no writer"]
+        if hasattr(be, "write"):
+            be.reset()
+            be.feed(why_prompt(f))
+            tpl = be.write(64, stop=("\n",), allow=_no_digits, nonempty=True).strip()
+            reasons = check_why(tpl, f, key)
+        if not reasons:
+            return {"why": fill(tpl, f), "why_by": "llama"}
+        return {"why": standard_why(f, key), "why_by": "standard", "why_rejected": "; ".join(reasons)}
 
     # ---------------------------------------------------------------- scored choices (logits backend)
     def _advise_scored(self, record: dict, history: dict[str, int] | None, window: int = 20) -> Advice:

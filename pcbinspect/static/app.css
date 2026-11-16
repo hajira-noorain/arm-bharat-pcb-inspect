@@ -192,6 +192,9 @@ tr.hot .bn { background: var(--blue); color: #fff; }
 .adv-group .kb { font-family: var(--narrow); color: var(--soft); font-size: 12.5px; }
 .adv-group span { display: block; }
 .adv-group .confirm { color: var(--soft); font-size: 13px; }
+.adv-group .why { font-size: 13.5px; }
+.adv-group .confirm-row { font-size: 13px; color: var(--soft); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.adv-group .confirm-row select { font: inherit; }
 .pending { color: var(--soft); }
 .pending::after { content: "…"; }
 .known { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
