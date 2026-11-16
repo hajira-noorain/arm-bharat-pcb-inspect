@@ -78,7 +78,7 @@ The fine-tuned Llama 3.2 1B gives the advice and words the shift answers; Llama 
 
 1. **Advice.** Llama reads a structured defect record (type, size, severity, location, recent history), never pixels, and chooses causes and actions from knowledge-base options. Its choices are read from next-token scores, not parsed from text. A grounding checker validates the answer.
 2. **Customer rules.** Llama fills a fixed rule form from each plain-English clause. The rule is verified and compared with the measured detection limit.
-3. **Shift questions and alerts.** Llama picks one of the station's fixed read-only queries for a typed question and words the rows; it also words drift alerts.
+3. **Shift questions and alerts.** A typed question is matched to one of the station's fixed read-only queries, and Llama words the answer with blanks that the station fills in; it also words drift alerts.
 
 The verdict never waits for Llama. Advice is produced on a background thread and appears seconds later.
 
@@ -425,7 +425,7 @@ Under "details" the screen shows:
 
 ### 6.4 Shift questions: fill-in sentences
 
-Llama picks one of the station's fixed read-only queries (scored choice, as before). It then writes the answer as a sentence with placeholders, and the station fills in the numbers:
+The question is matched to one of the station's fixed read-only queries. The fine-tuned 1B then writes the answer as a sentence with placeholders, and the station fills in the numbers:
 
 > "The pass rate is {pass_rate_pct}%: {passed} of {boards|board} passed."
 
@@ -436,7 +436,14 @@ The station computes rankings, rates and comparisons itself, never Llama (`top_d
 - says "most" without the top field;
 - runs past two sentences.
 
-A refused sentence is replaced by the standard sentence. A wrong number therefore cannot reach the screen: a refusal costs wording, never correctness. This replaced free wording after the recorded demo showed a 3B answer naming the wrong column ("28 boards sent for checking" when 25 were) and the wrong top row.
+A refused sentence is replaced by the standard sentence. A wrong number therefore cannot reach the screen: a refusal costs wording, never correctness. **Who picks the query.** Measured on the 20 held-out questions:
+- the prompted 3B picked the right query for 80%;
+- the fine-tuned 1B for 60%: query choice was never in its training data;
+- the keyword rule for 75%.
+
+So the station now routes by the keyword rule (`ask_route: keyword` in `config/app.yaml`) and lets the 1B write the answer. Training the 1B on query choice is the obvious next step.
+
+This replaced free wording after the recorded demo showed a 3B answer naming the wrong column ("28 boards sent for checking" when 25 were) and the wrong top row.
 
 The design follows template-based generation work: placeholder answers were 0% unfaithful against 83% for free text out of domain (TempLM, arXiv 2205.11055). It also follows symbolic-reference generation (SymGen, arXiv 2311.09188), where small models struggled with placeholder syntax until trained on it.
 

@@ -1,22 +1,139 @@
 {
  "what": "Llama-3.2-1B-PCB-Advisor v3.1, the model the station ships (config/app.yaml): LoRA rank 16 on Llama 3.2 1B Instruct, 9,000 cause examples with all nine clues plus fill-in sentences and why lines, the why prompt naming the clue to use; merged into Meta's checkpoint and exported 8da4w (group size 32, XNNPACK), 861 MB. Read from /content/res_v31 and /content/run_v31.log on Colab, 16 Nov 2026 (training on an A100, scoring of the .pte on the Colab CPU). The per-case JSON files are uploaded to the private HF model repo under results/llama_v31 when the Colab session allows.",
  "cause_top1_top2": {
-  "v31_8da4w_pte_T1 (n=300 test/alt, 8 real)": {"test": [0.700, 0.893], "alt": [0.613, 0.880], "real": [0.500, 0.750]},
-  "v31_bf16 (n=600 test/alt, 8 real)": {"test": [0.683, 0.878], "alt": [0.583, 0.855], "real": [0.500, 0.875]},
-  "v3_8da4w_pte (n=300)": {"test": [0.697, 0.903], "alt": [0.623, 0.877], "real": [0.500, 0.750]},
-  "lookup_table_same_rules (n=1000)": {"test": [0.675, 0.893], "alt": [0.599, 0.869], "real": [0.625, 0.875]}
+  "v31_8da4w_pte_T1 (n=300 test/alt, 8 real)": {
+   "test": [
+    0.7,
+    0.893
+   ],
+   "alt": [
+    0.613,
+    0.88
+   ],
+   "real": [
+    0.5,
+    0.75
+   ]
+  },
+  "v31_bf16 (n=600 test/alt, 8 real)": {
+   "test": [
+    0.683,
+    0.878
+   ],
+   "alt": [
+    0.583,
+    0.855
+   ],
+   "real": [
+    0.5,
+    0.875
+   ]
+  },
+  "v3_8da4w_pte (n=300)": {
+   "test": [
+    0.697,
+    0.903
+   ],
+   "alt": [
+    0.623,
+    0.877
+   ],
+   "real": [
+    0.5,
+    0.75
+   ]
+  },
+  "lookup_table_same_rules (n=1000)": {
+   "test": [
+    0.675,
+    0.893
+   ],
+   "alt": [
+    0.599,
+    0.869
+   ],
+   "real": [
+    0.625,
+    0.875
+   ]
+  }
  },
  "calibration_ece_and_close_calls": {
-  "v31_pte_temperature_1.0": {"test_ece": 0.090, "alt_ece": 0.140, "test_two_causes_shown": 0.14, "alt_two_causes_shown": 0.13},
-  "v31_pte_temperature_1.405 (shipped as 1.4)": {"test_ece": 0.048, "alt_ece": 0.105, "test_two_causes_shown": 0.21, "alt_two_causes_shown": 0.18, "test_true_cause_among_the_two_when_shown": 0.855},
-  "v3_pte_temperature_1.0": {"test_ece": 0.100, "alt_ece": 0.139},
-  "v3_pte_temperature_1.499": {"test_ece": 0.046, "alt_ece": 0.096, "test_two_causes_shown": 0.17},
-  "lookup_table": {"test_ece": 0.036, "alt_ece": 0.064},
-  "temperature_fit": {"v31": {"n_dev": 300, "temperature": 1.405}, "v3": {"n_dev": 300, "temperature": 1.499, "nll_at_1": 0.7453, "nll_fitted": 0.7097}}
+  "v31_pte_temperature_1.0": {
+   "test_ece": 0.09,
+   "alt_ece": 0.14,
+   "test_two_causes_shown": 0.14,
+   "alt_two_causes_shown": 0.13
+  },
+  "v31_pte_temperature_1.405 (shipped as 1.4)": {
+   "test_ece": 0.048,
+   "alt_ece": 0.105,
+   "test_two_causes_shown": 0.21,
+   "alt_two_causes_shown": 0.18,
+   "test_true_cause_among_the_two_when_shown": 0.855
+  },
+  "v3_pte_temperature_1.0": {
+   "test_ece": 0.1,
+   "alt_ece": 0.139
+  },
+  "v3_pte_temperature_1.499": {
+   "test_ece": 0.046,
+   "alt_ece": 0.096,
+   "test_two_causes_shown": 0.17
+  },
+  "lookup_table": {
+   "test_ece": 0.036,
+   "alt_ece": 0.064
+  },
+  "temperature_fit": {
+   "v31": {
+    "n_dev": 300,
+    "temperature": 1.405
+   },
+   "v3": {
+    "n_dev": 300,
+    "temperature": 1.499,
+    "nll_at_1": 0.7453,
+    "nll_fitted": 0.7097
+   }
+  }
  },
  "sentences_accepted_by_checker": {
-  "v31_pte": {"shift_heldout_n51": 0.902, "shift_demo_n6": 1.0, "why_heldout_n60": 1.0, "rejections": {"does not say what was asked": 5}},
-  "v3_pte": {"shift_heldout_n51": 0.843, "shift_demo_n6": 1.0, "why_heldout_n60": 0.533, "rejections": {"does not name the clue": 28, "does not say what was asked": 7, "the answer gives no fact": 1}}
+  "v31_pte": {
+   "shift_heldout_n51": 0.902,
+   "shift_demo_n6": 1.0,
+   "why_heldout_n60": 1.0,
+   "rejections": {
+    "does not say what was asked": 5
+   }
+  },
+  "v3_pte": {
+   "shift_heldout_n51": 0.843,
+   "shift_demo_n6": 1.0,
+   "why_heldout_n60": 0.533,
+   "rejections": {
+    "does not name the clue": 28,
+    "does not say what was asked": 7,
+    "the answer gives no fact": 1
+   }
+  }
  },
- "smoke_test": "One board with two defects through the station's evidence-mode advisor with v3 on the Colab CPU: 4.5 s including two why lines (llm/try_evidence_advice.py)."
+ "smoke_test": "One board with two defects through the station's evidence-mode advisor with v3 on the Colab CPU: 4.5 s including two why lines (llm/try_evidence_advice.py).",
+ "shift_question_query_choice": {
+  "what": "llm/eval_ask.py --backend logits --sets heldout on the v3.1 .pte (Colab CPU), read from /content/run_ask.log",
+  "n": 20,
+  "route_accuracy_tuned_1b_v31": 0.6,
+  "route_accuracy_keyword_rule": 0.75,
+  "route_accuracy_prompted_3b_earlier": 0.8,
+  "answer_written_by_llama": 0.842,
+  "wrong_by_query": {
+   "defect_counts -> open_alerts": 2,
+   "yield -> board_history": 1,
+   "yield -> open_alerts": 2,
+   "board_history -> yield": 1,
+   "board_history -> open_alerts": 1,
+   "severity_counts -> defect_counts": 1
+  },
+  "decision": "the station routes by the keyword rule (config ask_route: keyword) and lets the tuned 1B write the answer; query choice was never in the fine-tune's training data"
+ }
 }

@@ -136,18 +136,20 @@ def _no_digits(text_so_far: str, piece: str) -> bool:
     return not any(ch.isdigit() for ch in piece)
 
 
-def answer(question: str, conn, backend=None, max_new_tokens: int = 96) -> dict:
+def answer(question: str, conn, backend=None, max_new_tokens: int = 96, route_by_llama: bool = True) -> dict:
+    """route_by_llama=False: the keyword rule picks the query and Llama only writes the answer (config ask_route:
+    keyword; the fine-tuned 1B was not trained to pick queries and picks fewer right ones than the rule)."""
     out = {"question": question, "route": "keyword", "summary_by": "template"}
     qid, params = keyword_route(question)
     scored = backend is not None and hasattr(backend, "score")
-    if scored:
+    if scored and route_by_llama:
         try:
             qid, _ = route_scored(question, backend)
             params = {**QUERIES[qid]["params"], **question_params(question, qid)}
             out["route"] = "llama"
         except Exception as exc:    # noqa: BLE001  routing failure falls back to keywords
             out["route_error"] = repr(exc)
-    elif backend is not None:
+    elif backend is not None and not scored and route_by_llama:
         menu = "\n".join(f"{k}: {v['desc']} (params: {json.dumps(v['params'])})" for k, v in QUERIES.items())
         p = _chat("You route questions from a factory operator to a fixed list of database queries. "
                   "Reply with JSON only.",

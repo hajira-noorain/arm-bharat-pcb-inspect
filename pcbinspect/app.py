@@ -1275,7 +1275,8 @@ def create_app(cfg: dict) -> FastAPI:
     @app.post("/api/ask")
     def ask(req: AskReq):
         with st.llm_lock:
-            return ask_mod.answer(req.question, st.store.conn, st.llm)
+            return ask_mod.answer(req.question, st.store.conn, st.llm,
+                                  route_by_llama=st.cfg.get("ask_route", "llama") == "llama")
 
     @app.get("/api/export.csv")
     def export():

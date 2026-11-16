@@ -79,3 +79,13 @@ def test_question_sets_are_well_formed_and_do_not_overlap():
         assert all(it["query"] in ask.QUERIES for it in items)
         assert {it["query"] for it in items} == set(ask.QUERIES)            # every query is asked for
     assert not {it["q"] for it in sets["tuning"]} & {it["q"] for it in sets["heldout"]}
+
+
+def test_the_keyword_rule_can_route_while_llama_still_writes_the_answer(tmp_path):
+    """The fine-tuned 1B words answers well but was never trained to pick the query, so the station can route by
+    the keyword rule (config ask_route: keyword) and still let Llama write the sentence."""
+    s = log(tmp_path)
+    be = Scripted("open_alerts", [["The station inspected "], ["{boards}"], [" boards and "], ["{failed}"],
+                                  [" of them failed."]])
+    r = ask.answer("How many boards failed in the last 3 hours?", s.conn, be, route_by_llama=False)
+    assert r["route"] == "keyword" and r["query"] == "yield" and r["summary_by"] == "llama"

@@ -34,7 +34,10 @@ class LineCauses:
                 continue
             self.n_type[cls] += 1
             n_cause[cause] += 1
-            for k, v in features_from(ev or {}).items():
+            feats = features_from(ev or {})
+            if (ev or {}).get("roll_pitch") is False:   # passed to the model only when found, but its absence
+                feats["roll_pitch"] = False             # on a confirmed board is real evidence for learning
+            for k, v in feats.items():
                 if k == "round" and features_from(ev).get("long_thin"):
                     continue                # round is only asked when the defect is not long and thin
                 seen[cause][k][0] += bool(v)

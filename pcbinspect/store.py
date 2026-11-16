@@ -247,12 +247,12 @@ class Store:
                 "advice_ms_median": statistics.median(advice_ms) if advice_ms else None}
 
     def reset(self) -> None:
-        """Empty the inspection log and its images (the shared online demo, nightly). Designs, model versions,
-        eye tests and customer rules are kept."""
+        """Empty the inspection log and its images (the shared online demo, nightly), with the causes visitors
+        confirmed on it. Designs, model versions, eye tests and customer rules are kept."""
         shas = [r[0] for r in self.conn.execute("SELECT image_sha FROM inspections WHERE image_sha IS NOT NULL")]
         with self.conn:
             self.conn.execute("BEGIN")
-            for table in ("feedback_events", "advice", "defects", "alerts", "inspections"):
+            for table in ("feedback_events", "advice", "defects", "alerts", "cause_confirmations", "inspections"):
                 self.conn.execute(f"DELETE FROM {table}")
         for sha in shas:
             self.image_path(sha).unlink(missing_ok=True)
@@ -307,8 +307,10 @@ class Store:
                 (time.time(), iid, defect_key, row["cls"], cause_id, json.dumps(evidence or {}), operator))
 
     def confirmed_causes(self) -> list[tuple[str, str, dict]]:
+        """One lesson per board, defect type and cause: identical defects confirmed together count once."""
         return [(r["cls"], r["cause_id"], json.loads(r["evidence_json"] or "{}")) for r in self.conn.execute(
-            "SELECT cls, cause_id, evidence_json FROM cause_confirmations ORDER BY id")]
+            "SELECT cls, cause_id, evidence_json FROM cause_confirmations WHERE id IN (SELECT MIN(id) FROM "
+            "cause_confirmations GROUP BY inspection_id, cls, cause_id) ORDER BY id")]
 
     def confirmation_of(self, iid: int) -> dict[str, str]:
         return {r["defect_key"]: r["cause_id"] for r in self.conn.execute(

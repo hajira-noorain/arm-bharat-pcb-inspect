@@ -47,7 +47,7 @@ def main():
         p = ("<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nIn one sentence, what is a "
              "short circuit on a PCB?<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n")
         for label, name, required in (("small model, the fallback", "llama3_2_1b_spinquant.pte", True),
-                                      ("advice, questions and rule reader", "llama3_2_3b_spinquant.pte", False)):
+                                      ("customer-rule reader", "llama3_2_3b_spinquant.pte", False)):
             pte = root / "models" / "llm" / name
             if not pte.exists():
                 if required:

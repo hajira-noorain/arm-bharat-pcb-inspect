@@ -354,9 +354,12 @@ class Advisor:
         be.reset()
         be.feed(build_evidence_prompt({**record, "defects": defects}, kb))
         steps, extra = [], []
-        for d in defects:
-            causes = cm.causes(d["type"])
-            lo = {c: be.yes_no(cause_question(d["id"], c, kb)) / self.temperature for c in causes}
+        # Every defect's causes are judged on the board prompt alone, as in training and evaluation: yes_no()
+        # leaves the context as it was, and nothing about a chosen cause or action is fed until all are judged.
+        temp = max(self.temperature, 1e-3)
+        judged = [{c: be.yes_no(cause_question(d["id"], c, kb)) / temp for c in cm.causes(d["type"])}
+                  for d in defects]
+        for d, lo in zip(defects, judged):
             m = max(lo.values())
             ex = {c: math.exp(v - m) for c, v in lo.items()}
             z = sum(ex.values())

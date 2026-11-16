@@ -70,3 +70,24 @@ def test_the_confirm_endpoint_records_and_the_station_learns(tmp_path):
     assert r.status_code == 200 and r.json()["learned_from"] == 1
     assert c.post("/api/cause/confirm", json={"inspection_id": iid, "defect_key": "D1",
                                               "cause_id": "SHORT-C1"}).status_code == 400
+
+
+def test_a_clue_reported_only_when_present_still_learns_its_true_rate(cm):
+    """roll_pitch is passed to the cause model only when found; its absence on a confirmed board still counts."""
+    no = {**SAME, "roll_pitch": False}
+    yes = {**SAME, "roll_pitch": True}
+    line = LineCauses(cm, [("open", "OPEN-C2", no)] * 29 + [("open", "OPEN-C2", yes)])
+    table = cm.evidence["OPEN-C2"]["p"]["roll_pitch"]
+    learned = line.line.evidence["OPEN-C2"]["p"]["roll_pitch"]
+    assert learned == pytest.approx((10 * table + 1) / (10 + 30))
+
+
+def test_one_answer_for_a_group_of_identical_defects_is_one_lesson(tmp_path):
+    from test_evidence import _log
+    s = Store(tmp_path)
+    iid = _log(s, [("short", (10, 10, 20, 20)), ("short", (300, 10, 310, 20)), ("short", (600, 10, 610, 20))])
+    kb = default_kb()
+    for k in ("D1", "D2", "D3"):                    # the advice card groups them; one Save confirms all three
+        s.confirm_cause(iid, k, "SHORT-C1", SAME, "asha", kb)
+    assert s.confirmation_of(iid) == {"D1": "SHORT-C1", "D2": "SHORT-C1", "D3": "SHORT-C1"}
+    assert len(s.confirmed_causes()) == 1

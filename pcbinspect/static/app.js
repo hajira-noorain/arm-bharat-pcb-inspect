@@ -412,7 +412,7 @@ function clueWords(ev) {
   if (!ev) return "";
   const out = [], rs = ev.repeat_same_spot;
   out.push(rs === "unknown" || !rs ? "same spot: not enough history" : `same spot on ${rs.boards} of the last ${rs.of} boards`);
-  if (ev.near_edge !== "unknown") out.push(ev.near_edge ? "near the board edge" : "away from the edge");
+  if (typeof ev.near_edge === "boolean") out.push(ev.near_edge ? "near the board edge" : "away from the edge");
   if (ev.shape) out.push(String(ev.shape).replace("_", " "));
   if (ev.count_on_board) out.push(`${ev.count_on_board} of this type on the board`);
   if (ev.trend && ev.trend !== "unknown") out.push(`${ev.trend} on recent boards`);
@@ -422,12 +422,12 @@ const bare = (t) => String(t || "").replace(/\.\s*$/, "");
 // after the check: what the cause turned out to be. The station learns this line's causes from the answers.
 function confirmRow(g, r) {
   if (!g.candidates.length || r.upload || RECORDED) return "";
-  const done = (r.confirmed_causes || {})[g.keys[0]];
+  const done = g.keys.map((k) => (r.confirmed_causes || {})[k]).find(Boolean);
   if (done) {
     const c = g.candidates.find((x) => x.cause_id === done);
     return `<span class="confirm">Confirmed: ${esc(c ? c.short : done)}. The station learns this line's causes from these answers.</span>`;
   }
-  return `<span class="confirm-row">What was it, once checked? <select aria-label="Confirmed cause" data-confirm-keys="${g.keys.join(",")}">
+  return `<span class="confirm-row">What was it, once checked? <select aria-label="Confirmed cause" data-confirm-keys="${esc(g.keys.join(","))}">
     <option value="">choose</option>${g.candidates.map((c) => `<option value="${esc(c.cause_id)}">${esc(c.short)}</option>`).join("")}</select>
     <button class="btn small" type="button" data-confirm-save>Save</button></span>`;
 }
@@ -462,7 +462,7 @@ function renderAdvice(r) {
     ? `Useful? <button class="btn small" type="button" data-rate="1" data-a="${a.id}">Yes</button> <button class="btn small" type="button" data-rate="-1" data-a="${a.id}">No</button>`
     : `Rated ${a.operator_rating > 0 ? "useful" : "not useful"}.`;
   $("#advice").innerHTML = `<p class="summary">${esc(adv.summary)}</p>
-    ${groups.map((g) => `<div class="adv-group"><b>${esc(L.typeName(g.cls, g.ids.length))} ${g.ids.join(", ")}</b> · ${esc(g.action)}<br>
+    ${groups.map((g) => `<div class="adv-group"><b>${esc(L.typeName(g.cls, g.ids.length))} ${esc(g.ids.join(", "))}</b> · ${esc(g.action)}<br>
       ${causeLine(g)}${confirmRow(g, r)}<div class="kb" hidden>${esc(g.cause_id)}, ${esc(g.action_id)}${g.step ? `, ${esc(String(g.step).split(":")[0])}` : ""}${g.provenance ? ` · rule ${g.provenance === "sourced" ? "from a published source" : "our own inference"}` : ""}${g.evidence ? `<br>Clues: ${esc(clueWords(g.evidence))}` : ""}${g.learned_from ? `<br>Adjusted by ${g.learned_from} cause${g.learned_from === 1 ? "" : "s"} confirmed on this line` : ""}</div></div>`).join("")}
     <p class="meta">${note} <button class="btn link" type="button" id="kb-toggle">details</button></p>
     <div class="actions meta">${rate}</div>`;
@@ -473,10 +473,11 @@ $("#advice").addEventListener("click", async (e) => {
     const sel = e.target.previousElementSibling;
     if (!sel.value) { toast("Choose what the cause turned out to be first."); sel.focus(); return; }
     e.target.disabled = true;
+    const iid = current.id, who = $("#operator").value.trim() || null;   // fixed before any await
     try {
       let res;
       for (const key of sel.dataset.confirmKeys.split(",")) {
-        res = await api("/api/cause/confirm", { method: "POST", body: JSON.stringify({ inspection_id: current.id, defect_key: key, cause_id: sel.value, operator: $("#operator").value.trim() || null }) });
+        res = await api("/api/cause/confirm", { method: "POST", body: JSON.stringify({ inspection_id: iid, defect_key: key, cause_id: sel.value, operator: who }) });
       }
       toast(`Saved. Advice on this line now draws on ${res.learned_from} confirmed cause${res.learned_from === 1 ? "" : "s"} for this defect type.`);
       refreshCurrent();

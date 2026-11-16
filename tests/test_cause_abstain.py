@@ -92,3 +92,26 @@ def test_the_why_line_is_llamas_when_it_names_the_clue_and_standard_when_not():
     assert s["why_by"] == "llama" and "6 of the last 10 boards" in s["why"]
     s = Advisor(Writer(lo, "It points to {cause}."), kb, cause_mode="evidence", why=True).advise(rec()).steps[0]
     assert s["why_by"] == "standard" and "6 of the last 10 boards" in s["why"]
+
+
+class Recorder(Judge):
+    """Records what was in the context each time a cause question was asked."""
+    def __init__(self, logodds):
+        super().__init__(logodds)
+        self.contexts = []
+
+    def yes_no(self, text):
+        self.contexts.append(list(self.fed))
+        return super().yes_no(text)
+
+
+def test_every_defects_causes_are_judged_on_the_board_prompt_alone():
+    """Training and evaluation ask each cause right after the evidence prompt; a board with several defects must
+    not put an earlier defect's chosen cause or action lines in front of a later defect's questions."""
+    kb = default_kb()
+    r = rec()
+    r["defects"].append({"id": "D2", "type": "short", "severity": "critical", "size_mm": 0.2, "location": "edge",
+                         "confidence": 0.9, "ipc": {}, "evidence": {**EV_SAME, "count_on_board": 5}})
+    be = Recorder({"dust or hair on phototool": 3.0, "under-etching": 2.0})
+    Advisor(be, kb, cause_mode="evidence").advise(r)
+    assert be.contexts and all(len(c) == 1 for c in be.contexts)       # only the evidence prompt was fed

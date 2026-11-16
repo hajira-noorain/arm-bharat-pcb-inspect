@@ -192,7 +192,7 @@ dd { margin: 0; }
       <h3>3. Customer rules</h3>
       <p>A customer writes "nicks that reduce the width by more than 20% are rejectable". The 3B fills a fixed rule form, choosing only answers the sentence supports. The rule is checked, compared with the station's measured detection limit, and read back to the operator.</p>
       <h3>4. Shift questions</h3>
-      <p>"What is the pass rate today?" Llama picks one of the station's fixed read-only database queries. It then writes the answer with blanks, and the station fills in the numbers, so a wrong number cannot reach the screen.</p>
+      <p>"What is the pass rate today?" A keyword rule matches it to one of the station's fixed read-only database queries. It picked the right one for 75% of held-out questions, more often than the fine-tuned 1B, which was not trained for it. Llama then writes the answer with blanks, and the station fills in the numbers, so a wrong number cannot reach the screen.</p>
     </div>
     <figure style="margin-top:10pt"><img src="shot_advice_card.png" alt="Llama's advice on the dashboard"><figcaption>Llama's advice on the dashboard: the likely cause with its percentage, the clue behind it, the check to confirm it, and "What was it?" for the operator. Every cause and action is knowledge-base text, word for word.</figcaption></figure>
   </div>

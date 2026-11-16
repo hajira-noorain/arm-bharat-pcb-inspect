@@ -20,6 +20,8 @@ advice_abstain_gap: 0.15       # top two causes closer than this: show both and 
 advice_temperature: 1.4       # fitted for v3.1 on the development split (llm/fit_temperature.py: 1.405)
 advice_why: true               # one checked sentence naming the clue behind each cause
 advice_why_key: true           # models from v3.1 on: the prompt says which clue to name
+ask_route: keyword             # shift questions: the keyword rule picks the query (75% right on 20 held-out
+#                                questions; the tuned 1B picked 60%, the prompted 3B 80%); Llama writes the answer
 llm_tokenizer: models/llm/tokenizer.model
 spec_llm_pte: models/llm/llama3_2_3b_spinquant.pte   # reads customer requirements (loaded on first use)
 eyetest_dir: assets/eyetest
