@@ -114,12 +114,13 @@ def main() -> int:
     ap.add_argument("--tok")
     ap.add_argument("--n", type=int, default=600)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--temperature", type=float, default=1.0, help="divide the log-odds by this (llm/fit_temperature.py)")
     a = ap.parse_args()
     kb = default_kb()
     cm = CauseModel(kb)
     model = a.scorer
     if a.scorer == "llama":
-        fn, model = make_llama(a.pte, a.tok)
+        fn, model = make_llama(a.pte, a.tok, a.temperature)
     else:
         fn = probs_prior if a.scorer == "prior" else probs_bayes
     sets = {"test": examples(a.n, 13, "test", kb), "alt": alt_examples(a.n, 14, kb), "real": real_examples(kb)}
