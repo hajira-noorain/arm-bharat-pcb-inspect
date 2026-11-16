@@ -17,7 +17,7 @@ advice_llm_pte: models/llm/llama3_2_1b_pcb_lora_v3.pte  # Llama-3.2-1B-PCB-Advis
 llm_backend: logits            # decisions read from next-token scores; "runner" = the text runner writing JSON
 advice_cause_mode: evidence    # each cause judged from the clues in the log; "pointwise"/"list" = the older prompts
 advice_abstain_gap: 0.15       # top two causes closer than this: show both and the check that separates them
-advice_temperature: 1.0
+advice_temperature: 1.5       # fitted on the development split (llm/fit_temperature.py): v3 calibration error 0.100 -> 0.046
 advice_why: true               # one checked sentence naming the clue behind each cause
 advice_why_key: false          # true for models trained from v3.1 on: the prompt says which clue to name
 llm_tokenizer: models/llm/tokenizer.model
