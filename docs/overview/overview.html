@@ -85,7 +85,7 @@ dd { margin: 0; }
     <div class="fig"><b>4.0%</b><span>of defects missed on boards it had never seen, at a 5% miss-rate setting (DeepPCB, compared with the known-good board)</span></div>
     <div class="fig"><b>0.29</b><span>false calls per board on the same 500 held-out boards (250 defective, 250 good)</span></div>
     <div class="fig"><b>83.3%</b><span>mAP of the defect detector on 1,006 held-out boards (7,093 defects) from five public datasets</span></div>
-    <div class="fig"><b>95% · 88%</b><span>how often Llama's advice follows the evidence (repeating defect → process cause; one-off → handling), against about 50% for a blind pick</span></div>
+    <div class="fig"><b>70% vs 40%</b><span>right cause first on unseen cases: our fine-tuned Llama 1B against the prompted Llama 3B it replaced</span></div>
     <div class="fig"><b>0</b><span>network connections needed: every model runs on the Pi's Arm CPU through ExecuTorch</span></div>
     <div class="fig"><b>11 + 3</b><span>bare-board defect types named, plus missing, extra and changed parts on assembled boards</span></div>
   </div>
@@ -120,7 +120,7 @@ dd { margin: 0; }
     <tr><td>Alert operators with actionable advice</td><td>PASS / FAIL / CHECK with a green, red or amber light, and Llama's advice on cause and action</td></tr>
     <tr><td>Log inspection results</td><td>Every board, finding, decision and piece of advice in a database on the Pi, exportable as CSV</td></tr>
     <tr><td>Real time at the edge, no cloud</td><td>Every model runs on the Raspberry Pi 5's Arm CPU</td></tr>
-    <tr><td>A Llama model on ExecuTorch for reasoning</td><td>Llama 3.2 3B (Meta's SpinQuant 4-bit version) on ExecuTorch; Llama 3.2 1B as the fallback</td></tr>
+    <tr><td>A Llama model on ExecuTorch for reasoning</td><td>Llama 3.2 1B fine-tuned for this station (LoRA, 4-bit) for advice and shift questions; Meta's Llama 3.2 3B (SpinQuant 4-bit) for customer rules; all on ExecuTorch</td></tr>
   </table>
 </section>
 
@@ -135,7 +135,7 @@ dd { margin: 0; }
     <div class="step"><span class="k">4</span><div><h4>For assembled boards: anything unusual, and every part</h4>A second model knows what good boards look like and flags any area that differs. A part check finds each component and reports one that is missing, extra or looks different.</div><div class="how">ResNet-18 features with a memory of good patches; a one-class part detector (YOLO26n) taught from good photos of the design.</div></div>
     <div class="step"><span class="k">5</span><div><h4>Measure and grade</h4>Each defect is measured in millimetres: how much of a track's width a nick removes, how much of a gap a spur closes. That is compared with IPC-style limits for the customer's class.</div><div class="how">Measured from the good-board comparison, not from the detector's box. Limits are editable (30%, 20%, 10% for Class 1, 2, 3).</div></div>
     <div class="step"><span class="k">6</span><div><h4>Decide: PASS, FAIL or CHECK</h4>Thresholds set by calibration decide. If the station is not sure, it says CHECK and a person decides. The light on the stack turns green, red or amber.</div><div class="how">Conformal calibration at the operator's chosen miss rate (section 3).</div></div>
-    <div class="step"><span class="k">7</span><div><h4>Advise and log</h4>Llama reads the list of findings (never the picture) and chooses the likely cause and the next action for each, from a checked knowledge base. Everything is saved on the Pi.</div><div class="how">Llama 3.2 3B on ExecuTorch, choices read from its next-token scores; SQLite database.</div></div>
+    <div class="step"><span class="k">7</span><div><h4>Advise and log</h4>Llama reads the list of findings and the clues from the log (never the picture) and chooses the likely cause and the next action for each, from a checked knowledge base, with the clue behind it. Everything is saved on the Pi.</div><div class="how">Fine-tuned Llama 3.2 1B on ExecuTorch, choices read from its next-token scores; SQLite database.</div></div>
   </div>
   <figure><img src="shot_inspect.png" alt="The station's dashboard after inspecting a test board"><figcaption>The station's dashboard (recorded demo) after inspecting a held-out DeepPCB board: CHECK, five defects found and numbered on the board, each with size, place and IPC result, and the board's known answer from the dataset (5 of 5 found, no extra calls).</figcaption></figure>
 </section>
@@ -168,30 +168,52 @@ dd { margin: 0; }
 <!-- ================= 4. llama ================= -->
 <section>
   <h2><span class="n">4</span>What Llama does, and how it is kept honest</h2>
-  <p class="lead">One Llama 3.2 3B model (Meta's SpinQuant 4-bit version, exported to a 2.4 GB ExecuTorch file) does three jobs on the Pi. The rule throughout: <b>Llama decides, but what the operator acts on is always something the station can check.</b></p>
+  <div class="lead">Two Llama models run on the Pi:
+    <ul>
+      <li>a <b>Llama 3.2 1B that we fine-tuned for this station</b> (an 861 MB ExecuTorch file), which gives the advice and answers shift questions;</li>
+      <li><b>Meta's Llama 3.2 3B</b>, which reads customer rules.</li>
+    </ul>
+    The rule throughout: <b>Llama decides, but what the operator acts on is always something the station can check.</b></div>
   <div class="two">
     <div>
       <h3>1. Advice for each board</h3>
-      <p>Llama reads the findings (type, size, place, and whether the same defect keeps repeating on recent boards) and, for each defect, chooses the likely cause and the action from 2 to 4 options in the defect knowledge base. Each cause is asked as a yes/no question and the station reads Llama's probabilities directly, so nothing has to be parsed from free text. Llama also writes a one-line summary, which cannot contain a number that is not in the findings.</p>
-      <h3>2. Customer rules</h3>
-      <p>A customer writes "nicks that reduce the width by more than 20% are rejectable". Llama fills a fixed rule form, choosing only answers the sentence supports. The rule is checked, compared with the station's measured detection limit, and read back to the operator.</p>
-      <h3>3. Shift questions</h3>
-      <p>"What is the pass rate today?" Llama picks one of the station's fixed read-only database queries and words the rows it gets back. It can never write a database command itself.</p>
+      <p>The station measures clues for every defect from its own log:</p>
+      <ul>
+        <li>whether it sits at the same spot on earlier boards;</li>
+        <li>whether it lines up with earlier ones along the conveyor;</li>
+        <li>whether it is near the edge or in the middle of the board;</li>
+        <li>its shape, and how many there are;</li>
+        <li>whether this type is rising;</li>
+        <li>whether it repeats a laminator roll's length away.</li>
+      </ul>
+      <p>Llama judges each possible cause from these clues and gives a percentage. On a close call it shows the two likely causes and the check that tells them apart. One line names the clue behind the cause, for example "the same spot on 6 of the last 10 boards".</p>
+      <h3>2. Learning from the operator</h3>
+      <p>After checking, the operator taps what the cause turned out to be. The station learns this line's causes from those answers, and Llama's percentages shift with them, without retraining on the Pi.</p>
+      <h3>3. Customer rules</h3>
+      <p>A customer writes "nicks that reduce the width by more than 20% are rejectable". The 3B fills a fixed rule form, choosing only answers the sentence supports. The rule is checked, compared with the station's measured detection limit, and read back to the operator.</p>
+      <h3>4. Shift questions</h3>
+      <p>"What is the pass rate today?" Llama picks one of the station's fixed read-only database queries. It then writes the answer with blanks, and the station fills in the numbers, so a wrong number cannot reach the screen.</p>
     </div>
-    <figure style="margin-top:10pt"><img src="shot_advice_card.png" alt="Llama's advice on the dashboard"><figcaption>Llama's advice on the dashboard, grouped by defect type: action, likely cause, and who wrote it and how long it took. Every cause and action is knowledge-base text, word for word.</figcaption></figure>
+    <figure style="margin-top:10pt"><img src="shot_advice_card.png" alt="Llama's advice on the dashboard"><figcaption>Llama's advice on the dashboard: the likely cause with its percentage, the clue behind it, the check to confirm it, and "What was it?" for the operator. Every cause and action is knowledge-base text, word for word.</figcaption></figure>
   </div>
-  <div class="note"><b>A checker stands behind every answer.</b> It rejects a cause or action that does not belong to the defect, a number that is not in the findings, a defect type that is not on the board, and a summary that blames handling where the chosen cause is a process step (or the reverse). A rejected answer is replaced by the knowledge base's standard advice, and the screen says so.</div>
-  <h3>Measured</h3>
+  <div class="note"><b>How the 1B was trained.</b> No public data links PCB defects to their causes, so we wrote a rule table for all 45 causes. 22 of its rules follow published process sources and 23 are our own reasoning, labelled as such. Training examples were generated from that table and checked by an audit before training. The model was tested on clue combinations it never saw, on a second, independently built generator and on 8 published real cases. It was then fine-tuned with LoRA on a Colab GPU and exported for the Pi's CPU.</div>
+  <h3>Measured (held-out tests, ExecuTorch file as it runs on the Pi, scored on a PC CPU)</h3>
   <table>
-    <tr><th>Test</th><th class="num">Llama 3.2 3B (deployed)</th><th class="num">Blind pick / baseline</th></tr>
-    <tr><td>Advice shown (passed every check), 150 held-out records</td><td class="num">100%</td><td class="num">1B model: 87.3%</td></tr>
-    <tr><td>A defect that keeps repeating gets a process cause</td><td class="num">95.3%</td><td class="num">51.0% by chance</td></tr>
-    <tr><td>A one-off defect gets a handling cause</td><td class="num">88.4%</td><td class="num">46.6% by chance</td></tr>
-    <tr><td>Customer rules exactly right, 40 held-out clauses</td><td class="num">62.5%</td><td class="num">keyword reader 52.5%</td></tr>
-    <tr><td>Customer rules silently wrong (passed every check but wrong)</td><td class="num">2.5%</td><td class="num">keyword reader 45.0%</td></tr>
-    <tr><td>Shift question answered from the right query, 20 held-out questions</td><td class="num">80.0%</td><td class="num">keyword rule 75.0%</td></tr>
+    <tr><th>Test</th><th class="num">Fine-tuned 1B (deployed)</th><th class="num">Comparison</th></tr>
+    <tr><td>Right cause first, clue combinations never trained on</td><td class="num">70.0%</td><td class="num">prompted 3B 40.0%; the rule table itself 67.5%</td></tr>
+    <tr><td>Right cause in the first two</td><td class="num">89.3%</td><td class="num">prompted 3B 75.7%</td></tr>
+    <tr><td>Calibration error of the percentages</td><td class="num">0.048</td><td class="num">rule table 0.036</td></tr>
+    <tr><td>Shift answers the checker accepts, 51 held-out questions</td><td class="num">90%</td><td class="num">prompted 3B 37%</td></tr>
+    <tr><td>Why lines the checker accepts, 60 held-out cases</td><td class="num">100%</td><td class="num">-</td></tr>
+    <tr><td>Customer rules exactly right, 40 held-out clauses (3B)</td><td class="num">62.5%</td><td class="num">keyword reader 52.5%</td></tr>
+    <tr><td>Customer rules silently wrong (3B)</td><td class="num">2.5%</td><td class="num">keyword reader 45.0%</td></tr>
   </table>
-  <p class="soft">The 1B model picked whichever cause was listed first and could not tell a repeating defect from a one-off; that is why the 3B model is the default. Known weak spot: Llama's free-text wording of shift answers is checked for numbers but not for meaning, and it sometimes picks the wrong number from the rows (seen while recording the demo). The query it chose and its rows are always shown under the answer.</p>
+  <p class="soft">Honest limits:</p>
+  <ul class="soft">
+    <li>The model learned our rule table, so it can be no more right than the table, and nobody with shop-floor experience has reviewed the table yet.</li>
+    <li>It matches the table on 5 of the 8 real cases, which is too few to call it proven on a real line.</li>
+    <li>The prompted 3B was scored on the earlier version of the rules.</li>
+  </ul>
 </section>
 
 <!-- ================= 5. data ================= -->
@@ -283,10 +305,11 @@ dd { margin: 0; }
     <tr><td>Defect detector (YOLO26n; s and m also shipped)</td><td>ExecuTorch, XNNPACK, FP32 or INT8 (or Arm's optimised YOLO26 runtime)</td><td class="num">9.8 MB / 3.2 MB</td></tr>
     <tr><td>"Anything unusual" backbone (ResNet-18)</td><td>ExecuTorch, XNNPACK</td><td class="num">11.1 MB</td></tr>
     <tr><td>Part detector and part-kind classifier</td><td>ExecuTorch, XNNPACK</td><td class="num">9.8 MB / 6.2 MB</td></tr>
-    <tr><td>Llama 3.2 3B Instruct, SpinQuant INT4 (default)</td><td>ExecuTorch, XNNPACK with Arm KleidiAI kernels</td><td class="num">2.38 GB</td></tr>
+    <tr><td>Llama 3.2 1B Instruct, fine-tuned for this station (LoRA merged, 8-bit activations, 4-bit weights): advice and shift questions</td><td>ExecuTorch, XNNPACK with Arm KleidiAI kernels</td><td class="num">0.86 GB</td></tr>
+    <tr><td>Llama 3.2 3B Instruct, SpinQuant INT4: customer rules</td><td>ExecuTorch, XNNPACK with Arm KleidiAI kernels</td><td class="num">2.38 GB</td></tr>
     <tr><td>Llama 3.2 1B Instruct, SpinQuant INT4 (fallback)</td><td>ExecuTorch</td><td class="num">1.08 GB</td></tr>
   </table>
-  <p><b>Measured on the Pi on 20-21 November</b> (bench/bench_device.py, deploy/measure_on_pi.sh): inspections per second and time to verdict, time per stage, detector speed in FP32, INT8 and Arm's runtime at 1, 2 and 4 threads, Llama's time to first token and tokens per second, memory with everything loaded, board power from the Pi's own power chip, and temperature over a 30-minute run. Until then, speed figures in this project are labelled with the machine they came from: Llama's advice took a median of 7 s on a cloud server CPU and 25 to 48 s on a laptop CPU.</p>
+  <p><b>Measured on the Pi on 20-21 November</b> (bench/bench_device.py, deploy/measure_on_pi.sh): inspections per second and time to verdict, time per stage, detector speed in FP32, INT8 and Arm's runtime at 1, 2 and 4 threads, Llama's time to first token and tokens per second, memory with everything loaded, board power from the Pi's own power chip, and temperature over a 30-minute run. Until then, speed figures in this project are labelled with the machine they came from: the fine-tuned 1B's advice for a board with two defects, causes and why lines included, took 4.5 s on a cloud server CPU.</p>
   <div class="note"><b>Already checked without a Pi.</b> The Arm (aarch64) build of every model was run in an arm64 Debian emulator: all six detector files load and give the same findings. The check the Pi runs first (deploy/arm_check.py) loads every model and runs Llama, including from the web server's worker thread, a case that once crashed and is now tested.</div>
 
   <h3>The operator's screen</h3>
@@ -301,7 +324,7 @@ dd { margin: 0; }
     <li><b>Real boards under the real camera</b> are tested only in that session (a taught board and a knife cut, the printed eye-test card). Everything else is on public datasets.</li>
     <li><b>Assembled boards:</b> the "anything unusual" model sends about 60% of VisA test boards to a person (about half of them are faulty), and the parts check works well on two of the four VisA designs and poorly on two. It does not check polarity, part value or solder joints.</li>
     <li><b>Severity limits</b> come from cited secondary sources, not the licensed IPC standard; they are editable per customer.</li>
-    <li><b>Llama's free-text sentences</b> are checked for numbers, defect types and the kind of cause, but not for every claim. The causes and actions the operator acts on are always knowledge-base text.</li>
+    <li><b>Llama's causes come from a rule table we wrote.</b> 22 of the 45 rules follow published process sources; the numbers are our estimates and are not yet reviewed by anyone with shop-floor experience. The causes, actions and numbers the operator reads are always knowledge-base text or station-computed.</li>
   </ul>
 
   <h2 style="margin-top:18pt"><span class="n">9</span>Words used in this document</h2>
