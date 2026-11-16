@@ -475,7 +475,9 @@ The design follows template-based generation work: placeholder answers were 0% u
 | Tuned 1B v2, 6,000 examples, BF16 | v2 | 61.3% / 89.5% | 59.0% / 86.0% | 4 / 7 |
 | Lookup table, same rules (the ceiling) | v2 | 60.0% / 87.6% | 55.8% / 85.3% | 5 / 7 |
 | Tuned 1B v3, 9,000 examples, BF16 | v3 | 66.7% / 87.8% | 60.3% / 87.0% | 4 / 7 |
-| **Tuned 1B v3, 8da4w `.pte` (shipped)** | v3 | **69.7% / 90.3%** | **62.3% / 87.7%** | 4 / 6 |
+| Tuned 1B v3, 8da4w `.pte` | v3 | 69.7% / 90.3% | 62.3% / 87.7% | 4 / 6 |
+| Tuned 1B v3.1, BF16 | v3 | 68.3% / 87.8% | 58.3% / 85.5% | 4 / 7 |
+| **Tuned 1B v3.1, 8da4w `.pte` (shipped)** | v3 | **70.0% / 89.3%** | **61.3% / 88.0%** | 4 / 6 |
 | Lookup table, same rules (the ceiling) | v3 | 67.5% / 89.3% | 59.9% / 86.9% | 5 / 7 |
 
 **What this shows:**
@@ -488,11 +490,14 @@ The design follows template-based generation work: placeholder answers were 0% u
   - 6,000 reached the ceiling (61.3%);
   - 12,000 added nothing (61.7%).
 - **The new clues moved the ceiling, and the model followed it.** v3 gains about 8 points over v2.
-- **The percentages were too confident, and a temperature fixed that.** v3's calibration error (ECE) was 0.100 on test, against 0.036 for the lookup table. One temperature fitted on the development split (`llm/fit_temperature.py`, T = 1.5) brought it down without changing a single ranking:
-  - test: 0.100 to 0.046;
-  - second generator: 0.139 to 0.096.
+- **The percentages were too confident, and a temperature fixed that.** The tuned model's calibration error (ECE) was about 0.09 to 0.10 on test, against 0.036 for the lookup table. One temperature, fitted on the development split (`llm/fit_temperature.py`), brought it down without changing a single ranking:
 
-  Close calls, shown as two causes and a check, went from 10% to 17% of test cases. The station uses this temperature (`advice_temperature` in `config/app.yaml`).
+  | Model | Temperature | Calibration error, test | Calibration error, second generator |
+  |---|---|---|---|
+  | v3 | 1.5 | 0.100 to 0.046 | 0.139 to 0.096 |
+  | v3.1 | 1.4 | 0.090 to 0.048 | 0.140 to 0.105 |
+
+  With v3.1 at its temperature, the screen shows two causes and a check on 21% of test cases, and the true cause is one of the two 85% of the time. The station uses this temperature (`advice_temperature` in `config/app.yaml`).
 
 **Shift answers accepted by the checker** (the rest fall back to the standard sentence):
 
@@ -501,9 +506,14 @@ The design follows template-based generation work: placeholder answers were 0% u
 | Prompted 1B | 0% (writes no placeholders) | 0 of 6 |
 | Prompted 3B | 37% | 1 of 6 |
 | **Tuned 1B v1, 8da4w `.pte`** | **86%** | **6 of 6** |
-| **Tuned 1B v3, 8da4w `.pte` (shipped)** | **84%** | **6 of 6** |
+| Tuned 1B v3, 8da4w `.pte` | 84% | 6 of 6 |
+| **Tuned 1B v3.1, 8da4w `.pte` (shipped)** | **90%** | **6 of 6** |
 
-**Why lines accepted by the checker** (60 held-out clue combinations): 53% for v3. 28 of the rejections named a different clue from the one the code had picked, because v3's prompt did not say which clue to name. The rejected lines fall back to the standard sentence. v3.1 adds the clue to the prompt.
+**Why lines accepted by the checker** (60 held-out clue combinations):
+- **v3: 53%.** 28 of its rejections named a different clue from the one the code had picked, because v3's prompt did not say which clue to name. The rejected lines fall back to the standard sentence.
+- **v3.1: 100%.** Its prompt says which clue to name, and its causes are unchanged. That is why v3.1 ships.
+
+One board with two defects, causes and why lines included, took 4.5 s on the Colab CPU (`llm/try_evidence_advice.py`); the Pi timing is measured separately.
 
 ### 6.7 What came before, and what failed
 
