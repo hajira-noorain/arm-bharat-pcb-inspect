@@ -5,7 +5,7 @@ camera. A visitor can:
 
 - pick a test board (DeepPCB, PKU-Market-PCB, real photos from the Mendeley set, and assembled VisA boards),
   none of them used for training, and see the verdict, every finding marked on the board, its known answer from
-  the dataset, and Llama 3.2 3B's advice;
+  the dataset, and the fine-tuned Llama 3.2 1B's advice (the likely cause, the clue behind it and the check to confirm it);
 - upload a photo of a bare board. With no reference board for it, it is judged by the detector alone, never
   passed automatically, and its sizes are in pixels. Uploads stay in memory and are never logged;
 - open the Log, Trends and setup screens as on the station.

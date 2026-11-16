@@ -12,7 +12,14 @@ In more detail, for each board it:
 - **compares against a known-good board first**: this is the station's main evidence. It sees any change in the copper, checks connectivity (a short joins two conductors, an open splits one), **measures each defect in millimetres**, and tells the detector which parts of the picture to look at. If a board does not line up with its reference picture, it is never passed: a person looks;
 - **grades severity** against IPC-style limits for the customer's class;
 - **returns PASS, FAIL or CHECK** (a person decides). The operator picks a target for how many defects may slip through (1%, 5%, 10%); the threshold is set by conformal calibration, and what it achieved on held-out boards is published (4.0% missed at the 5% setting with the known-good board; 6.5% with the detector alone; each beside the level that calibration can promise with 95% confidence, see `docs/RESULTS.md`);
-- **explains each finding with Llama 3.2 3B**: the causes and actions the operator reads are knowledge-base text, word for word; Llama chooses among them from the evidence and writes the summary, and a checker rejects any answer that states something not in the findings. (Measured on 150 held-out records: a defect that keeps repeating gets a process cause 95% of the time and a one-off gets a handling cause 88% of the time, against about 50% for picking blind. The 1B model we started with stayed at chance, which is why it is now only the fallback.);
+- **explains each finding with our fine-tuned Llama 3.2 1B** (Llama-3.2-1B-PCB-Advisor, LoRA, 8da4w on ExecuTorch):
+  - It judges the likely process cause from clues the station measures in its own log: same spot on earlier boards, a lane along the conveyor, edge, middle of the board, shape, count, trend, and a laminator-roll repeat.
+  - It gives a percentage, and shows the two most likely causes with the check that separates them when it is a close call.
+  - It adds one line naming the clue behind the cause.
+  - Causes and actions are knowledge-base text, word for word, and every number in a sentence is filled in by the station.
+  - The operator can record what the cause turned out to be, and the station learns that line's causes from those answers.
+
+  On held-out clue combinations it picks the right cause first 70% of the time, against 40% for the prompted Llama 3.2 3B it replaced. It matches the rule table it learned from (67.5%); the clues themselves allow no more. See `docs/TECHNICAL_REPORT.md` section 6.
 - **logs everything** on the device and lights a green, amber or red stack light;
 - **learns on the floor**:
   - a new bare board is taught in minutes from two or more pictures of a good board. The first becomes the reference picture; the station then draws test defects of known size onto the pictures to set that board's pass and fail thresholds and to state what size of defect it finds on it;
@@ -30,10 +37,10 @@ And it proves what it can do:
 |---|---|---|
 | Detect surface defects, cracks, anomalies | YOLO26n (11 bare-board defect types; YOLO26s and YOLO26m also shipped), golden-board comparison with a connectivity check, and for assembled boards a patch-memory anomaly flag plus a part-by-part check | `pcbinspect/detect_bare.py`, `golden_diff.py`, `fusion.py`, `anomaly.py`, `parts.py` |
 | Classify type and severity | Defect type from the detector; size in mm from the golden comparison against IPC-style class limits | `pcbinspect/golden.py`, `severity.py`, `config/severity.yaml` |
-| Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` | `pcbinspect/app.py`, `advisor.py`, `grounding.py` |
+| Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` with the clues behind it (`kb/evidence.yaml`) | `pcbinspect/app.py`, `advisor.py`, `evidence.py`, `why.py`, `grounding.py` |
 | Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
 | Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; `deploy/measure_on_pi.sh` measures timings, memory, power and a 30-minute soak on the device (numbers pending the Pi session, 20-21 Nov) | `bench/`, `deploy/measure_on_pi.sh` |
-| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct (Meta's SpinQuant INT4 checkpoints) exported with ExecuTorch `export_llm`, run on the same `.pte` through `executorch.runtime` so decisions are read from next-token scores: one 3B model for advice, shift questions and compiling customer rules, 1B as the fallback | `pcbinspect/llm_logits.py`, `llm_select.py`, `advisor.py`, `spec_llm.py`, `llm/` |
+| Llama via ExecuTorch for reasoning | Llama 3.2 Instruct exported with ExecuTorch `export_llm` and run through `executorch.runtime`, so decisions are read from next-token scores: a 1B fine-tuned with LoRA on the station's own rule table for advice and shift questions (merged, 8da4w), Meta's SpinQuant 3B for compiling customer rules, and the SpinQuant 1B as the fallback | `pcbinspect/llm_logits.py`, `llm_select.py`, `advisor.py`, `spec_llm.py`, `llm/` |
 
 ## Two pipelines
 
@@ -41,9 +48,9 @@ And it proves what it can do:
 VISION (ExecuTorch / Arm runtime, Arm CPU)            REASONING (ExecuTorch, Llama 3.2, Arm CPU)
 camera (focus + exposure locked) -> ArUco scale, QR   structured defect record (no pixels)
   -> YOLO26n on tiles -> named defects                  + knowledge-base options for each defect
-  -> golden-board comparison + connectivity check     -> 3B judges causes / actions, writes a summary
-  -> fused evidence, size in mm                       -> checker: options valid, numbers and defect
-  -> ResNet-18 patch memory -> unusual areas             types must come from the record
+  -> golden-board comparison + connectivity check     + clues from the log (same spot, lane, edge, trend)
+  -> fused evidence, size in mm                       -> tuned 1B: probability per cause, why line
+  -> ResNet-18 patch memory -> unusual areas          -> checker: knowledge-base options, station numbers
   -> IPC-style class limits -> disposition
   -> per-defect conformal gate -> PASS / FAIL / CHECK  customer clause in plain English
   -> customer rules -> SQLite log, stack light        -> 3B fills a fixed rule form, field by field
@@ -64,7 +71,8 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 | Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
 | Parts check: part detector on 15 held-out FPIC boards; missing/extra/moved parts on VisA photos (development result) | |
 | Every detector file loads and gives the same findings on aarch64 (arm64 emulator, `deploy/sim_check_detectors.py`) | |
-| Llama advice grounding and choice vs chance; Llama rule reader (free, constrained, grounded) on 80 tuning and 40 held-out clauses | A taught board's gate and limits on real boards (built and tested on camera-like synthetic pictures; first real use is the Pi session) |
+| Fine-tuned Llama cause choice on held-out clue combinations, a second independently built generator and 8 published real cases, beside the rule table; shift answers and why lines through the station's checker; Llama rule reader on 80 tuning and 40 held-out clauses | A taught board's gate and limits on real boards (built and tested on camera-like synthetic pictures; first real use is the Pi session) |
+| | The cause rule table: its directions come from published process sources for 22 of 45 rules, but its numbers are our estimates and have not been reviewed by anyone with shop-floor experience; 8 real cases are too few to rank models |
 | Learning from operator feedback, simulated on held-out boards (DeepPCB: boards sent to a person 20% to 4%, no defective board passed) | |
 | Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
 
@@ -73,7 +81,7 @@ The public datasets are scans or close-up photos, and some defects are synthetic
 ## Try it without a Pi
 
 - **Online, recorded:** the station's own dashboard showing what it did on each held-out test board (verdict, findings marked on the board, the dataset's known answer, Llama's own advice): https://pcb-inspection-demo.vercel.app. It is a recording made with `deploy/record_demo.py` and packaged by `deploy/build_static_demo.py`, run on an x86 CPU, not the Pi; Llama's answers to example shift questions and customer requirements are recorded too.
-- **Live, on your computer:** one Docker command runs the real station in demo mode. Pick any test board or upload a photo of a bare board, and Llama 3.2 3B writes the advice on your CPU. See `deploy/DEMO.md`.
+- **Live, on your computer:** one Docker command runs the real station in demo mode. Pick any test board or upload a photo of a bare board, and the fine-tuned Llama writes the advice on your CPU. See `deploy/DEMO.md`.
 
 ## Run it
 
@@ -100,6 +108,7 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 - `eval_bare.py` evaluates and calibrates the detector.
 - `build_visa_banks.py` builds the anomaly memories.
 - `export_vision.py` and `llm/export_llama.sh` produce the ExecuTorch exports (executorch 1.6.0, the version the Pi runs). They run in `deploy/Dockerfile.export` or on Colab.
+- The fine-tuned advice model is rebuilt end to end on Colab with `training/colab/job_llama_v31.sh`. It generates the training data from `kb/evidence.yaml` (`llm/data/`), trains a LoRA with `llm/train_lora.py`, merges it into Meta's checkpoint (`llm/merge_lora_meta.py`), exports 8da4w and scores the `.pte`. Then fit its temperature with `llm/fit_temperature.py`, and set `advice_llm_pte` and `advice_temperature` in `config/app.yaml`. `llm/data/audit.py` checks the training data first. Under the Llama licence, a distributed fine-tune's name must begin with "Llama" (see `NOTICE.md`).
 - `deploy/Dockerfile.pi` is an arm64 Debian image that installs exactly what the Pi installs. It is used to check the Arm build without hardware.
 
 - `prepare_components.py` and `eval_parts*.py` build and score the parts check (FPIC, VisA).

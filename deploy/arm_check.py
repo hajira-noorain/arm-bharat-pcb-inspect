@@ -63,6 +63,38 @@ def main():
                 sys.exit(f"ARM CHECK FAILED: Llama {label} produced no text")
             print(f"llama {label} ({llm.load_ms:.0f} ms load): {g.text!r}  decode {g.decode_tps} tok/s", flush=True)
             del llm
+    # The advice model the config names (the fine-tuned 1B): one board through the station's evidence-mode advisor,
+    # read from next-token scores like on the station. It must choose knowledge-base causes with probabilities.
+    if a.llm_tokens > 0:
+        import yaml
+        cfg = yaml.safe_load((root / "config" / "app.yaml").read_text())
+        adv_pte = root / str(cfg.get("advice_llm_pte", ""))
+        if cfg.get("advice_cause_mode") == "evidence" and adv_pte.is_file():
+            from pcbinspect.advisor import LLAMA_BACKEND, Advisor
+            from pcbinspect.kb import default_kb
+            from pcbinspect.llm_logits import LogitLlama
+            ev = {"repeat_same_spot": {"boards": 6, "of": 10}, "repeat_in_line": {"boards": 0, "of": 10},
+                  "near_edge": False, "shape": "long_thin", "count_on_board": 1, "trend": "steady", "central": True,
+                  "roll_pitch": False, "co_occurring": []}
+            rec = {"board_id": "ARM-CHECK", "design": "check", "verdict": "FAIL", "defects": [
+                {"id": "D1", "type": "open", "severity": "critical", "size_mm": 0.4, "location": "centre",
+                 "confidence": 0.9, "ipc": {}, "evidence": ev}]}
+            try:
+                ll = LogitLlama(adv_pte, root / "models" / "llm" / "tokenizer.model")
+                t = time.perf_counter()
+                adv = Advisor(ll, default_kb(), cause_mode="evidence", why=bool(cfg.get("advice_why", True)),
+                              why_key=bool(cfg.get("advice_why_key", False)),
+                              temperature=float(cfg.get("advice_temperature", 1.0))).advise(rec)
+                ms = (time.perf_counter() - t) * 1e3
+            except Exception as exc:   # noqa: BLE001
+                sys.exit(f"ARM CHECK FAILED: advice model {adv_pte.name} did not run: {exc}")
+            s = adv.steps[0] if adv.steps else {}
+            if adv.backend != LLAMA_BACKEND or not s.get("p"):
+                sys.exit(f"ARM CHECK FAILED: advice model {adv_pte.name} fell back to standard advice "
+                         f"({adv.rejected_reasons})")
+            print(f"advice model {adv_pte.name}: {s['cause_id']} at {s['p'][s['cause_id']]:.2f}, "
+                  f"why ({s.get('why_by')}): {s.get('why')!r}, {ms:.0f} ms", flush=True)
+            del ll
     # Constrained decoding for the rule reader: the same .pte through executorch.runtime must return scores
     # for every token, and a closed choice must come out right.
     if a.llm_tokens > 0:

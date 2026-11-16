@@ -20,6 +20,8 @@ RUN useradd -m -u 1000 user
 USER user
 WORKDIR /home/user/app
 
+# Change BUNDLE_REV whenever the bundle on Hugging Face changes, so the download below is not taken from the cache.
+ARG BUNDLE_REV=v31
 RUN --mount=type=secret,id=HF_TOKEN,mode=0444,required=true \
     HF_TOKEN="$(cat /run/secrets/HF_TOKEN)" python -c "from huggingface_hub import snapshot_download as s; \
 s('Sulaiman-shariff/arm-bharat-pcb-inspect', allow_patterns=['pi_bundle/pcb-station/models/*', \
