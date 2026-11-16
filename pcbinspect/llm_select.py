@@ -2,11 +2,12 @@
 
 config/app.yaml:
   llm_pte            the small model (1B): the fallback, and the one the tokens-per-second benchmark times
-  advice_llm_pte     the model that decides advice and shift questions when present (3B: it follows the
-                     evidence where the 1B model does not, docs/RESULTS.md)
+  advice_llm_pte     the model that decides advice and shift questions when present: the fine-tuned 1B
+                     (Llama-3.2-1B-PCB-Advisor, docs/TECHNICAL_REPORT.md section 6)
   llm_backend        logits = decisions read from next-token scores (pcbinspect/llm_logits.py);
                      runner = the text runner writing JSON
-  advice_cause_mode  pointwise = each candidate cause judged alone with a yes/no question
+  advice_cause_mode  evidence = each cause judged from the clues in the log (needs the fine-tuned model);
+                     pointwise = each candidate cause judged alone with a yes/no question (the older prompt)
 """
 from __future__ import annotations
 

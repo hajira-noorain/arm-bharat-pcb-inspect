@@ -60,10 +60,12 @@ def why_facts(cls: str, ev: dict, cause_id: str, cm, kb) -> tuple[dict, str | No
     return f, key
 
 
-def why_prompt(f: dict) -> str:
+def why_prompt(f: dict, key: str | None = None) -> str:
+    """With key, the prompt also says which clue to name (from v3.1 on); without, the prompt v3 was trained on."""
     listed = "; ".join(f"{k} = {v}" for k, v in f.items())
+    name = f"\nName this clue: {key}" if key else ""
     return ("<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n" + SYSTEM +
-            "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n" + f"Facts: {listed}" +
+            "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n" + f"Facts: {listed}{name}" +
             "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n")
 
 

@@ -13,9 +13,13 @@ detector_pte: models/vision/pcb_y26n_xnnpack.pte
 detector_pt: models/vision/pcb_y26n.pt
 backbone_pte: models/vision/resnet18_patch_xnnpack.pte
 llm_pte: models/llm/llama3_2_1b_spinquant.pte          # small model: fallback, and the tokens/s benchmark
-advice_llm_pte: models/llm/llama3_2_3b_spinquant.pte   # decides advice and shift questions (falls back to llm_pte)
+advice_llm_pte: models/llm/llama3_2_1b_pcb_lora_v3.pte  # Llama-3.2-1B-PCB-Advisor: the fine-tuned 1B (docs/TECHNICAL_REPORT.md 6)
 llm_backend: logits            # decisions read from next-token scores; "runner" = the text runner writing JSON
-advice_cause_mode: pointwise   # each candidate cause judged alone with a yes/no question; "list" = pick from a list
+advice_cause_mode: evidence    # each cause judged from the clues in the log; "pointwise"/"list" = the older prompts
+advice_abstain_gap: 0.15       # top two causes closer than this: show both and the check that separates them
+advice_temperature: 1.0
+advice_why: true               # one checked sentence naming the clue behind each cause
+advice_why_key: false          # true for models trained from v3.1 on: the prompt says which clue to name
 llm_tokenizer: models/llm/tokenizer.model
 spec_llm_pte: models/llm/llama3_2_3b_spinquant.pte   # reads customer requirements (loaded on first use)
 eyetest_dir: assets/eyetest

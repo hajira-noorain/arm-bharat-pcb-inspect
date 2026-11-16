@@ -46,3 +46,11 @@ def test_why_training_targets_pass_the_checker():
     assert len(exs) == 300 and len({e["key"] for e in exs}) >= 4
     for e in exs:
         assert check_why(e["target"], e["facts"], e["key"]) == [], e
+
+
+def test_the_prompt_can_name_the_clue_to_use(kbcm):
+    from pcbinspect.why import why_prompt
+    kb, cm = kbcm
+    f, key = why_facts("open", SAME, "OPEN-C2", cm, kb)
+    assert "Name this clue: same_spot_boards" in why_prompt(f, key)
+    assert "Name this clue" not in why_prompt(f)                 # the prompt v3 was trained on

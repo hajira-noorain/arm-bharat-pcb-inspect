@@ -293,7 +293,8 @@ class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
                  option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list",
-                 abstain_gap: float = 0.15, temperature: float = 1.0, line=None, why: bool = False):
+                 abstain_gap: float = 0.15, temperature: float = 1.0, line=None, why: bool = False,
+                 why_key: bool = False):
         self.cause_mode = cause_mode      # scored path: 'list' (score the listed options), 'pointwise'
         #                                   (one yes/no question per candidate cause, no list in the prompt) or
         #                                   'evidence' (the station's clues in the prompt, probabilities over the
@@ -302,6 +303,7 @@ class Advisor:
         self.temperature = temperature    # evidence mode: calibration of the yes/no log-odds (set on dev data)
         self.line = line                  # evidence mode: causes this line's operators confirmed (pcbinspect/learned.py)
         self.why = why                    # evidence mode: Llama words a checked "why" line per cause (pcbinspect/why.py)
+        self.why_key = why_key            # tell Llama which clue to name (models trained from v3.1 on)
         self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
         self.last_forwards = 0
         self.fewshot = fewshot
@@ -408,7 +410,7 @@ class Advisor:
         tpl, reasons = "", ["no writer"]
         if hasattr(be, "write"):
             be.reset()
-            be.feed(why_prompt(f))
+            be.feed(why_prompt(f, key if self.why_key else None))
             tpl = be.write(64, stop=("\n",), allow=_no_digits, nonempty=True).strip()
             reasons = check_why(tpl, f, key)
         if not reasons:

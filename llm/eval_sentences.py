@@ -64,6 +64,7 @@ def main() -> int:
     ap.add_argument("--tok", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--max-new-tokens", type=int, default=64)
+    ap.add_argument("--why-key", action="store_true", help="name the clue in the why prompt (models from v3.1)")
     a = ap.parse_args()
     from pcbinspect.llm_logits import LogitLlama
     be = LogitLlama(a.pte, a.tok)
@@ -73,7 +74,7 @@ def main() -> int:
     for group, qid, q, facts in cases():
         be.reset()
         if group == "why":                          # q holds the clue the sentence must name
-            be.feed(why_prompt(facts))
+            be.feed(why_prompt(facts, q if a.why_key else None))
             tpl = be.write(a.max_new_tokens, stop=("\n",), allow=_no_digits, nonempty=True).strip()
             bad = check_why(tpl, facts, q)
         else:

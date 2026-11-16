@@ -45,4 +45,4 @@ def examples(n: int, seed: int = 0, split: str = "train") -> list[dict]:
 
 
 def training_rows(ex: dict) -> dict:
-    return {"prompt": why_prompt(ex["facts"]), "completion": ex["target"]}
+    return {"prompt": why_prompt(ex["facts"], ex["key"]), "completion": ex["target"]}
