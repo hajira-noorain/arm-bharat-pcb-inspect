@@ -1,0 +1,7 @@
+{
+ "model": "llama3_2_1b_pcb_lora_v31",
+ "n_dev": 300,
+ "temperature": 1.405,
+ "nll_at_1": 0.7286,
+ "nll_fitted": 0.7052
+}

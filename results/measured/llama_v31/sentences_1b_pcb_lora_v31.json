@@ -1,0 +1,1086 @@
+{
+ "model": "llama3_2_1b_pcb_lora_v31",
+ "seconds": 92.0,
+ "summary": {
+  "heldout": {
+   "n": 51,
+   "accepted": 0.9019607843137255
+  },
+  "demo": {
+   "n": 6,
+   "accepted": 1.0
+  },
+  "why": {
+   "n": 60,
+   "accepted": 1.0
+  }
+ },
+ "reasons": {
+  "does not say what was asked": 5
+ },
+ "rows": [
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "26 defects of 1 type were found in the last 8 hours; the most common is missing pad (26)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "30 defects of 2 types were found in the last 8 hours; the most common is foreign object (15)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "15 defects of 1 type were found in the last 8 hours; the most common is foreign object (15)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Most of the defects were {top_defect}: {top_count} of {total_defects}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Most of the defects were missing pad: 22 of 49."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Most of the defects were {top_defect}: {top_count} of {total_defects}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Most of the defects were changed part: 25 of 62."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Most of the defects were {top_defect}: {top_count} of {total_defects}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Most of the defects were changed part: 22 of 83."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "The station found {count_spur|spur} in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The station found 0 spurs in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "The station found {count_spur} in the last {hours|hour}, mostly {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "The station found 30 in the last 8 hours, mostly spur (30)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "The station found {count_spur|spur} in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The station found 22 spurs in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "42 defects of 2 types were found in the last 10 hours; the most common is missing pad (24)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "82 defects of 4 types were found in the last 10 hours; the most common is foreign object (32)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "19 defects of 1 type were found in the last 10 hours; the most common is short (19)."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "{review} went to boards for a second look, of {boards|board}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "7 went to boards for a second look, of 16 boards."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "{review} went to {passed} of the {boards|board}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "0 went to 29 of the 33 boards."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "{review} of the {boards|board} went to a person for checking.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['failed', 'pass_rate_pct']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "{failed} of the {boards|board} inspected failed.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['pass_rate_pct']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The station inspected {boards|board} in the last {hours|hour}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "{boards|board} went through the station in the last {hours|hour}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "{boards|board} went through the station in the last {hours|hour}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "{review} went to some of the {boards|board} for a second look in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "1 went to some of the 3 boards for a second look in the last 4 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "{review} went to some of the {boards|board} for a second look in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "9 went to some of the 49 boards for a second look in the last 4 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00088 was inspected 1 time. Its last result was FAIL, with 3 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00088 was inspected 2 times. Its last result was CHECK, with 5 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "{board} has been through the station {times_inspected|time}, ending with {last_verdict} and {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00023 has been through the station 1 time, ending with FAIL and 7 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "{board} has been through the station {times_inspected|time}, ending with {last_verdict} and {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00023 has been through the station 2 times, ending with FAIL and 0 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00054 was inspected 1 time. Its last result was PASS, with 9 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00054 was inspected 1 time. Its last result was PASS, with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00054 was inspected 1 time. Its last result was CHECK, with 3 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00012 was inspected 1 time. Its last result was FAIL, with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00012 was inspected 1 time. Its last result was PASS, with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "0 critical, 4 major and 0 minor defects were found in the last 3 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "46 critical, 27 major and 21 minor defects were found in the last 3 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "7 critical, 4 major and 47 minor defects were found in the last 3 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "28 critical, 4 major and 3 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "0 critical, 29 major and 5 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "31 critical, 31 major and 43 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "{comparison} findings: {minor} minor against {major} major.",
+   "ok": true,
+   "reasons": [],
+   "answer": "More minor than major findings: 22 minor against 0 major."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "{comparison} findings: {major} major against {minor} minor.",
+   "ok": true,
+   "reasons": [],
+   "answer": "More minor than major findings: 23 major against 37 minor."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "{comparison} findings: {major} major against {minor} minor.",
+   "ok": true,
+   "reasons": [],
+   "answer": "More major than minor findings: 13 major against 4 minor."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Of {total_defects|defect} in the last {hours|hour}, {critical} were critical, {major} major and {minor} minor.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Of 125 defects in the last 24 hours, 29 were critical, 47 major and 49 minor."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Of {total_defects|defect} in the last {hours|hour}, {critical} were critical, {major} major and {minor} minor.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Of 117 defects in the last 24 hours, 48 were critical, 48 major and 21 minor."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Of {total_defects|defect} in the last {hours|hour}, {critical} were critical, {major} major and {minor} minor.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Of 51 defects in the last 24 hours, 36 were critical, 6 major and 9 minor."
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: short on 6 of the last 20 boards (3x the usual rate): check the etch line"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: short on 6 of the last 20 boards (3x the usual rate): check the etch line"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "demo",
+   "qid": "defect_counts",
+   "question": "Which defect is the most common this shift?",
+   "template": "The most common defect is {top_defect}, found {top_count|time}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The most common defect is unknown anomaly, found 28 times."
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "What is the pass rate today?",
+   "template": "{passed} of {boards|board} passed, a pass rate of {pass_rate_pct}%.",
+   "ok": true,
+   "reasons": [],
+   "answer": "3 of 28 boards passed, a pass rate of 11%."
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "How many boards went to a person for checking today?",
+   "template": "{review} went to an operator for a second look, out of {boards|board}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "25 went to an operator for a second look, out of 28 boards."
+  },
+  {
+   "group": "demo",
+   "qid": "severity_counts",
+   "question": "Split the defects from today into critical, major and minor",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "44 critical, 66 major and 32 minor defects were found in the last 24 hours."
+  },
+  {
+   "group": "demo",
+   "qid": "board_history",
+   "question": "What happened with board B00005?",
+   "template": "{board} was inspected {times_inspected|time}. Its last result was {last_verdict}, with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00005 was inspected 1 time. Its last result was CHECK, with 6 defects."
+  },
+  {
+   "group": "demo",
+   "qid": "open_alerts",
+   "question": "Are there any open alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: short on 6 of the last 20 boards: check the etch line"
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "lane_boards",
+   "template": "{cause} is likely: it falls in a line with the same type on {lane_boards} of the last {lane_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Poor resist adhesion at edge is likely: it falls in a line with the same type on 7 of the last 8 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Incomplete development is likely: the same spot was hit on 0 of the last 18 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "shape",
+   "template": "Its shape is {shape}, which fits {cause}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Its shape is long and thin, which fits airborne dust or fibre."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching or undercut is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Conductive debris on panel is likely: the same spot was hit on 1 of the last 6 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Loose part dropped on the board is likely: 1 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "edge",
+   "template": "It is {edge}, which points to {cause}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "It is away from the board edge, which points to assembly fault."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: 8 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Assembly fault is likely: the same spot was hit on 6 of the last 12 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching at pad is likely: 8 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Assembly fault is likely: 8 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Incomplete etching is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Incomplete development is likely: the same spot was hit on 0 of the last 18 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Assembly fault is likely: the same spot was hit on 5 of the last 16 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: the same spot was hit on 9 of the last 15 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Dust or hair on phototool is likely: the same spot was hit on 13 of the last 13 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: 4 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Wrong part loaded is likely: the same spot was hit on 9 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Assembly fault is likely: the same spot was hit on 5 of the last 7 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: the same spot was hit on 6 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching or undercut is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "lane_boards",
+   "template": "{cause} is likely: it falls in a line with the same type on {lane_boards} of the last {lane_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Incomplete etching is likely: it falls in a line with the same type on 11 of the last 17 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Broken drill bit is likely: the same spot was hit on 1 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching at pad is likely: the same spot was hit on 1 of the last 15 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "shape",
+   "template": "Its shape is {shape}, which fits {cause}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Its shape is long and thin, which fits physical damage."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part turned or standing up is likely: the same spot was hit on 0 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Dust or bubbles at lamination is likely: 1 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Phototool nick or dirt is likely: the same spot was hit on 10 of the last 11 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "edge",
+   "template": "{cause} is likely because the defect is {edge}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Pad lifted or scraped is likely because the defect is near the board edge."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching at pad is likely: 4 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: the same spot was hit on 3 of the last 7 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching or undercut is likely: 7 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "edge",
+   "template": "{cause} is likely because the defect is {edge}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Physical damage is likely because the defect is near the board edge."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Wrong part loaded is likely: the same spot was hit on 10 of the last 10 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Poor resist adhesion at edge is likely: 1 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Assembly fault is likely: the same spot was hit on 13 of the last 17 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Resist or phototool defect at pad is likely: the same spot was hit on 4 of the last 8 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "shape",
+   "template": "{cause} is likely: the defect is {shape}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Physical damage is likely: the defect is irregular."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: the same spot was hit on 5 of the last 15 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Under-etching is likely: the same spot was hit on 1 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "shape",
+   "template": "{cause} is likely: the defect is {shape}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Debris or a solder ball is likely: the defect is round."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Loose part dropped on the board is likely: 2 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Over-etching or undercut is likely: 7 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Wrong part loaded is likely: the same spot was hit on 13 of the last 19 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Plating voids is likely: 3 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Dust or bubbles at lamination is likely: 2 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "edge",
+   "template": "It is {edge}, which points to {cause}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "It is near the board edge, which points to panel handling or stacking."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Metal particle from tooling is likely: 2 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "edge",
+   "template": "It is {edge}, which points to {cause}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "It is near the board edge, which points to physical damage."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Wrong part loaded is likely: the same spot was hit on 8 of the last 15 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Incomplete etching is likely: 6 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "shape",
+   "template": "{cause} is likely: the defect is {shape}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Physical damage is likely: the defect is irregular."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Process residue is likely: 5 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Panel handling or stacking is likely: 2 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "count",
+   "template": "{cause} is likely: {count} of them on this one board.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Poor resist adhesion at edge is likely: 2 of them on this one board."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Wrong part loaded is likely: the same spot was hit on 6 of the last 7 boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "trend",
+   "template": "{cause} is likely because this type is {trend} on recent boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Process residue is likely because this type is rising on recent boards."
+  },
+  {
+   "group": "why",
+   "qid": "why",
+   "question": "same_spot_boards",
+   "template": "{cause} is likely: the same spot was hit on {same_spot_boards} of the last {same_spot_of} boards.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Part was never placed is likely: the same spot was hit on 12 of the last 20 boards."
+  }
+ ]
+}

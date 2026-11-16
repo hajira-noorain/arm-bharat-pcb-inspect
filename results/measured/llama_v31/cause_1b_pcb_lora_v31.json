@@ -1,0 +1,55 @@
+{
+ "scorer": "llama",
+ "model": "llama3_2_1b_pcb_lora_v31",
+ "n_per_set": 300,
+ "sets": {
+  "test": {
+   "n": 300,
+   "top1": 0.7,
+   "top2": 0.8933333333333333,
+   "agree_with_bayes": 0.9233333333333333,
+   "brier": 0.4354958486184914,
+   "ece": 0.0898126608785649,
+   "handling_vs_process": 0.8221153846153846,
+   "handling_vs_process_n": 208,
+   "within_process": 0.7244897959183674,
+   "within_process_n": 196,
+   "abstain_rate": 0.14,
+   "abstained_true_in_top2": 0.8809523809523809,
+   "answered": 258,
+   "seconds": 199.0
+  },
+  "alt": {
+   "n": 300,
+   "top1": 0.6133333333333333,
+   "top2": 0.88,
+   "agree_with_bayes": 0.9133333333333333,
+   "brier": 0.5443292427557517,
+   "ece": 0.1400603762725851,
+   "handling_vs_process": 0.7783505154639175,
+   "handling_vs_process_n": 194,
+   "within_process": 0.6298076923076923,
+   "within_process_n": 208,
+   "abstain_rate": 0.13,
+   "abstained_true_in_top2": 0.717948717948718,
+   "answered": 261,
+   "seconds": 202.3
+  },
+  "real": {
+   "n": 8,
+   "top1": 0.5,
+   "top2": 0.75,
+   "agree_with_bayes": 0.875,
+   "brier": 0.6888669817040395,
+   "ece": 0.28381832675729474,
+   "handling_vs_process": 1.0,
+   "handling_vs_process_n": 6,
+   "within_process": 0.42857142857142855,
+   "within_process_n": 7,
+   "abstain_rate": 0.125,
+   "abstained_true_in_top2": 1.0,
+   "answered": 7,
+   "seconds": 4.1
+  }
+ }
+}
