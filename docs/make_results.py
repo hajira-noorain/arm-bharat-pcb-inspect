@@ -379,6 +379,64 @@ def anomaly_compare_section(r: Path) -> list[str]:
             "share sent to a person come from the conformal gate on the held-out half of the test set."]
 
 
+TUNED_CAUSE_RUNS = [   # (file under results/measured, label, rules, temperature)
+    ("llama_v1/cause_prompted_1b.json", "Prompted 1B, Meta SpinQuant .pte", "v1", "1.0"),
+    ("llama_v1/cause_prompted_3b.json", "Prompted 3B, Meta SpinQuant .pte (the previous station)", "v1", "1.0"),
+    ("llama_v1/cause_1b_base_8da4w.json", "Untuned 1B, our 8da4w export", "v1", "1.0"),
+    ("llama_v1/cause_1b_pcb_lora.json", "Tuned 1B v1, 8da4w .pte", "v1", "1.0"),
+    ("llama_v3/cause_bayes.json", "Lookup table (the rules' own answer)", "v3", "-"),
+    ("llama_v3/cause_1b_pcb_lora_v3.json", "Tuned 1B v3, 8da4w .pte", "v3", "1.0"),
+    ("llama_v3/cause_1b_pcb_lora_v3_T.json", "Tuned 1B v3, 8da4w .pte", "v3", "1.5"),
+    ("llama_v31/cause_1b_pcb_lora_v31.json", "Tuned 1B v3.1, 8da4w .pte", "v3", "1.0"),
+    ("llama_v31/cause_1b_pcb_lora_v31_T.json", "Tuned 1B v3.1, 8da4w .pte (shipped)", "v3", "1.4"),
+]
+TUNED_SENTENCE_RUNS = [
+    ("llama_v1/sentences_prompted_1b.json", "Prompted 1B"),
+    ("llama_v1/sentences_prompted_3b.json", "Prompted 3B (the previous station)"),
+    ("llama_v1/sentences_1b_pcb_lora.json", "Tuned 1B v1"),
+    ("llama_v3/sentences_1b_pcb_lora_v3.json", "Tuned 1B v3"),
+    ("llama_v31/sentences_1b_pcb_lora_v31.json", "Tuned 1B v3.1 (shipped)"),
+]
+
+
+def tuned_llama_section(r: Path) -> list[str]:
+    """The fine-tuned advisor: cause choice from the station's clues, and fill-in sentences, as the .pte runs."""
+    rows = []
+    for name, label, rules, temp in TUNED_CAUSE_RUNS:
+        sets = (load(r / name) or {}).get("sets")
+        if not sets:
+            continue
+        t, a, re_ = sets.get("test", {}), sets.get("alt", {}), sets.get("real", {})
+        two = lambda x: f"{pct(x.get('top1'))} / {pct(x.get('top2'))}" if x else "-"
+        real = f"{round(re_['top1'] * re_['n'])} / {round(re_['top2'] * re_['n'])} of {re_['n']}" if re_ else "-"
+        rows.append([label, rules, temp, t.get("n", "-"), two(t), two(a), real, num(t.get("ece"), 3),
+                     pct(t.get("abstain_rate"), 0)])
+    srows = []
+    for name, label in TUNED_SENTENCE_RUNS:
+        sm = (load(r / name) or {}).get("summary")
+        if not sm:
+            continue
+        cell = lambda k: f"{pct(sm[k]['accepted'], 0)} of {sm[k]['n']}" if k in sm else "-"
+        srows.append([label, cell("heldout"), cell("demo"), cell("why")])
+    if not rows and not srows:
+        return []
+    out = ["### Fine-tuned Llama advisor: cause from the station's clues (ExecuTorch .pte)\n",
+           "Generated defects with the clues the station measures; test = clue combinations never trained on, "
+           "alt = a second, independently built generator, real = published cases. Top-1 / top-2: the true cause "
+           "first / in the first two. Rules v1 are before the data audit, v3 after it with nine clues. The temperature "
+           "divides the log-odds (fitted on the development split). ECE is the calibration error on test; "
+           "\"two causes\" is how often the station shows the top two and the check that separates them. "
+           "Scored on an x86 CPU, not the Pi.\n",
+           table(["System", "Rules", "Temperature", "Test n", "Test", "Alt", "Real", "ECE (test)", "Two causes"], rows)]
+    if srows:
+        out += ["\n### Fine-tuned Llama advisor: fill-in sentences accepted by the station's checker\n",
+                "Held-out shift questions, the six questions recorded for the online demo, and why lines on held-out "
+                "clue combinations. A refused sentence is replaced by the standard sentence, so a refusal costs "
+                "wording, never a wrong number.\n",
+                table(["System", "Shift questions (held out)", "Demo questions", "Why lines"], srows)]
+    return out
+
+
 def advice_section(r: Path) -> list[str]:
     rows = []
     for name, label in (("advice_eval_1b_v2.json", "1B, single-shot, numbered"),
@@ -772,7 +830,7 @@ def main():
              "Nothing in this file is typed by hand.\n"]
     for sec in (bare_section(r, gates=Path(a.gates)), detector_compare_section(r), variants_section(r), prf_section(r), external_section(r), golden_section(r),
                 eyetest_section(r), spec_section(r), anomaly_section(r), anomaly_compare_section(r),
-                realiad_section(r), parts_section(r), advice_section(r), advice_decisions_section(r), ask_section(r),
+                realiad_section(r), parts_section(r), tuned_llama_section(r), advice_section(r), advice_decisions_section(r), ask_section(r),
                 learning_section(r),
                 device_section(Path(a.device) if a.device else None)):
         if sec:

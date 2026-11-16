@@ -374,6 +374,34 @@ These VisA designs had already been looked at while building the check (alignmen
 
 Both models exported to ExecuTorch: detector 9.3 MB, classifier 5.9 MB. The exported classifier gives the same answer as PyTorch on 100.0% of 400 test crops. Parts found on 12 test tiles, PyTorch vs exported: None.
 
+### Fine-tuned Llama advisor: cause from the station's clues (ExecuTorch .pte)
+
+Generated defects with the clues the station measures; test = clue combinations never trained on, alt = a second, independently built generator, real = published cases. Top-1 / top-2: the true cause first / in the first two. Rules v1 are before the data audit, v3 after it with nine clues. The temperature divides the log-odds (fitted on the development split). ECE is the calibration error on test; "two causes" is how often the station shows the top two and the check that separates them. Scored on an x86 CPU, not the Pi.
+
+| System | Rules | Temperature | Test n | Test | Alt | Real | ECE (test) | Two causes |
+|---|---|---|---|---|---|---|---|---|
+| Prompted 1B, Meta SpinQuant .pte | v1 | 1.0 | 300 | 38.3% / 77.0% | 35.3% / 74.0% | 3 / 6 of 8 | 0.060 | 80% |
+| Prompted 3B, Meta SpinQuant .pte (the previous station) | v1 | 1.0 | 300 | 40.0% / 75.7% | 39.0% / 72.7% | 1 / 4 of 8 | 0.094 | 46% |
+| Untuned 1B, our 8da4w export | v1 | 1.0 | 300 | 41.0% / 75.7% | 37.0% / 74.0% | 1 / 5 of 8 | 0.088 | 55% |
+| Tuned 1B v1, 8da4w .pte | v1 | 1.0 | 300 | 59.3% / 91.7% | 60.7% / 89.3% | 5 / 6 of 8 | 0.111 | 20% |
+| Lookup table (the rules' own answer) | v3 | - | 1000 | 67.5% / 89.3% | 59.9% / 86.9% | 5 / 7 of 8 | 0.036 | 25% |
+| Tuned 1B v3, 8da4w .pte | v3 | 1.0 | 300 | 69.7% / 90.3% | 62.3% / 87.7% | 4 / 6 of 8 | 0.100 | 10% |
+| Tuned 1B v3, 8da4w .pte | v3 | 1.5 | 300 | 69.7% / 90.3% | 62.3% / 87.7% | 4 / 6 of 8 | 0.046 | 17% |
+| Tuned 1B v3.1, 8da4w .pte | v3 | 1.0 | 300 | 70.0% / 89.3% | 61.3% / 88.0% | 4 / 6 of 8 | 0.090 | 14% |
+| Tuned 1B v3.1, 8da4w .pte (shipped) | v3 | 1.4 | 300 | 70.0% / 89.3% | 61.3% / 88.0% | 4 / 6 of 8 | 0.048 | 21% |
+
+### Fine-tuned Llama advisor: fill-in sentences accepted by the station's checker
+
+Held-out shift questions, the six questions recorded for the online demo, and why lines on held-out clue combinations. A refused sentence is replaced by the standard sentence, so a refusal costs wording, never a wrong number.
+
+| System | Shift questions (held out) | Demo questions | Why lines |
+|---|---|---|---|
+| Prompted 1B | 0% of 51 | 0% of 6 | - |
+| Prompted 3B (the previous station) | 37% of 51 | 17% of 6 | - |
+| Tuned 1B v1 | 86% of 51 | 100% of 6 | - |
+| Tuned 1B v3 | 84% of 51 | 100% of 6 | 53% of 60 |
+| Tuned 1B v3.1 (shipped) | 90% of 51 | 100% of 6 | 100% of 60 |
+
 ### Earlier advice method, superseded (60 seeded defect records, x86 host)
 
 Kept for the record. These runs asked Llama to write its choice as text; the method the station uses now, and its results, are in the next table.
