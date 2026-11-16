@@ -81,7 +81,7 @@ def main():
     ap.add_argument("--work", default=r"C:\Users\sulai\pcb_work")
     ap.add_argument("--out", default=r"C:\Users\sulai\pcb_work\bundle\pcb-station")
     ap.add_argument("--llm", default="llama3_2_1b_spinquant.pte")
-    ap.add_argument("--extra-llm", default="llama3_2_1b_pcb_lora_v3.pte,llama3_2_3b_spinquant.pte",
+    ap.add_argument("--extra-llm", default="llama3_2_1b_pcb_lora_v31.pte,llama3_2_3b_spinquant.pte",
                     help="also ship these .pte files (the tuned 1B gives advice and answers, the 3B reads customer "
                          "rules; see config/app.yaml)")
     ap.add_argument("--demo-per-design", type=int, default=24)
