@@ -488,7 +488,11 @@ The design follows template-based generation work: placeholder answers were 0% u
   - 6,000 reached the ceiling (61.3%);
   - 12,000 added nothing (61.7%).
 - **The new clues moved the ceiling, and the model followed it.** v3 gains about 8 points over v2.
-- **The percentages run high.** The tuned model's calibration error (ECE) is 0.10 on test, against 0.036 for the lookup table, so its percentages are more confident than they should be. Fitting a temperature on the development set is the planned fix.
+- **The percentages were too confident, and a temperature fixed that.** v3's calibration error (ECE) was 0.100 on test, against 0.036 for the lookup table. One temperature fitted on the development split (`llm/fit_temperature.py`, T = 1.5) brought it down without changing a single ranking:
+  - test: 0.100 to 0.046;
+  - second generator: 0.139 to 0.096.
+
+  Close calls, shown as two causes and a check, went from 10% to 17% of test cases. The station uses this temperature (`advice_temperature` in `config/app.yaml`).
 
 **Shift answers accepted by the checker** (the rest fall back to the standard sentence):
 
