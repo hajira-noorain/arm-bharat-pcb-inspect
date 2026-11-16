@@ -74,6 +74,7 @@ class Station:
         self.advisor = Advisor(self.llm, self.kb, cause_mode=cfg.get("advice_cause_mode", "list"),
                                abstain_gap=float(cfg.get("advice_abstain_gap", 0.15)),
                                temperature=float(cfg.get("advice_temperature", 1.0)))
+        self._refresh_line()
         self.camera = self._open_camera()
         self.cache: OrderedDict[int, tuple] = OrderedDict()   # iid -> (insp, analysis, bgr)
         self.buffers: dict[str, FeedbackBuffer] = {}
@@ -150,6 +151,28 @@ class Station:
             det = cls = None
         log.info("parts check: detector=%s classifier=%s", det is not None, cls is not None)
         return det, cls
+
+    def _refresh_line(self):
+        """The causes this line's operators confirmed, applied on top of the rule table (pcbinspect/learned.py)."""
+        from .causes import CauseModel
+        from .learned import LineCauses
+        self.advisor.line = LineCauses(CauseModel(self.kb), self.store.confirmed_causes())
+
+    def confirm_cause(self, iid: int, defect_key: str, cause_id: str, operator: str | None) -> dict:
+        ev = None
+        for a in reversed(self.store.conn.execute(
+                "SELECT advice_json FROM advice WHERE inspection_id=? ORDER BY id", (iid,)).fetchall()):
+            ev = next((s.get("evidence") for s in json.loads(a["advice_json"]).get("steps", [])
+                       if str(s.get("defect")) == defect_key and s.get("evidence")), None)
+            if ev:
+                break
+        try:
+            self.store.confirm_cause(iid, defect_key, cause_id, ev, operator, self.kb)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        self._refresh_line()
+        cls = self.kb.by_id[cause_id]["cls"]
+        return {"ok": True, "learned_from": self.advisor.line.confirmed(cls)}
 
     def _load_llm(self):
         from .llm_select import load_llama
@@ -662,6 +685,7 @@ class Station:
         # why a board that looked clean was still sent to a person (blurred picture, golden board not matched)
         r["check_reason"] = versions.get("capture_check")
         r["evidence"] = versions.get("evidence")
+        r["confirmed_causes"] = self.store.confirmation_of(iid)
         return r
 
     # ---------------- feedback / learning ----------------
@@ -913,6 +937,13 @@ class FeedbackReq(BaseModel):
     action: str
 
 
+class ConfirmReq(BaseModel):
+    inspection_id: int
+    defect_key: str
+    cause_id: str
+    operator: str | None = None
+
+
 class ReviewReq(BaseModel):
     inspection_id: int
     verdict: str
@@ -1105,6 +1136,12 @@ def create_app(cfg: dict) -> FastAPI:
             raise HTTPException(404, str(exc))
         st.light.show(req.verdict)
         return {"ok": True}
+
+    @app.post("/api/cause/confirm")
+    def confirm(req: ConfirmReq):
+        """What a defect's cause turned out to be. The station learns this line's causes from these."""
+        with st.lock:
+            return st.confirm_cause(req.inspection_id, req.defect_key, req.cause_id, req.operator)
 
     @app.post("/api/advice/{advice_id}/rate/{rating}")
     def rate(advice_id: int, rating: int):

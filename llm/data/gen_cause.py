@@ -62,6 +62,14 @@ class Generator:
                 ev["repeat_same_spot"] = {"boards": rng.randint(max(2, math.ceil(0.25 * of)), of), "of": of}
             else:
                 ev["repeat_same_spot"] = {"boards": rng.randint(0, 1), "of": of}
+        if ev["repeat_same_spot"] == "unknown":
+            ev["repeat_in_line"] = "unknown"
+        else:
+            of = ev["repeat_same_spot"]["of"]
+            ev["repeat_in_line"] = ({"boards": rng.randint(max(2, math.ceil(0.25 * of)), of), "of": of}
+                                    if flip(rng.random() < p["lane"]) else {"boards": rng.randint(0, 1), "of": of})
+        ev["central"] = "unknown" if rng.random() < UNKNOWN_P["near_edge"] else flip(rng.random() < p["central"])
+        ev["roll_pitch"] = flip(rng.random() < p["roll_pitch"])
         ev["near_edge"] = "unknown" if rng.random() < UNKNOWN_P["near_edge"] else flip(rng.random() < p["near_edge"])
         if flip(rng.random() < p["long_thin"]):
             ev["shape"] = "long_thin"

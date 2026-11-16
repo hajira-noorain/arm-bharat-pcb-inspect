@@ -53,3 +53,12 @@ def test_the_second_generator_is_built_differently_and_only_for_testing(kb):
     assert len(alt) == 400 and all(e["true_cause"] in e["posterior"] for e in alt)
     # its clues are correlated through a hidden fault strength, so naive Bayes is not exact on it
     assert Generator.__name__ and alt[0]["generator"] == "alt"
+
+
+def test_generated_clues_include_the_new_ones_with_matching_unknowns():
+    exs = examples(400, seed=8, split="train")
+    evs = [d["evidence"] for e in exs for d in e["record"]["defects"]]
+    assert any(isinstance(ev.get("repeat_in_line"), dict) for ev in evs)
+    assert any(ev.get("central") is True for ev in evs) and any(ev.get("roll_pitch") is True for ev in evs)
+    for ev in evs:      # no history means neither repeat can be known
+        assert (ev["repeat_same_spot"] == "unknown") == (ev["repeat_in_line"] == "unknown")

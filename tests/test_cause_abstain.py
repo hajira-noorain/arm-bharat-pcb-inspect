@@ -59,3 +59,16 @@ def test_a_close_call_shows_the_top_two_and_how_to_tell_them_apart():
     assert s["abstain"] and [x["cause_id"] for x in s["alternatives"]] == ["OPEN-C2", "OPEN-C1"]
     assert all(x["confirm"] and x["p"] > 0.2 for x in s["alternatives"])
     assert a.to_json()["steps"][0]["abstain"] is True
+
+
+def test_what_this_line_confirmed_shifts_the_choice_and_says_so():
+    from pcbinspect.causes import CauseModel
+    from pcbinspect.learned import LineCauses
+    kb = default_kb()
+    be = Judge({"dust or hair on phototool": 1.0, "resist scratch or poor adhesion": 0.6})
+    line = LineCauses(CauseModel(kb), [("open", "OPEN-C1", EV_SAME)] * 40)
+    s = Advisor(be, kb, cause_mode="evidence", line=line).advise(rec()).steps[0]
+    assert s["cause_id"] == "OPEN-C1" and s["learned_from"] == 40
+    plain = Advisor(Judge({"dust or hair on phototool": 1.0, "resist scratch or poor adhesion": 0.6}), kb,
+                    cause_mode="evidence").advise(rec()).steps[0]
+    assert plain["cause_id"] == "OPEN-C2" and plain["learned_from"] == 0

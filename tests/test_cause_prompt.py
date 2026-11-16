@@ -31,3 +31,13 @@ def test_prompt_and_question():
     assert "D1: open, critical, 0.4 mm, centre" in p and "same spot on 5 of the last 12 boards" in p
     q = cause_question("D1", "OPEN-C2", kb)
     assert q == '\nQuestion: is "dust or hair on phototool" (imaging) the likely cause of D1? Answer:'
+
+
+def test_new_clues_are_written_when_known_and_left_out_when_not():
+    from pcbinspect.cause_prompt import clue_text
+    t = clue_text({"repeat_same_spot": {"boards": 0, "of": 8}, "repeat_in_line": {"boards": 3, "of": 8},
+                   "central": True, "roll_pitch": True})
+    assert "in a line with the same type on 3 of the last 8 boards" in t
+    assert "in the middle of the board" in t and "laminator roll" in t
+    bare = clue_text({"repeat_same_spot": "unknown", "central": "unknown", "roll_pitch": False})
+    assert "line" not in bare and "middle" not in bare and "roll" not in bare

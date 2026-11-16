@@ -18,6 +18,9 @@ LONG_THIN = 3.0         # longest / shortest box side at or above this: long and
 ROUND = 1.4             # below this: round
 TREND_HALF = 10         # trend compares the last 10 boards with the 10 before
 TREND_MIN = 3           # ... and needs the type on at least this many recent boards
+CENTRAL = (0.3, 0.7)    # central: the box centre in the middle 40% of the frame both ways (etchant puddling)
+ROLL_MM = (190.0, 264.0)  # laminator roll circumferences (TB-0173): a repeat this far apart, in line
+ALIGN_MM = 5.0          # "in line" for the roll repeat: within this distance across the direction of travel
 
 
 def _centre(b):
@@ -35,6 +38,26 @@ def near_edge(b, img_w, img_h, mm_per_px):
         return UNKNOWN
     lim = EDGE_MM / mm_per_px if mm_per_px else EDGE_FRACTION * min(img_w, img_h)
     return min(b[0], b[1], img_w - b[2], img_h - b[3]) <= lim
+
+
+def central(b, img_w, img_h):
+    if not img_w or not img_h:
+        return UNKNOWN
+    cx, cy = _centre(b)
+    return CENTRAL[0] <= cx / img_w <= CENTRAL[1] and CENTRAL[0] <= cy / img_h <= CENTRAL[1]
+
+
+def roll_pitch(b, others, mm_per_px):
+    """Another defect of the same type on this board, in line and one laminator-roll circumference away."""
+    if not mm_per_px:
+        return UNKNOWN
+    cx, cy = _centre(b)
+    for ob in others:
+        ox, oy = _centre(ob)
+        for along, across in ((abs(ox - cx), abs(oy - cy)), (abs(oy - cy), abs(ox - cx))):
+            if across * mm_per_px <= ALIGN_MM and ROLL_MM[0] <= along * mm_per_px <= ROLL_MM[1]:
+                return True
+    return False
 
 
 def board_evidence(store, iid: int, img_w: int | None, img_h: int | None, mm_per_px: float | None,
@@ -56,6 +79,8 @@ def board_evidence(store, iid: int, img_w: int | None, img_h: int | None, mm_per
     tol = (SPOT_MM / mm_per_px if mm_per_px
            else SPOT_FRACTION * min(img_w, img_h) if img_w and img_h else 30.0)
     types = [r["cls"] for r in rows]
+    boxes = [(r["defect_key"], (r["x1"], r["y1"], r["x2"], r["y2"])) for r in rows]
+    kinds = {r["defect_key"]: r["cls"] for r in rows}
     out = {}
     for r in rows:
         b = (r["x1"], r["y1"], r["x2"], r["y2"])
@@ -64,8 +89,14 @@ def board_evidence(store, iid: int, img_w: int | None, img_h: int | None, mm_per
             n_same = sum(any(c == r["cls"] and math.dist(_centre(bb), (cx, cy)) <= tol for c, bb in hist[p])
                          for p in prev)
             repeat = {"boards": n_same, "of": len(prev)}
+
+            def in_line(bb):     # same type in line with this one (same x or same y) but not at the same spot
+                ox, oy = _centre(bb)
+                return math.dist((ox, oy), (cx, cy)) > tol and (abs(ox - cx) <= tol or abs(oy - cy) <= tol)
+            n_line = sum(any(c == r["cls"] and in_line(bb) for c, bb in hist[p]) for p in prev)
+            line = {"boards": n_line, "of": len(prev)}
         else:
-            repeat = UNKNOWN
+            repeat = line = UNKNOWN
         if len(prev) >= 2 * TREND_HALF:
             seen = [any(c == r["cls"] for c, _ in hist[p]) for p in prev]
             recent, older = sum(seen[:TREND_HALF]), sum(seen[TREND_HALF:2 * TREND_HALF])
@@ -74,6 +105,10 @@ def board_evidence(store, iid: int, img_w: int | None, img_h: int | None, mm_per
             trend = UNKNOWN
         out[r["defect_key"]] = {
             "repeat_same_spot": repeat,
+            "repeat_in_line": line,
+            "central": central(b, img_w, img_h),
+            "roll_pitch": roll_pitch(b, [ob for k, ob in boxes if k != r["defect_key"] and kinds[k] == r["cls"]],
+                                     mm_per_px),
             "near_edge": near_edge(b, img_w, img_h, mm_per_px),
             "shape": shape_of(b),
             "count_on_board": types.count(r["cls"]),

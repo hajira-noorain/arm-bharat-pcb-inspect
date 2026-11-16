@@ -293,13 +293,14 @@ class Advisor:
     def __init__(self, backend: LLMBackend | None, kb: KnowledgeBase | None = None,
                  max_new_tokens: int = 160, summary_tokens: int = 90, fewshot: bool | None = None,
                  option_order: str | None = None, score_norm: str = "sum", cause_mode: str = "list",
-                 abstain_gap: float = 0.15, temperature: float = 1.0):
+                 abstain_gap: float = 0.15, temperature: float = 1.0, line=None):
         self.cause_mode = cause_mode      # scored path: 'list' (score the listed options), 'pointwise'
         #                                   (one yes/no question per candidate cause, no list in the prompt) or
         #                                   'evidence' (the station's clues in the prompt, probabilities over the
         #                                   causes, top two shown when they are close: see _advise_evidence)
         self.abstain_gap = abstain_gap    # evidence mode: show the top two when their probabilities are this close
         self.temperature = temperature    # evidence mode: calibration of the yes/no log-odds (set on dev data)
+        self.line = line                  # evidence mode: causes this line's operators confirmed (pcbinspect/learned.py)
         self.score_norm = score_norm      # scored path: 'sum' (log-probability of the whole option) or 'mean' per token
         self.last_forwards = 0
         self.fewshot = fewshot
@@ -341,7 +342,7 @@ class Advisor:
         import math
 
         from .cause_prompt import build_evidence_prompt, cause_question
-        from .causes import CauseModel
+        from .causes import CauseModel, features_from
         be, kb = self.backend, self.kb
         cm = getattr(self, "_cm", None) or CauseModel(kb)
         self._cm = cm
@@ -357,6 +358,9 @@ class Advisor:
             ex = {c: math.exp(v - m) for c, v in lo.items()}
             z = sum(ex.values())
             p = {c: v / z for c, v in ex.items()}
+            learned = self.line.confirmed(d["type"]) if self.line else 0
+            if learned:
+                p = self.line.adjust(d["type"], features_from(d.get("evidence") or {}), p)
             order = sorted(p, key=p.get, reverse=True)
             aids = [a["id"] for a in kb.entry(d["type"])["actions"]]
             be.feed(f"\n{d['id']} cause: {kb.by_id[order[0]]['short']}\n{d['id']} action:")
@@ -365,7 +369,7 @@ class Advisor:
             steps.append({"defect": d["id"], "cause": order[0], "action": action})
             abstain = len(order) > 1 and p[order[0]] - p[order[1]] < self.abstain_gap
             ev = cm.evidence[order[0]]
-            extra.append({"p": p, "abstain": abstain, "evidence": d.get("evidence"), "provenance": ev["provenance"],
+            extra.append({"p": p, "abstain": abstain, "learned_from": learned, "evidence": d.get("evidence"), "provenance": ev["provenance"],
                           "source": ev["source"], "confirm": ev["confirm"],
                           "alternatives": [{"cause_id": c, "cause": kb.by_id[c]["text"], "p": p[c],
                                             "confirm": cm.evidence[c]["confirm"],

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-FEATURES = ("same_spot", "near_edge", "long_thin", "round", "many", "rising")
+FEATURES = ("same_spot", "near_edge", "long_thin", "round", "many", "rising", "lane", "central", "roll_pitch")
 DEFAULT_EVIDENCE = Path(__file__).resolve().parent.parent / "kb" / "evidence.yaml"
 SAME_SPOT_MIN_BOARDS = 2
 SAME_SPOT_MIN_SHARE = 0.25
@@ -33,6 +33,13 @@ def features_from(ev: dict) -> dict[str, bool]:
         f["many"] = ev["count_on_board"] >= MANY
     if ev.get("trend") in ("rising", "steady"):
         f["rising"] = ev["trend"] == "rising"
+    line = ev.get("repeat_in_line")
+    if isinstance(line, dict) and line.get("of"):
+        f["lane"] = line["boards"] >= SAME_SPOT_MIN_BOARDS and line["boards"] / line["of"] >= SAME_SPOT_MIN_SHARE
+    if isinstance(ev.get("central"), bool):
+        f["central"] = ev["central"]
+    if ev.get("roll_pitch") is True:     # only a found repeat is a clue: with small boards its absence says little
+        f["roll_pitch"] = True
     return f
 
 

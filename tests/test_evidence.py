@@ -78,3 +78,32 @@ def test_the_llm_record_carries_each_defects_evidence(tmp_path):
     assert out["defects"][1]["evidence"]["co_occurring"] == ["open"]
     assert "evidence" not in rec["defects"][0]                        # the caller's record is not changed
     assert attach_evidence(rec, s, None, 1000, 800, MMPP) == rec      # not logged (demo upload): no history
+
+
+def test_a_line_across_boards_is_a_lane_not_a_same_spot(tmp_path):
+    s = Store(tmp_path)
+    for k in range(4):                                   # same x, y moving along: a lane (a roller or a nozzle)
+        _log(s, [("spur", (500, 100 + 150 * k, 510, 110 + 150 * k))])
+    iid = _log(s, [("spur", (502, 700, 512, 710))])
+    ev = board_evidence(s, iid, 1000, 800, MMPP)["D1"]
+    assert ev["repeat_in_line"] == {"boards": 4, "of": 4}
+    assert ev["repeat_same_spot"] == {"boards": 0, "of": 4}
+
+
+def test_central_needs_the_frame_and_means_the_middle_of_the_board(tmp_path):
+    s = Store(tmp_path)
+    iid = _log(s, [("short", (490, 390, 510, 410)), ("short", (20, 20, 40, 40))])
+    ev = board_evidence(s, iid, 1000, 800, MMPP)
+    assert ev["D1"]["central"] is True and ev["D2"]["central"] is False
+    assert board_evidence(s, iid, None, None, None)["D1"]["central"] == "unknown"
+
+
+def test_a_repeat_at_the_laminator_roll_length_is_found_on_one_board(tmp_path):
+    s = Store(tmp_path)
+    mmpp = 0.1                                           # 10 px per mm: 220 mm apart = 2200 px, in line
+    iid = _log(s, [("pin_hole", (100, 300, 110, 310)), ("pin_hole", (2300, 302, 2310, 312))])
+    ev = board_evidence(s, iid, 2600, 800, mmpp)
+    assert ev["D1"]["roll_pitch"] is True and ev["D2"]["roll_pitch"] is True
+    near = _log(s, [("pin_hole", (100, 300, 110, 310)), ("pin_hole", (600, 300, 610, 310))])
+    assert board_evidence(s, near, 2600, 800, mmpp)["D1"]["roll_pitch"] is False
+    assert board_evidence(s, near, 2600, 800, None)["D1"]["roll_pitch"] == "unknown"   # needs a scale

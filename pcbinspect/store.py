@@ -92,6 +92,17 @@ CREATE TABLE IF NOT EXISTS model_versions (
     active INTEGER NOT NULL DEFAULT 0,
     note TEXT
 );
+CREATE TABLE IF NOT EXISTS cause_confirmations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts REAL NOT NULL,
+    inspection_id INTEGER NOT NULL,
+    defect_key TEXT NOT NULL,
+    cls TEXT NOT NULL,
+    cause_id TEXT NOT NULL,
+    evidence_json TEXT,
+    operator TEXT,
+    UNIQUE (inspection_id, defect_key)
+);
 CREATE TABLE IF NOT EXISTS alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts REAL NOT NULL,
@@ -276,6 +287,32 @@ class Store:
         if rating not in (-1, 1):
             raise ValueError(rating)
         self.conn.execute("UPDATE advice SET operator_rating=? WHERE id=?", (rating, advice_id))
+
+    # ---------- confirmed causes (learning during use) ----------
+    def confirm_cause(self, iid: int, defect_key: str, cause_id: str, evidence: dict | None, operator: str | None,
+                      kb) -> None:
+        """What the cause of a defect turned out to be. Only a cause listed for that defect type is accepted; a
+        later answer for the same defect replaces the earlier one."""
+        row = self.conn.execute("SELECT cls FROM defects WHERE inspection_id=? AND defect_key=?",
+                                (iid, defect_key)).fetchone()
+        if row is None:
+            raise ValueError(f"no defect {defect_key} on inspection {iid}")
+        if cause_id not in [c["id"] for c in kb.entry(row["cls"])["causes"]]:
+            raise ValueError(f"{cause_id} is not a cause of {row['cls']}")
+        with self.conn:
+            self.conn.execute(
+                "INSERT INTO cause_confirmations(ts, inspection_id, defect_key, cls, cause_id, evidence_json, operator) "
+                "VALUES (?,?,?,?,?,?,?) ON CONFLICT(inspection_id, defect_key) DO UPDATE SET ts=excluded.ts, "
+                "cause_id=excluded.cause_id, evidence_json=excluded.evidence_json, operator=excluded.operator",
+                (time.time(), iid, defect_key, row["cls"], cause_id, json.dumps(evidence or {}), operator))
+
+    def confirmed_causes(self) -> list[tuple[str, str, dict]]:
+        return [(r["cls"], r["cause_id"], json.loads(r["evidence_json"] or "{}")) for r in self.conn.execute(
+            "SELECT cls, cause_id, evidence_json FROM cause_confirmations ORDER BY id")]
+
+    def confirmation_of(self, iid: int) -> dict[str, str]:
+        return {r["defect_key"]: r["cause_id"] for r in self.conn.execute(
+            "SELECT defect_key, cause_id FROM cause_confirmations WHERE inspection_id=?", (iid,))}
 
     # ---------- feedback ----------
     def log_feedback(self, action: str, inspection_id: int | None = None,

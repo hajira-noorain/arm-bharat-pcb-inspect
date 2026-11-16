@@ -28,6 +28,17 @@ def _clues(ev: dict, v: int) -> list[str]:
     trend = {"rising": "rising on recent boards", "steady": "steady on recent boards"}.get(ev.get("trend"),
                                                                                          "trend unknown")
     out = [same, edge, shape, count, trend]
+    line = ev.get("repeat_in_line")
+    if isinstance(line, dict):
+        out.insert(1, f"in a line with the same type on {line['boards']} of the last {line['of']} boards" if v % 2 == 0
+                   else f"lined up with the same type (same row or column) on {line['boards']} of the previous "
+                        f"{line['of']} boards")
+    if ev.get("central") is True:
+        out.append("in the middle of the board")
+    elif ev.get("central") is False:
+        out.append("away from the middle of the board")
+    if ev.get("roll_pitch") is True:
+        out.append("another one in line about a laminator roll's length away")
     if ev.get("co_occurring"):
         out.append("also on the board: " + ", ".join(t.replace("_", " ") for t in ev["co_occurring"]))
     if v % 4 == 3:                  # a different order for some training examples

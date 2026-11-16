@@ -6,6 +6,10 @@
 #   long_thin  the defect is at least 3x as long as it is wide;  round: under 1.4x
 #   many       3 or more of the same type on this board
 #   rising     on at least 3 of the last 10 boards and twice as many as the 10 before
+#   lane       the same type in line (same x or same y, not the same spot) on at least 2 and 25% of recent boards
+#   central    in the middle 40% of the board both ways
+#   roll_pitch another of the same type on this board, in line, 190-264 mm away (a laminator roll's circumference)
+#   Defaults where no source links a cause to these three: lane 0.05, central 0.16 (the middle's share of the area), roll_pitch 0.02.
 # p: probability that the clue is present given the cause. prior: share of this defect type the cause explains.
 #
 # No source publishes these probabilities. The numbers are our own estimates; what is sourced is the DIRECTION of
@@ -28,285 +32,285 @@ causes:
   # ---------------- short ----------------
   SHORT-C1:   # under-etching
     prior: 0.40
-    p: {same_spot: 0.10, near_edge: 0.15, long_thin: 0.20, round: 0.30, many: 0.70, rising: 0.50}
+    p: {same_spot: 0.10, near_edge: 0.15, long_thin: 0.20, round: 0.30, many: 0.70, rising: 0.50, lane: 0.25, central: 0.45, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2020: copper left in narrow gaps across the panel = under-etch (speed, temperature, spray pressure)"
+    source: "Carano 2020: copper left in narrow gaps across the panel = under-etch (speed, temperature, spray pressure); lane: Dietz 2011 (one etch nozzle); centre: Ball 2022, etchant puddles at the panel centre"
     confirm: "Check etch conveyor speed, etchant temperature and spray pressure; shorts from under-etch appear in fine gaps all over the board."
   SHORT-C2:   # phototool spot or resist residue
     prior: 0.35
-    p: {same_spot: 0.85, near_edge: 0.15, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.30}
+    p: {same_spot: 0.85, near_edge: 0.15, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: same coordinates on consecutive panels = phototool or exposure-frame dirt; Ball 2023: phototool not at full vacuum"
     confirm: "Inspect the phototool at this exact spot; if the next board shows the same short in the same place, it is the phototool."
   SHORT-C3:   # conductive debris on panel
     prior: 0.25
-    p: {same_spot: 0.05, near_edge: 0.35, long_thin: 0.35, round: 0.30, many: 0.15, rising: 0.15}
+    p: {same_spot: 0.05, near_edge: 0.35, long_thin: 0.35, round: 0.30, many: 0.15, rising: 0.15, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: debris lands at random places, more often near handled edges"
     confirm: "Look for a copper sliver or particle under magnification; check panel cleaning before imaging."
   # ---------------- open ----------------
   OPEN-C1:    # resist scratch or poor adhesion
     prior: 0.30
-    p: {same_spot: 0.08, near_edge: 0.20, long_thin: 0.30, round: 0.20, many: 0.35, rising: 0.35}
+    p: {same_spot: 0.08, near_edge: 0.20, long_thin: 0.30, round: 0.20, many: 0.35, rising: 0.35, lane: 0.05, central: 0.16, roll_pitch: 0.20}
     provenance: sourced
-    source: "Carano 2020: sporadic opens at random places = resist not conforming (surface prep, moisture, lamination)"
+    source: "Carano 2020: sporadic opens at random places = resist not conforming (surface prep, moisture, lamination); roll repeat: TB-0173, defects repeating at the laminator roll circumference"
     confirm: "Check lamination temperature and pressure and the copper surface prep; look for lifted resist edges on the next panel."
   OPEN-C2:    # dust or hair on phototool
     prior: 0.30
-    p: {same_spot: 0.85, near_edge: 0.15, long_thin: 0.55, round: 0.20, many: 0.20, rising: 0.30}
+    p: {same_spot: 0.85, near_edge: 0.15, long_thin: 0.55, round: 0.20, many: 0.20, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: same spot every panel = phototool dirt; Ball 2025: tiny breaks fixed by cleaning the exposure area"
     confirm: "Inspect and clean the phototool at this spot; a hair or dust shadow there confirms it."
   OPEN-C3:    # over-etching
     prior: 0.15
-    p: {same_spot: 0.08, near_edge: 0.20, long_thin: 0.10, round: 0.20, many: 0.75, rising: 0.50}
+    p: {same_spot: 0.08, near_edge: 0.20, long_thin: 0.10, round: 0.20, many: 0.75, rising: 0.50, lane: 0.05, central: 0.08, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2020: opens are rarely the etcher's fault (look at imaging first); over-etch thins many lines at once"
+    source: "Carano 2020: opens are rarely the etcher's fault (look at imaging first); over-etch thins many lines at once; centre: Ball 2022, the panel edges etch faster than a puddled centre"
     confirm: "Measure line widths across the board; if all are under nominal, check etch time and etchant strength."
   OPEN-C4:    # handling scratch
     prior: 0.25
-    p: {same_spot: 0.03, near_edge: 0.45, long_thin: 0.65, round: 0.10, many: 0.10, rising: 0.10}
+    p: {same_spot: 0.03, near_edge: 0.45, long_thin: 0.65, round: 0.10, many: 0.10, rising: 0.10, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Wafer-map analogue: straight scratch lines and edge damage come from handling"
     confirm: "Look for a scratch that runs past the conductor onto the laminate; check racks, stacking and gloves."
   # ---------------- mouse bite ----------------
   MBITE-C1:   # over-etching or undercut
     prior: 0.40
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50, lane: 0.05, central: 0.08, roll_pitch: 0.02}
     provenance: inferred
-    source: "Our inference from IPC-9121A TOC etching symptoms: undercut affects edges across the board"
+    source: "Our inference from IPC-9121A TOC etching symptoms: undercut affects edges across the board; centre: Ball 2022, the panel edges etch faster than a puddled centre"
     confirm: "Section or measure a few conductors: undercut on many edges means etch time or etchant activity."
   MBITE-C2:   # poor resist adhesion at edge
     prior: 0.30
-    p: {same_spot: 0.15, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.45, rising: 0.40}
+    p: {same_spot: 0.15, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.45, rising: 0.40, lane: 0.30, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2018: mouse bites traced to developer residue (clogged nozzles, soft rinse water) and resist adhesion"
+    source: "Carano 2018: mouse bites traced to developer residue (clogged nozzles, soft rinse water) and resist adhesion; lane: Carano 2018 part 3 (clogged developer nozzles) with Dietz 2011 (lane = nozzle)"
     confirm: "Check developer nozzles and spray pressure (25-35 psi) and rinse; look for resist residue on the next panel."
   MBITE-C3:   # phototool nick or dirt
     prior: 0.15
-    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30}
+    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: a defect at the same coordinates on consecutive panels = phototool or exposure-frame dirt"
     confirm: "Inspect the phototool at this exact spot; if the next board has the bite in the same place, it is the phototool."
   MBITE-C4:   # bubbles in pattern plating
     prior: 0.15
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.35, many: 0.70, rising: 0.40}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.35, many: 0.70, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Carano 2018, PCB007 case study (pits and mouse bites, part 2): air-sparger bubbles on the resist sidewall in pattern plating; eductors removed them"
     confirm: "Look at the plated edge under magnification for rounded bites; check plating-tank agitation (air spargers) and whether bites appear across the whole panel."
   # ---------------- spur ----------------
   SPUR-C1:    # under-etching
     prior: 0.45
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.70, rising: 0.50, lane: 0.25, central: 0.40, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2020: copper left at conductor edges = under-etch"
+    source: "Carano 2020: copper left at conductor edges = under-etch; lane: Dietz 2011 (one etch nozzle); centre: Ball 2022, etchant puddles at the panel centre"
     confirm: "Check etch speed, temperature and spray pressure; spurs from under-etch appear along many edges."
   SPUR-C2:    # incomplete development
     prior: 0.35
-    p: {same_spot: 0.20, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.55, rising: 0.45}
+    p: {same_spot: 0.20, near_edge: 0.20, long_thin: 0.30, round: 0.30, many: 0.55, rising: 0.45, lane: 0.40, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2020: late breakpoint / under-development leaves residue; Dietz 2011: a lane of defects = a plugged nozzle"
+    source: "Carano 2020: late breakpoint / under-development leaves residue; Dietz 2011: a lane of defects = a plugged nozzle; lane: Dietz 2011, a lane of defects along the conveyor = a plugged nozzle"
     confirm: "Check the developer breakpoint and spray nozzles; spurs lined up along the conveyor direction point to one nozzle."
   SPUR-C3:    # phototool spot or scratch
     prior: 0.20
-    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30}
+    p: {same_spot: 0.90, near_edge: 0.15, long_thin: 0.30, round: 0.30, many: 0.15, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: a defect at the same coordinates on consecutive panels = phototool or exposure-frame dirt"
     confirm: "Inspect the phototool at this exact spot; if the next board has the spur in the same place, it is the phototool."
   # ---------------- spurious copper ----------------
   SPCU-C1:    # incomplete etching
     prior: 0.40
-    p: {same_spot: 0.15, near_edge: 0.10, long_thin: 0.15, round: 0.30, many: 0.70, rising: 0.50}
+    p: {same_spot: 0.15, near_edge: 0.10, long_thin: 0.15, round: 0.30, many: 0.70, rising: 0.50, lane: 0.35, central: 0.40, roll_pitch: 0.02}
     provenance: sourced
-    source: "Carano 2020: under-etch; Ball 2022: board centre under-etched by puddling, edges cleaner"
+    source: "Carano 2020: under-etch; Ball 2022: board centre under-etched by puddling, edges cleaner; lane: Dietz 2011 (one etch nozzle); centre: Ball 2022, etchant puddles at the panel centre"
     confirm: "Compare the centre with the edges of the panel; copper left in the centre points to etch puddling."
   SPCU-C2:    # resist residue or phototool spot
     prior: 0.35
-    p: {same_spot: 0.80, near_edge: 0.15, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.30}
+    p: {same_spot: 0.80, near_edge: 0.15, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: same spot every panel = phototool or exposure-frame dirt"
     confirm: "Inspect the phototool at this spot; the same island on the next board confirms it."
   SPCU-C3:    # contamination before etching
     prior: 0.25
-    p: {same_spot: 0.05, near_edge: 0.35, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.20}
+    p: {same_spot: 0.05, near_edge: 0.35, long_thin: 0.20, round: 0.50, many: 0.20, rising: 0.20, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: particles shielding copper land at random places"
     confirm: "Check panel cleaning and cleanroom practice before etch; random islands point to contamination."
   # ---------------- missing hole ----------------
   MHOLE-C1:   # drill program error
     prior: 0.50
-    p: {same_spot: 0.95, near_edge: 0.20, long_thin: 0.05, round: 0.80, many: 0.50, rising: 0.20}
+    p: {same_spot: 0.95, near_edge: 0.20, long_thin: 0.05, round: 0.80, many: 0.50, rising: 0.20, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC 'holes not drilled': a program error misses the same holes on every board"
     confirm: "Compare the drill file with the design; the same hole missing on every board means the program."
   MHOLE-C2:   # broken drill bit
     prior: 0.50
-    p: {same_spot: 0.30, near_edge: 0.20, long_thin: 0.05, round: 0.80, many: 0.70, rising: 0.60}
+    p: {same_spot: 0.30, near_edge: 0.20, long_thin: 0.05, round: 0.80, many: 0.70, rising: 0.60, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC 'drill bits breaking': holes after the break are missing"
     confirm: "Check the drill bit and the machine log for a break; holes missing from one point in the sequence onward confirm it."
   # ---------------- pinhole ----------------
   PHOLE-C1:   # dust or bubbles at lamination
     prior: 0.55
-    p: {same_spot: 0.25, near_edge: 0.20, long_thin: 0.10, round: 0.65, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.25, near_edge: 0.20, long_thin: 0.10, round: 0.65, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.30}
     provenance: sourced
-    source: "TB-0173 and Dietz 2011: laminator roll pits give voids repeating at the roll circumference; dust at lamination"
+    source: "TB-0173 and Dietz 2011: laminator roll pits give voids repeating at the roll circumference; dust at lamination; roll repeat: TB-0173, defects repeating at the laminator roll circumference"
     confirm: "Inspect the laminator rolls for pits and check lamination cleanliness; voids repeating 190-264 mm apart mean the roll."
   PHOLE-C2:   # plating voids
     prior: 0.45
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.70, many: 0.60, rising: 0.50}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.70, many: 0.60, rising: 0.50, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC plating voids"
     confirm: "Check the plating bath (agitation, bubbles, chemistry); voids across many features point to plating."
   # ---------------- missing pad ----------------
   MPAD-C1:    # over-etching at pad
     prior: 0.35
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.40, many: 0.60, rising: 0.45}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.40, many: 0.60, rising: 0.45, lane: 0.05, central: 0.08, roll_pitch: 0.02}
     provenance: inferred
-    source: "Our inference: over-etch takes many small pads at once"
+    source: "Our inference: over-etch takes many small pads at once; centre: Ball 2022, the panel edges etch faster than a puddled centre"
     confirm: "Measure other small pads; if they are all undersized, check etch time."
   MPAD-C2:    # resist or phototool defect at pad
     prior: 0.35
-    p: {same_spot: 0.80, near_edge: 0.15, long_thin: 0.10, round: 0.40, many: 0.20, rising: 0.30}
+    p: {same_spot: 0.80, near_edge: 0.15, long_thin: 0.10, round: 0.40, many: 0.20, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Dietz 2011: same spot every panel = phototool"
     confirm: "Inspect the phototool at this pad; the same pad missing on the next board confirms it."
   MPAD-C3:    # pad lifted or scraped
     prior: 0.30
-    p: {same_spot: 0.05, near_edge: 0.45, long_thin: 0.40, round: 0.20, many: 0.10, rising: 0.10}
+    p: {same_spot: 0.05, near_edge: 0.45, long_thin: 0.40, round: 0.20, many: 0.10, rising: 0.10, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Wafer-map analogue: edge damage from handling"
     confirm: "Look for scraping marks on the laminate around the pad; check handling and rework."
   # ---------------- hole breakout ----------------
   HBRK-C1:    # drill-to-pad misregistration
     prior: 0.40
-    p: {same_spot: 0.70, near_edge: 0.40, long_thin: 0.10, round: 0.50, many: 0.80, rising: 0.30}
+    p: {same_spot: 0.70, near_edge: 0.40, long_thin: 0.10, round: 0.50, many: 0.80, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC 'hole not located properly': a registration error shifts many holes the same way"
     confirm: "Check whether all holes are shifted the same direction; re-check drill registration and panel scaling."
   HBRK-C2:    # pattern shifted at exposure
     prior: 0.30
-    p: {same_spot: 0.60, near_edge: 0.30, long_thin: 0.10, round: 0.50, many: 0.80, rising: 0.30}
+    p: {same_spot: 0.60, near_edge: 0.30, long_thin: 0.10, round: 0.50, many: 0.80, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: an image shifted at exposure moves every pad against the holes"
     confirm: "Check image-to-drill registration at exposure; a uniform pad shift points to imaging, a uniform hole shift to drilling."
   HBRK-C3:    # drill wander
     prior: 0.30
-    p: {same_spot: 0.15, near_edge: 0.20, long_thin: 0.10, round: 0.50, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.15, near_edge: 0.20, long_thin: 0.10, round: 0.50, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC drilling symptoms: a worn bit wanders at random"
     confirm: "Check drill bit wear and hit count; random breakouts in different directions point to wander."
   # ---------------- scratch ----------------
   SCR-C1:     # panel handling or stacking
     prior: 0.45
-    p: {same_spot: 0.05, near_edge: 0.45, long_thin: 0.80, round: 0.05, many: 0.20, rising: 0.20}
+    p: {same_spot: 0.05, near_edge: 0.45, long_thin: 0.80, round: 0.05, many: 0.20, rising: 0.20, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Wafer-map analogue: straight scratches and edge damage from handling"
     confirm: "Check stacking, racks and how panels are carried; random scratch directions point to handling."
   SCR-C2:     # rollers or conveyor
     prior: 0.30
-    p: {same_spot: 0.35, near_edge: 0.20, long_thin: 0.85, round: 0.05, many: 0.50, rising: 0.40}
+    p: {same_spot: 0.35, near_edge: 0.20, long_thin: 0.85, round: 0.05, many: 0.50, rising: 0.40, lane: 0.50, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
-    source: "Dietz 2011: marks in a lane along the conveyor = damaged conveyor wheel"
+    source: "Dietz 2011: marks in a lane along the conveyor = damaged conveyor wheel; lane: Dietz 2011, a lane along the conveyor = a wheel or roller"
     confirm: "Check whether scratches run along the conveyor direction in one lane; inspect the wheels in that lane."
   SCR-C3:     # scratched resist before etch
     prior: 0.25
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.70, round: 0.05, many: 0.30, rising: 0.30}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.70, round: 0.05, many: 0.30, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: a scratch in the resist etches into the copper below"
     confirm: "Check whether the scratch shows in the copper but not the laminate; that means the resist was scratched before etch."
   # ---------------- foreign object ----------------
   FOB-C1:     # airborne dust or fibre
     prior: 0.45
-    p: {same_spot: 0.05, near_edge: 0.20, long_thin: 0.50, round: 0.30, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.05, near_edge: 0.20, long_thin: 0.50, round: 0.30, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Ball 2025: cleanroom gowning lapses raised dust defects"
     confirm: "Check cleanroom practice (gowning, door discipline); a fibre under magnification confirms airborne contamination."
   FOB-C2:     # process residue
     prior: 0.30
-    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.55, many: 0.50, rising: 0.50}
+    p: {same_spot: 0.10, near_edge: 0.20, long_thin: 0.10, round: 0.55, many: 0.50, rising: 0.50, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference from IPC-9121A TOC plating residue symptoms"
     confirm: "Check rinse stages and bath filtration; residue on many boards points to the process."
   FOB-C3:     # metal particle from tooling
     prior: 0.25
-    p: {same_spot: 0.10, near_edge: 0.40, long_thin: 0.20, round: 0.60, many: 0.15, rising: 0.20}
+    p: {same_spot: 0.10, near_edge: 0.40, long_thin: 0.20, round: 0.60, many: 0.15, rising: 0.20, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: metal particles come from cutting and drilling near edges"
     confirm: "Test the particle with a magnet or look for a metallic shine; check routing and drilling debris removal."
   # ---------------- unknown anomaly (assembled boards) ----------------
   ANOM-C1:    # assembly fault
     prior: 0.50
-    p: {same_spot: 0.50, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.50, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: assembly faults repeat at the same component position"
     confirm: "Look at the part at this spot on the next board; the same fault there points to the assembly line."
   ANOM-C2:    # physical damage
     prior: 0.30
-    p: {same_spot: 0.05, near_edge: 0.50, long_thin: 0.45, round: 0.15, many: 0.10, rising: 0.10}
+    p: {same_spot: 0.05, near_edge: 0.50, long_thin: 0.45, round: 0.15, many: 0.10, rising: 0.10, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Wafer-map analogue: edge and line damage from handling"
     confirm: "Look for cracks or dents; check handling after assembly."
   ANOM-C3:    # contamination or foreign object
     prior: 0.20
-    p: {same_spot: 0.05, near_edge: 0.25, long_thin: 0.30, round: 0.50, many: 0.20, rising: 0.30}
+    p: {same_spot: 0.05, near_edge: 0.25, long_thin: 0.30, round: 0.50, many: 0.20, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: contamination lands at random places"
     confirm: "Clean the area and re-inspect; if it disappears it was contamination."
   # ---------------- missing part ----------------
   MPART-C1:   # part was never placed
     prior: 0.50
-    p: {same_spot: 0.85, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.85, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Juki/Padnos 2011 and Omron WP: one feeder or nozzle repeating = that feeder or nozzle (pick failure, tape, program)"
     confirm: "Check the feeder and nozzle for this part and the pick-up error log; the same part missing on the next board confirms it."
   MPART-C2:   # part moved or stood up in reflow
     prior: 0.30
-    p: {same_spot: 0.30, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.35}
+    p: {same_spot: 0.30, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.35, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Kester 2005: tombstoning from uneven heating or uneven paste on the two pads"
     confirm: "Look for the part nearby or standing on one end; check the paste volume on both pads and the reflow profile."
   MPART-C3:   # part knocked off after soldering
     prior: 0.20
-    p: {same_spot: 0.05, near_edge: 0.50, long_thin: 0.20, round: 0.30, many: 0.10, rising: 0.10}
+    p: {same_spot: 0.05, near_edge: 0.50, long_thin: 0.20, round: 0.30, many: 0.10, rising: 0.10, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: knocked-off parts are near edges and random"
     confirm: "Look for solder left on the pads (part was soldered, then knocked off); check handling after reflow."
   # ---------------- extra part ----------------
   XPART-C1:   # loose part dropped on the board
     prior: 0.40
-    p: {same_spot: 0.08, near_edge: 0.25, long_thin: 0.20, round: 0.30, many: 0.10, rising: 0.30}
+    p: {same_spot: 0.08, near_edge: 0.25, long_thin: 0.20, round: 0.30, many: 0.10, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: dropped parts land at random places"
     confirm: "Check whether the extra part is soldered; a loose unsoldered part was dropped (check nozzle drops)."
   XPART-C2:   # wrong build variant
     prior: 0.30
-    p: {same_spot: 0.90, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.70, rising: 0.30}
+    p: {same_spot: 0.90, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.70, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: a variant mix-up adds the same parts on every board"
     confirm: "Compare the placement program and BOM with this board's variant."
   XPART-C3:   # debris or a solder ball
     prior: 0.30
-    p: {same_spot: 0.08, near_edge: 0.25, long_thin: 0.10, round: 0.75, many: 0.40, rising: 0.35}
+    p: {same_spot: 0.08, near_edge: 0.25, long_thin: 0.10, round: 0.75, many: 0.40, rising: 0.35, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Kester 2005: solder balls from paste on mask, stencil-bottom smear or moisture"
     confirm: "A shiny round ball is solder; check stencil wiping and paste handling."
   # ---------------- changed part ----------------
   CPART-C1:   # wrong part loaded
     prior: 0.40
-    p: {same_spot: 0.90, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.90, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Juki/Padnos 2011: wrong part or orientation in the feeder; the same position repeats on every board"
     confirm: "Check the reel loaded in that feeder against the BOM."
   CPART-C2:   # part turned or standing up
     prior: 0.35
-    p: {same_spot: 0.40, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40}
+    p: {same_spot: 0.40, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.30, rising: 0.40, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: sourced
     source: "Omron WP: one nozzle size tilting chips on about 1% of boards"
     confirm: "Check the nozzle used for this part and the placement offset; the same nozzle on other tilted parts confirms it."
   CPART-C3:   # same part from another supplier
     prior: 0.25
-    p: {same_spot: 0.80, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.60, rising: 0.30}
+    p: {same_spot: 0.80, near_edge: 0.20, long_thin: 0.20, round: 0.30, many: 0.60, rising: 0.30, lane: 0.05, central: 0.16, roll_pitch: 0.02}
     provenance: inferred
     source: "Our inference: an alternate supplier's part looks different at the same position on every board"
     confirm: "Check the reel's supplier against the approved list; if approved, re-teach the board with this part."
