@@ -358,9 +358,21 @@ The result is one 861 MB `.pte`. Before the fine-tune, the station ran Llama 3.2
 | Shape | Long and thin (3:1 or more), round (under 1.4:1) or irregular |
 | Count | How many of this type are on the board |
 | Trend | Rising if this type appears on at least 3 of the last 10 boards and at least twice as often as on the 10 before |
+| In a line | Same type lined up with this one (same row or column, not the same spot) on earlier boards: a lane along the conveyor |
+| Middle of the board | The defect sits in the middle 40% of the board both ways |
+| Roll repeat | Another of the same type on this board, in line, 190 to 264 mm away: one laminator-roll circumference |
 | Also on the board | The other defect types found with it |
 
-Why these clues: a defect at the same coordinates on consecutive panels points to the phototool or exposure frame, and defects spread across the panel point to a bath, etch or development setting (Dietz 2011; full sources in `docs/RESEARCH_AND_DECISIONS.md` section 6).
+Why these clues:
+- A defect at the same coordinates on consecutive panels points to the phototool or exposure frame.
+- A lane along the conveyor points to one nozzle or roller (Dietz 2011).
+- Defects pooled in the middle of the panel point to etchant puddling (Ball 2022).
+- Repeats at the roll circumference point to the laminator (TB-0173).
+- Defects spread across the panel point to a bath, etch or development setting.
+
+Full sources are in `docs/RESEARCH_AND_DECISIONS.md` section 6.
+
+The last three clues raised the lookup table's ceiling on held-out clue combinations from 60.0% to 67.5% top-1. That is measured on data drawn from the rules, so it shows what the rules can separate, not real-world accuracy.
 
 ### 6.2 The rule table and where the labels come from
 
@@ -400,6 +412,17 @@ Under "details" the screen shows:
 - the clues behind the choice;
 - whether each rule is published or our own inference.
 
+**Why line.** Under each cause, one sentence names the clue behind it, for example: "The defect sits at the same place on 6 of the last 10 boards, which points to dust or hair on phototool."
+- Which clue to name is computed by code: the clue whose observed value most favours this cause over the others, from the rule table (`pcbinspect/why.py`).
+- Llama only words it, as a fill-in sentence.
+- The checker requires the cause and that clue, and refuses typed numbers. Otherwise the standard sentence is shown.
+
+**Learning during use.** After the check, the operator records what the cause turned out to be, choosing from that defect type's listed causes (`/api/cause/confirm`).
+- The station keeps these confirmations with the clues that were shown, and moves this line's numbers towards them (`pcbinspect/learned.py`). Twenty confirmations of a defect type weigh as much as the rule table's own share.
+- Llama's probabilities are reweighted by how far the line has moved from the table, with no retraining on the device.
+- The confirmations are also real, local labels for testing and for the next fine-tune.
+- This is the "trained beforehand, and also during use" the problem statement asks for, applied to the reasoning half.
+
 ### 6.4 Shift questions: fill-in sentences
 
 Llama picks one of the station's fixed read-only queries (scored choice, as before). It then writes the answer as a sentence with placeholders, and the station fills in the numbers:
@@ -437,7 +460,10 @@ The design follows template-based generation work: placeholder answers were 0% u
 
 ### 6.6 Measured results
 
-**Cause choice.** Top-1 / top-2 accuracy. Tuned models and the lookup table were scored on 600 examples per set; the `.pte` rows on 300. Run v1 used the rules before the audit fixes; the lookup row in the v1 block is on those rules. The v2 block uses the fixed rules, with its own lookup row.
+**Cause choice.** Top-1 / top-2 accuracy. BF16 tuned models were scored on 600 examples per set, the lookup table on 1,000 and the `.pte` rows on 300. Each block has its own rules and its own lookup row:
+- v1 used the rules before the audit fixes.
+- v2 used the fixed rules.
+- v3 adds the three new clues and the why line.
 
 | System | Rules | Test (new clue combinations) | Second generator | Real cases (of 8) |
 |---|---|---|---|---|
@@ -447,15 +473,22 @@ The design follows template-based generation work: placeholder answers were 0% u
 | **Tuned 1B v1, 8da4w `.pte`** | v1 | **59.3% / 91.7%** | **60.7% / 89.3%** | 5 / 6 |
 | Lookup table, same rules (the ceiling) | v1 | 61.8% / 91.6% | 56.6% / – | 5 / – |
 | Tuned 1B v2, 6,000 examples, BF16 | v2 | 61.3% / 89.5% | 59.0% / 86.0% | 4 / 7 |
-| Tuned 1B v2, 8da4w `.pte` (shipped) | v2 | pending | pending | pending |
 | Lookup table, same rules (the ceiling) | v2 | 60.0% / 87.6% | 55.8% / 85.3% | 5 / 7 |
+| Tuned 1B v3, 9,000 examples, BF16 | v3 | 66.7% / 87.8% | 60.3% / 87.0% | 4 / 7 |
+| **Tuned 1B v3, 8da4w `.pte` (shipped)** | v3 | **69.7% / 90.3%** | **62.3% / 87.7%** | 4 / 6 |
+| Lookup table, same rules (the ceiling) | v3 | 67.5% / 89.3% | 59.9% / 86.9% | 5 / 7 |
 
 **What this shows:**
 - **Fine-tuning moved the 1B from near-guessing to the ceiling.** The tuned 1B is about 20 points better than the prompted 3B at top-1, from a model less than half its size.
 - **It does not beat the rule table, and cannot.** It learned the table. Its value is that Llama now reads the clues as written text and gives calibrated probabilities, so it can say "one of these two". It also does better than the table on the second generator, whose data the table did not produce.
 - **Quantising to 8da4w kept the result.** The shift from BF16 is within the noise of a 300-example test.
 - **Eight real cases are too few to rank systems.** One case is 12.5 points.
-- **The learning curve settled the data size.** At 3,000 cause examples the tuned model reached only 44.3% on test; at 6,000 it reached the ceiling. A 12,000 run is pending.
+- **The learning curve settled the data size.** On the v2 rules:
+  - 3,000 cause examples reached only 44.3% on test;
+  - 6,000 reached the ceiling (61.3%);
+  - 12,000 added nothing (61.7%).
+- **The new clues moved the ceiling, and the model followed it.** v3 gains about 8 points over v2.
+- **The percentages run high.** The tuned model's calibration error (ECE) is 0.10 on test, against 0.036 for the lookup table, so its percentages are more confident than they should be. Fitting a temperature on the development set is the planned fix.
 
 **Shift answers accepted by the checker** (the rest fall back to the standard sentence):
 
@@ -464,7 +497,9 @@ The design follows template-based generation work: placeholder answers were 0% u
 | Prompted 1B | 0% (writes no placeholders) | 0 of 6 |
 | Prompted 3B | 37% | 1 of 6 |
 | **Tuned 1B v1, 8da4w `.pte`** | **86%** | **6 of 6** |
-| Tuned 1B v2, 8da4w `.pte` | pending | pending |
+| **Tuned 1B v3, 8da4w `.pte` (shipped)** | **84%** | **6 of 6** |
+
+**Why lines accepted by the checker** (60 held-out clue combinations): 53% for v3. 28 of the rejections named a different clue from the one the code had picked, because v3's prompt did not say which clue to name. The rejected lines fall back to the standard sentence. v3.1 adds the clue to the prompt.
 
 ### 6.7 What came before, and what failed
 

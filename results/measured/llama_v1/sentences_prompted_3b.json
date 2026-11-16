@@ -1,0 +1,623 @@
+{
+ "model": "llama3_2_3b_spinquant",
+ "seconds": 139.1,
+ "summary": {
+  "heldout": {
+   "n": 51,
+   "accepted": 0.37254901960784315
+  },
+  "demo": {
+   "n": 6,
+   "accepted": 0.16666666666666666
+  }
+ },
+ "reasons": {
+  "does not say what was asked": 18,
+  "says 'most' without the top defect": 4,
+  "fields that do not exist": 11,
+  "the answer gives no fact": 16,
+  "more than two sentences": 1
+ },
+ "rows": [
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Since morning, {n_types} types of faults have been found, including {top_defect} which has occurred {top_count} times, specifically {count_missing_pad} of those being {top_defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Since morning, 1 types of faults have been found, including missing pad which has occurred 26 times, specifically 26 of those being missing pad."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Since morning, {n_types} types of faults have been found, including {top_defect} with {top_count} occurrences, and {second_defect} with {second_count} occurrences.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Since morning, 2 types of faults have been found, including foreign object with 15 occurrences, and open with 15 occurrences."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Since morning, {n_types} types of faults have been found, with {top_defect} being the most common, which accounted for {top_count} occurrences, and {count_foreign_object} of those being foreign objects.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Since morning, 1 types of faults have been found, with foreign object being the most common, which accounted for 15 occurrences, and 15 of those being foreign objects."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The missing pad fault shows up most on the boards, with {count_missing_pad} occurrences.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['top_defect']",
+    "says 'most' without the top defect"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The {spur} fault shows up most on the boards, with {count_spur} occurrences, tied with the {changed part} fault, which also shows up {count_changed_part} times.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['spur']",
+    "does not say what was asked: ['top_defect']",
+    "says 'most' without the top defect"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The fault showing up most on the boards over the last {hours} is the {top_defect}, which is the {changed part}, with {top_count} occurrences.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The fault showing up most on the boards over the last 5 is the changed part, which is the {changed part}, with 22 occurrences."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "There is a spur problem this shift, as {count_spur} is zero, indicating no spur defects were found.",
+   "ok": true,
+   "reasons": [],
+   "answer": "There is a spur problem this shift, as 0 is zero, indicating no spur defects were found."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "There is a spur problem this shift, with {count_spur} {count_foreign_object} {count_short} {count_spurious_copper} {count_mouse_bite} defects.",
+   "ok": true,
+   "reasons": [],
+   "answer": "There is a spur problem this shift, with 30 20 13 13 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "It appears to be a spur problem, as {count_spur} {top_count} are the top defects.",
+   "ok": false,
+   "reasons": [
+    "says 'most' without the top defect"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here is the answer:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here is the answer:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here is the answer:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "In the last {hours}, {boards} went through the station, of which {passed} were good and {failed} were not.",
+   "ok": true,
+   "reasons": [],
+   "answer": "In the last 6, 16 went through the station, of which 6 were good and 3 were not."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "{hours} boards went through the station, {boards} of which {passed} were good and {failed} were not.",
+   "ok": true,
+   "reasons": [],
+   "answer": "6 boards went through the station, 33 of which 29 were good and 4 were not."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "We are rejecting {five} out of every {twenty-four} hours of boards.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['five']",
+    "does not say what was asked: ['boards', 'failed']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "We are rejecting {five} out of every {twenty-four} boards that come through for inspection.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['five']",
+    "does not say what was asked: ['boards', 'failed']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "{hours} hours of inspection were completed this week, resulting in {boards} boards being checked.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "{review} hours of inspection were completed this week, during which {hours} boards were checked, of which {passed} were passed and {failed} were failed.",
+   "ok": true,
+   "reasons": [],
+   "answer": "7 hours of inspection were completed this week, during which 168 boards were checked, of which 49 were passed and 2 were failed."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "{Review} boards were checked this week.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "{review} boards needed a second look from the operator in the last {hours}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "1 boards needed a second look from the operator in the last 4."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "{review} boards needed a second look from the operator in the last {hours}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "9 boards needed a second look from the operator in the last 4."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here is the inspection log for board {B}:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here is the response:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "Serial {board} has not been through the station before. It was inspected once previously, resulting in a {last_verdict} and {last_defects} defects.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['times_inspected']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "Serial {board} has been through the station {times_inspected} times, with its last inspection resulting in a {last_verdict} and no defects found during that inspection.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Serial B00023 has been through the station 2 times, with its last inspection resulting in a FAIL and no defects found during that inspection."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "The board, B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "The board, B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "The board, B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B{B",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The trace board for {board} is the {board} trace board. It has been inspected {times_inspected} times, with the last inspection resulting in a {last_verdict} due to {last_defects} defects, which occurred on {last_time}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The trace board for B00012 is the B00012 trace board. It has been inspected 1 times, with the last inspection resulting in a FAIL due to 8 defects, which occurred on 2026-11-17 12:53:00."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The trace board for {board} is the {board} trace board. It has been inspected {times_inspected} times, with the last inspection resulting in a {last_verdict}. The last defects found were {last_defects}, and the last inspection took place on {last_time}.",
+   "ok": false,
+   "reasons": [
+    "more than two sentences"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "None of the defects from the last {hours} were critical.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['critical']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Out of {total_defects}, {critical} were critical.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 94, 46 were critical."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Out of {total_defects}, {critical} were critical.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 58, 7 were critical."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "The severity mix for this shift is critical {critical} major {major} minor {minor}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The severity mix for this shift is critical 28 major 4 minor 3."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "The severity mix for this shift is major {major} and minor {minor}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['critical']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "The severity mix for this shift is critical {critical} and major {major} defects, with minor {minor} defects making up the remainder.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The severity mix for this shift is critical 31 and major 31 defects, with minor 43 defects making up the remainder."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "There were more minor findings today.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "There were more minor findings today.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "There were more major findings today.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects were quite severe, with {critical} critical defects and {major} major defects, totaling {total_defects} defects in the past {hours} hours.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['minor']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects were quite severe, with {critical} and {major} defects making up {critical} + {major} = {critical + major} defects, while the {minor} defects were significantly fewer.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The defects were quite severe, with 48 and 48 defects making up 48 + 48 = {critical + major} defects, while the 21 defects were significantly fewer."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects were quite severe, with {critical} being particularly problematic. The total number of defects was {total_defects}, consisting of {major} major defects and {minor} minor defects.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The defects were quite severe, with 36 being particularly problematic. The total number of defects was 51, consisting of 6 major defects and 9 minor defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "There are two outstanding alerts flagged by the station, specifically related to inspecting the phototool, which has been an issue since the latest alert on {latest_time}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "There is one outstanding alert flagged by the station, which is related to the phototool inspection.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts. The latest alert was on {latest_time} and was related to inspecting the phototool on {number} boards.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts. The latest alert was on {latest_time} and was related to the phototool on {number} of boards.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts. The latest alert was on {latest_time} and indicated that {short} was short on  {number} of the last {number} boards, which is three times the usual rate.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number', 'short']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station has not warned about a trend on the line. The latest alert is open on  {name} boards, indicating no warning has been issued.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['name']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station has warned about a trend on the line. The latest alert was a short on  of the last  of the boards, which is three times the usual rate.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "The alerts that are still open right now are the two alerts.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "The alert that is still open is the one on the phototool, which is located on  five boards.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "defect_counts",
+   "question": "Which defect is the most common this shift?",
+   "template": "The most common defect this shift is spurious copper, with  {count_spurious_copper} occurrences.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['top_defect']",
+    "says 'most' without the top defect"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "What is the pass rate today?",
+   "template": "The pass rate today is {passed} out of {total} boards inspected, which is {passed}/{boards} or {passed}/{review}.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['total']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "How many boards went to a person for checking today?",
+   "template": "{hours} hours of review were spent checking the boards, and {passed} boards were sent to {name} for checking.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['name']",
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "severity_counts",
+   "question": "Split the defects from today into critical, major and minor",
+   "template": "The inspection log will be split into three categories: critical, major, and minor. The critical defects will be {critical}, the major defects will be {major}, and the minor defects will be {minor}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The inspection log will be split into three categories: critical, major, and minor. The critical defects will be 44, the major defects will be 66, and the minor defects will be 32."
+  },
+  {
+   "group": "demo",
+   "qid": "board_history",
+   "question": "What happened with board B00005?",
+   "template": "Board B{name} was inspected once, resulting in a CHECK verdict and  six defects, on {name}.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['name']",
+    "does not say what was asked: ['times_inspected']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "open_alerts",
+   "question": "Are there any open alerts?",
+   "template": "There is one open alert. The latest alert was on {latest_time} and was related to a short on  of the last {number} boards, specifically the etch line.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  }
+ ]
+}

@@ -1,0 +1,548 @@
+{
+ "model": "llama3_2_1b_pcb_lora",
+ "seconds": 44.2,
+ "summary": {
+  "heldout": {
+   "n": 51,
+   "accepted": 0.8627450980392157
+  },
+  "demo": {
+   "n": 6,
+   "accepted": 1.0
+  }
+ },
+ "reasons": {
+  "fields that do not exist": 1,
+  "does not say what was asked": 7
+ },
+ "rows": [
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "26 defects of 1 type were found in the last 8 hours; the most common is missing pad (26)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "30 defects of 2 types were found in the last 8 hours; the most common is foreign object (15)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "15 defects of 1 type were found in the last 8 hours; the most common is foreign object (15)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The most common defect is {top_defect}, found {top_count|time}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The most common defect is missing pad, found 22 times."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "{top_defect} is the most frequent defect, with {top_count} found.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Changed part is the most frequent defect, with 25 found."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "{top_defect} is the most frequent defect, with {top_count} found.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Changed part is the most frequent defect, with 22 found."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Found in the last {hours|hour}: {count_spur|spur}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Found in the last 8 hours: 0 spurs."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Found in the last {hours|hour}: {count_spur|spur}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Found in the last 8 hours: 30 spurs."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Found in the last {hours|hour}: {count_spur|spur}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Found in the last 8 hours: 22 spurs."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "42 defects of 2 types were found in the last 10 hours; the most common is missing pad (24)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "82 defects of 4 types were found in the last 10 hours; the most common is foreign object (32)."
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "{total_defects|defect} of {n_types|type} were found in the last {hours|hour}; the most common is {top_defect} ({top_count}).",
+   "ok": true,
+   "reasons": [],
+   "answer": "19 defects of 1 type were found in the last 10 hours; the most common is short (19)."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "Out of {boards|board}, {passed} passed.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 16 boards, 6 passed."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "Out of {boards|board}, {passed} passed.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 33 boards, 29 passed."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "{rejected} of the {boards|board} inspected failed.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['rejected']",
+    "does not say what was asked: ['failed']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "{review} of the {boards|board} went to a person for checking.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['failed']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "Out of {boards|board}, {passed} passed.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "Out of {boards|board}, {passed} passed.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The station inspected {boards|board} in the last {hours|hour}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "Out of {boards|board}, {review} went to a person.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 3 boards, 1 went to a person."
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "Out of {boards|board} inspected, {review} went to a person.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 49 boards inspected, 9 went to a person."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00088 was inspected 1 time; the last verdict was FAIL with 3 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00088 was inspected 2 times; the last verdict was CHECK with 5 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00023 was inspected 1 time; the last verdict was FAIL with 7 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "{board} has been through the station {times_inspected|time}, ending with {last_verdict} and {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "B00023 has been through the station 2 times, ending with FAIL and 0 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00054 was inspected 1 time; the last verdict was PASS with 9 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00054 was inspected 1 time; the last verdict was PASS with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00054 was inspected 1 time; the last verdict was CHECK with 3 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00012 was inspected 1 time; the last verdict was FAIL with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00012 was inspected 1 time; the last verdict was PASS with 8 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "0 critical, 4 major and 0 minor defects were found in the last 3 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} of the {total_defects|defect} were critical.",
+   "ok": true,
+   "reasons": [],
+   "answer": "46 of the 94 defects were critical."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "7 critical, 4 major and 47 minor defects were found in the last 3 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "28 critical, 4 major and 3 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "0 critical, 29 major and 5 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "31 critical, 31 major and 43 minor defects were found in the last 8 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "In the last {hours|hour}: {minor} minor and {major} major, out of {total_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "In the last 24 hours: 22 minor and 0 major, out of 66 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "In the last {hours|hour}: {major} major and {minor} minor, out of {total_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "In the last 24 hours: 23 major and 37 minor, out of 66 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "In the last {hours|hour}: {major} major and {minor} minor, out of {total_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "In the last 24 hours: 13 major and 4 minor, out of 38 defects."
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "{critical} and {major} defects were found in the last {hours|hour}; the total is {total_defects|defect}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['minor']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "{critical} and {major} defects were found in the last {hours|hour}; the worst was {critical} and the best was {major}.",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['minor']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "36 critical, 6 major and 9 minor defects were found in the last 24 hours."
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: short on 6 of the last 20 boards (3x the usual rate): check the etch line"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: short on 6 of the last 20 boards (3x the usual rate): check the etch line"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 2. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: open repeating at the same spot on 5 boards: inspect the phototool"
+  },
+  {
+   "group": "demo",
+   "qid": "defect_counts",
+   "question": "Which defect is the most common this shift?",
+   "template": "The most common defect is {top_defect}, found {top_count|time}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "The most common defect is unknown anomaly, found 28 times."
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "What is the pass rate today?",
+   "template": "Out of {boards|board}, {passed} passed.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Out of 28 boards, 3 passed."
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "How many boards went to a person for checking today?",
+   "template": "{review} of the {boards|board} went to a person for checking.",
+   "ok": true,
+   "reasons": [],
+   "answer": "25 of the 28 boards went to a person for checking."
+  },
+  {
+   "group": "demo",
+   "qid": "severity_counts",
+   "question": "Split the defects from today into critical, major and minor",
+   "template": "{critical} critical, {major} major and {minor} minor defects were found in the last {hours|hour}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "44 critical, 66 major and 32 minor defects were found in the last 24 hours."
+  },
+  {
+   "group": "demo",
+   "qid": "board_history",
+   "question": "What happened with board B00005?",
+   "template": "Board {board} was inspected {times_inspected|time}; the last verdict was {last_verdict} with {last_defects|defect}.",
+   "ok": true,
+   "reasons": [],
+   "answer": "Board B00005 was inspected 1 time; the last verdict was CHECK with 6 defects."
+  },
+  {
+   "group": "demo",
+   "qid": "open_alerts",
+   "question": "Are there any open alerts?",
+   "template": "Open alerts: {n_alerts}. The latest says: {latest_alert}",
+   "ok": true,
+   "reasons": [],
+   "answer": "Open alerts: 1. The latest says: short on 6 of the last 20 boards: check the etch line"
+  }
+ ]
+}

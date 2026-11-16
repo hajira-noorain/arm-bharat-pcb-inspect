@@ -1,0 +1,648 @@
+{
+ "model": "llama3_2_1b_spinquant",
+ "seconds": 65.3,
+ "summary": {
+  "heldout": {
+   "n": 51,
+   "accepted": 0.0
+  },
+  "demo": {
+   "n": 6,
+   "accepted": 0.0
+  }
+ },
+ "reasons": {
+  "the answer gives no fact": 55,
+  "does not say what was asked": 1,
+  "fields that do not exist": 1
+ },
+ "rows": [
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The fault that shows up most on the boards over the last   hours is the top defect, which is missing pad.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The fault that shows up most on the boards over the last   hours is the top_defect, which is changed part.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "The top defect is the foreign object, which shows up most on the boards over the last   hours.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "We have a spur problem this shift, or it is something else.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "We have a spur problem this shift, which is likely due to the high number of foreign object defects and the fact that the top defect is a spur.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "We have a spur problem this shift, as the top defect is a spur.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the defect types and their frequency in the past   hours:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the defect types and their frequency in the past  ous hours:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the defect types and their frequency in the past  ous hours:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "The factory operator answered:  \u00be of the boards went through the station in the last  \u00bd hour and  \ufffd\ufffd of the boards were good.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "The factory operator answered:  \u00bd of the boards went through the station in the last  \u00bd hour and  \u00bc of the boards were good.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "We are rejecting  \ufffd\ufffd of the boards, or  \ufffd\ufffd \u00d7  \ufffd\ufffd =  \ufffd\ufffd of the boards, or  \ufffd\ufffd \u00d7  \ufffd\ufffd =  \ufffd\ufffd/\ufffd\ufffd =  \ufffd\ufffd/\ufffd\ufffd =  \ufffd\ufffd/\ufffd\ufffd",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "We are rejecting  \ufffd\ufffd of the boards, or  \ufffd\ufffd \u00d7  \ufffd\ufffd =  \ufffd\ufffd of the boards, or  \ufffd\ufffd \u00d7  \ufffd\ufffd =  \ufffd\ufffd/ \ufffd\ufffd =  \ufffd\ufffd of the boards.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The total number of boards checked this week is  {  \uff09\uff0c the number of boards passed is  \uff09\uff0c the number of boards failed is  \uff09\uff0c the number of boards reviewed is  \uff09\uff0c and the number of boards inspected is  \uff09\u3002",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The factory operator answered: \"The total number of boards checked this week is  {hours}.\"",
+   "ok": false,
+   "reasons": [
+    "does not say what was asked: ['review']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The factory operator answered: \"The total number of boards checked this week is  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "The operator needed  \u00bd  of the boards needed a second look from an operator in the last  \u00bd  of the  \u00bd  of the  \u00bd  of the  \u00bd  of the  \u00bd  of the  \u00bd  of the  \u00bd  of the",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "The operator needed  \u00bd board for a second look from the last  \u00bd hour.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here is the answer:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here is the answer:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "The board BBOO is not the same as BBOO, so it has not been through the station before.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "The board BBOO is not the same as BBOO, so it has not been through the station before.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "The verdict for board B  ouch   ics   was  PASS.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board B   BOB   BOB   BOB  BOB  BOB  BOB  BOB  BOB  BOB  BOB  BOB  BOB  BOB  BOB  BO",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "The verdict for board B  umber     umber   umber   umber   umber   umber   umber   umber   umber   umber   umber   umber   umber   umber",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The inspection log for board B   {B",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The inspection log for board B  ouch   inger   is  currently  showing  ouch   inger   as  PASS  with  ouch   inger  having  ouch   inger   ouch   ouch   ouch",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "The number of critical defects from the last   hours was   zero.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "The severity mix for this shift is  \u00bd critical, \u00be major, and \u00bc minor defects.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "Here is the answer: The severity mix for this shift is  \u00bd critical, \u00be major, and \u00bc minor.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "Here is the answer: The severity mix for this shift is  \u00bd critical, \u00bc major, \u00bd minor.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "There were more minor findings today, with  ursula,  and  romeo  reporting  ursula  and  romeo  as  minor  defects.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "The factory operator would likely say that there were more minor findings today.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "There were more minor findings today.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects in the past  ouch  were quite severe, with  ouch  being the most critical and  minor  being the most common type.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects in the past   were relatively minor, with  and  being the most common types of defects.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "The defects in the past   were relatively minor, with  and  being the most common types of defects.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "The station has flagged {n_alerts} outstanding issues about the process, and the latest alert is due to be inspected on {latest_time} at the same location on  {number} boards.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "The station has flagged an outstanding issue with the phototool inspection process.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts because the phototool inspection is not being performed on the  umber   number   number   number   number   number   number   number   number   number   number   number   number   number   number",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts because the phototool inspection is not being performed on the  umber   number   number   number   number   number   number   number   number   number   number   number   number   number   number",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You have unacknowledged alerts because the etch line is not being checked on \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the last \ufffd\ufffd of the",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station has warned about a trend on the line, and the latest alert is due to open at the same spot on  five boards, and the latest time is  uts  uts  uts  uts  uts  uts  uts  uts  uts  uts",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station has warned about a trend on the line, and the latest alert is for short on  six of the last  twenty boards, which is three times the usual rate.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "The open alerts are still on the phototool inspection.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "The alerts that are still open are the ones that are repeating at the same spot on  five boards.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "defect_counts",
+   "question": "Which defect is the most common this shift?",
+   "template": "The most common defect is spurious copper, which accounts for  \u00bd of the total defects.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "What is the pass rate today?",
+   "template": "The pass rate today is  \ufffd\ufffd, or  \ufffd\ufffd of  the total number of boards inspected, which is  \ufffd\ufffd *  \ufffd\ufffd\ufffd\ufffd = \ufffd\ufffd\u0964",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "How many boards went to a person for checking today?",
+   "template": "The number of boards that went to a person for checking today is  iced.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "severity_counts",
+   "question": "Split the defects from today into critical, major and minor",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "board_history",
+   "question": "What happened with board B00005?",
+   "template": "The inspection log for board B  ouch   five  indicates that it was inspected  one  time, the verdict was  CHECK, there were  six  defects, and the last inspection was on",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "open_alerts",
+   "question": "Are there any open alerts?",
+   "template": "The factory operator's answer is: \"Yes, there are open alerts, and the latest alert is on the outhouse board, which is short on the etch line, and the latest time is   ouch  ouch  ouch  ouch  ouch  ouch  ouch",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  }
+ ]
+}

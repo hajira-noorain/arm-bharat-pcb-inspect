@@ -1,0 +1,647 @@
+{
+ "model": "llama3_2_1b_base_8da4w",
+ "seconds": 52.7,
+ "summary": {
+  "heldout": {
+   "n": 51,
+   "accepted": 0.0196078431372549
+  },
+  "demo": {
+   "n": 6,
+   "accepted": 0.0
+  }
+ },
+ "reasons": {
+  "the answer gives no fact": 53,
+  "fields that do not exist": 3,
+  "does not say what was asked": 1
+ },
+ "rows": [
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Tally the kinds of faults found since this morning",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Which fault shows up most on the boards over the last 5 hours?",
+   "template": "Here are the answers to the operator's question in one or two sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Here are the answers to the factory operator's question in one or two sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Here are the answers to the factory operator's question in one or two sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "Do we have a spur problem this shift, or is it something else?",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the defect types and their frequency in the past  \u00a0{hours} hours:",
+   "ok": true,
+   "reasons": [],
+   "answer": "Here are the defect types and their frequency in the past  \u00a010 hours:"
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the defect types and their frequency in the past  \ufffd\ufffd  \ufffd\ufffd  \ufffd\ufffd  hours:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "defect_counts",
+   "question": "List the defect types and how often each one occurred in the past 10 hours",
+   "template": "Here are the answers to the factory operator's question:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards went through the station in the last 6 hours and how many were good?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "What share of boards are we rejecting today?",
+   "template": "We are rejecting \ufffd\ufffd of the boards, or \u00bd of the boards, or \ufffd\ufffd of the boards, or \u00bd of the boards, or \ufffd\ufffd of the boards, or \ufffd\ufffd of the boards, or \ufffd\ufffd of the boards, or \ufffd\ufffd of the boards,",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "The factory operator's answer is:  the number of boards checked is  \u00bd of the total hours worked, which is  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd of  \u00bd",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "Here are the answers to the question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "Total boards checked this week?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "The operator needs to review \u00bd of the boards, which is \u00bd *  \u00bd *  \u00bd *  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =  \u00bd =",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "yield",
+   "question": "How many boards needed a second look from an operator in the last 4 hours?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Pull up everything recorded for board B00088",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "The board {board} has serial {serial} B{serial}   has been inspected {times_inspected} times, and the last time it was inspected {last_time} was   was inspected on {last_verdict} {last_defects} times, which is {last_defects} times,",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['serial']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Has serial B00023 been through the station before?",
+   "template": "The board {board} has serial {serial} B{serial}   has been inspected {times_inspected} times, and the last time it was inspected {last_time} was   was inspected on {last_verdict}  was a failure {last_defects}  was inspected on {last_time",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['serial']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board B   \u00a0number  \u00a0is  \u00a0\"  B  \u00a0\"  \u00a0number  \u00a0is  \u00a0\"  \u00a0\"  \u00a0number  \u00a0is  \u00a0\"  \u00a0\"  \u00a0number  \u00a0is",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board B   \u00a0number  \u00a0is  \u00a0\"  B  \u00a0\"  \u00a0and  \u00a0\"  \u00a0\" \u00a0is \u00a0\" \u00a0numbered\" \u00a0; \u00a0times \u00a0inspected \u00a0is \u00a0\" \u00a0one\"",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "What verdict did board B00054 get?",
+   "template": "Board B-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO (times inspected =   ouch) verdict = PASS",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The inspection log for board B-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "board_history",
+   "question": "Trace board B00012 for me",
+   "template": "The inspection log for board B-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO-BO",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How many of the defects from the last 3 hours were critical?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Give me the severity mix for this shift",
+   "template": "Here is the answer in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "Were there more minor or major findings today?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "severity_counts",
+   "question": "How bad were the defects in the past 24 hours?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "The station has flagged an outstanding issue with the process, specifically related to the phototool inspection, which has been open for a long time.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Anything outstanding that the station has flagged about the process?",
+   "template": "The station has flagged an outstanding issue with the process, which is related to the phototool inspection, and the latest time it was inspected is  November",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You need to check if there are any unacknowledged alerts in the factory, and if so, what the latest alert is, which is currently on the same spot on  five boards, and it was last inspected at    November",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You need to check if there are any unacknowledged alerts in the factory, and if so, what the latest alert is, which is an open repeating alert on the same spot on  five boards, and the latest time is  November      November",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Do I have unacknowledged alerts?",
+   "template": "You need to check the etch line on the last   {number} boards to see if there are any unacknowledged alerts.",
+   "ok": false,
+   "reasons": [
+    "fields that do not exist: ['number']",
+    "does not say what was asked: ['n_alerts']"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station's inspection log shows that there are  n_alerts  of alerts, and the latest alert was triggered on   latest_time  which is November       unknown ,  unknown  days ago,  unknown  hours ago,  unknown  minutes ago.",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "Has the station warned about a trend on the line?",
+   "template": "The station has warned about a trend on the line, as indicated by the fact that there are  n_alerts =",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "The alerts that are still open right now are the ones that were inspected on or before the latest_time, which is  November",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "heldout",
+   "qid": "open_alerts",
+   "question": "What alerts are still open right now?",
+   "template": "Here are the answers to the operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "defect_counts",
+   "question": "Which defect is the most common this shift?",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "What is the pass rate today?",
+   "template": "The pass rate today is \ufffd\ufffd, or \ufffd\ufffd or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or \ufffd\ufffd, or",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "yield",
+   "question": "How many boards went to a person for checking today?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "severity_counts",
+   "question": "Split the defects from today into critical, major and minor",
+   "template": "Here are the answers to the factory operator's question in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "board_history",
+   "question": "What happened with board B00005?",
+   "template": "The inspection log for board B- B- was inspected  only once, on November",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  },
+  {
+   "group": "demo",
+   "qid": "open_alerts",
+   "question": "Are there any open alerts?",
+   "template": "Here are the answers in one or two plain sentences:",
+   "ok": false,
+   "reasons": [
+    "the answer gives no fact"
+   ],
+   "answer": null
+  }
+ ]
+}
