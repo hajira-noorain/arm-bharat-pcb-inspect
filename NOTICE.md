@@ -13,7 +13,7 @@ repository's own rule table; no third-party dataset is in its training data.
 Llama model weights and the exported `.pte` files are **not** included in this repository. Obtain the checkpoints
 from Meta (Hugging Face, after accepting the licence) and export them with `llm/` as described in the README.
 
-The licence for this repository's own code is being finalised (see the note on Ultralytics below).
+This repository's own code is licensed under the GNU Affero General Public License v3.0 (`LICENSE`), the same licence as Ultralytics YOLO, which the detector training uses. Third-party components, datasets and model weights keep their own licences, listed below; Llama model weights are under the Llama 3.2 Community License, not the AGPL.
 
 ## Software
 

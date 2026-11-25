@@ -133,4 +133,4 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 
 ## Data and licences
 
-Datasets, models and software licences, including Llama 3.2 and Ultralytics, are listed in `NOTICE.md`. No dataset is redistributed here. Real-IAD (non-commercial) is used for evaluation only and never for anything shipped. The IPC-style limits in `config/severity.yaml` come from a cited secondary source and are editable; they do not replace the licensed IPC standards or a customer's own specification.
+The project's own code is licensed under AGPL-3.0 (`LICENSE`). Datasets, models and software licences, including Llama 3.2 and Ultralytics, are listed in `NOTICE.md`. No dataset is redistributed here. Real-IAD (non-commercial) is used for evaluation only and never for anything shipped. The IPC-style limits in `config/severity.yaml` come from a cited secondary source and are editable; they do not replace the licensed IPC standards or a customer's own specification.
