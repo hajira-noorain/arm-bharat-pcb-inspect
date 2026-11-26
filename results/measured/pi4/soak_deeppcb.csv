@@ -1,0 +1,5 @@
+t_s,board,verdict,verdict_ms,advice_ms,decode_tps,temp_c,throttled
+43.1,deeppcb_000.golden.jpg,REVIEW,516.8,42570.1,0.0,60.8,throttled=0x0
+113.9,deeppcb_000.jpg,FAIL,442.3,70385.3,0.0,62.3,throttled=0x0
+114.4,deeppcb_001.golden.jpg,PASS,443.0,,,63.3,throttled=0x0
+187.4,deeppcb_001.jpg,FAIL,432.0,72581.1,0.0,62.8,throttled=0x0

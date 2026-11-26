@@ -7,6 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY=.venv/bin/python
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"   # bench/ scripts import pcbinspect from the bundle root
 MODE="${1:-full}"
 STAMP=$(date +%Y%m%d_%H%M)
 mkdir -p results

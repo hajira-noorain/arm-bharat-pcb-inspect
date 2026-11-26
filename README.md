@@ -2,7 +2,7 @@
 
 Arm Bharat AI-SoC Challenge 2026-27, Problem Statement 5 (real-time industrial defect detection and quality-control assistant).
 
-**One station, one question: is this bare circuit board good?** Put a board under the camera of a Raspberry Pi 5. Its picture is compared with a known-good board; every difference is named, measured in millimetres and graded; the board gets PASS, FAIL or CHECK and a light; Llama 3.2 on ExecuTorch explains the likely cause and the next action; and the inspection is logged. Nothing leaves the Pi. On boards it had never seen, at a 5% miss-rate setting, it missed 4.0% of defects.
+**One station, one question: is this bare circuit board good?** Put a board under the camera of a Raspberry Pi. Its picture is compared with a known-good board; every difference is named, measured in millimetres and graded; the board gets PASS, FAIL or CHECK and a light; Llama 3.2 on ExecuTorch explains the likely cause and the next action; and the inspection is logged. Nothing leaves the Pi. On boards it had never seen, at a 5% miss-rate setting, it missed 4.0% of defects.
 
 Every inspection system claims a high accuracy figure. This one also **measures the smallest defect it can find on your camera, says what it cannot see, and refuses customer rules it cannot guarantee.** Vision runs through ExecuTorch (or Arm's optimised YOLO26 runtime), Llama 3.2 through ExecuTorch, all on the Pi's Arm CPU.
 
@@ -39,7 +39,7 @@ And it proves what it can do:
 | Classify type and severity | Defect type from the detector; size in mm from the golden comparison against IPC-style class limits | `pcbinspect/golden.py`, `severity.py`, `config/severity.yaml` |
 | Alert operators with actionable recommendations | PASS / FAIL / CHECK, GPIO stack light and buzzer, and Llama advice grounded in `kb/defects.yaml` with the clues behind it (`kb/evidence.yaml`) | `pcbinspect/app.py`, `advisor.py`, `evidence.py`, `why.py`, `grounding.py` |
 | Log inspection results | SQLite on the device (images, defects, dispositions, operator decisions, advice, eye tests, rules, model versions), plus CSV export | `pcbinspect/store.py` |
-| Real time at the edge, no cloud | Every model runs on the Pi 5 CPU; `deploy/measure_on_pi.sh` measures timings, memory, power and a 30-minute soak on the device (numbers pending the Pi session, 20-21 Nov) | `bench/`, `deploy/measure_on_pi.sh` |
+| Real time at the edge, no cloud | Every model runs on the Pi's Arm CPU. Measured on a Raspberry Pi 4 (Cortex-A72): 254 ms per detector tile (INT8, 4 threads), 434 ms per DeepPCB board, Llama 3.2 1B at 3.6 tokens/s, peak 63.3 C with no throttling in a 3-minute soak (`docs/RESULTS.md`) | `bench/`, `deploy/measure_on_pi.sh` |
 | Llama via ExecuTorch for reasoning | Llama 3.2 Instruct exported with ExecuTorch `export_llm` and run through `executorch.runtime`, so decisions are read from next-token scores: a 1B fine-tuned with LoRA on the station's own rule table for advice and shift questions (merged, 8da4w), Meta's SpinQuant 3B for compiling customer rules, and the SpinQuant 1B as the fallback | `pcbinspect/llm_logits.py`, `llm_select.py`, `advisor.py`, `spec_llm.py`, `llm/` |
 
 ## Two pipelines
@@ -71,10 +71,10 @@ The verdict never waits for Llama. Advice arrives on a background thread a few s
 | Anomaly memory on VisA pcb1-4 and Real-IAD `pcb` | Long-term drift on a real line |
 | Parts check: part detector on 15 held-out FPIC boards; missing/extra/moved parts on VisA photos (development result) | |
 | Every detector file loads and gives the same findings on aarch64 (arm64 emulator, `deploy/sim_check_detectors.py`) | |
-| Fine-tuned Llama cause choice on held-out clue combinations, a second independently built generator and 8 published real cases, beside the rule table; shift answers and why lines through the station's checker; Llama rule reader on 80 tuning and 40 held-out clauses | A taught board's gate and limits on real boards (built and tested on camera-like synthetic pictures; first real use is the Pi session) |
+| Fine-tuned Llama cause choice on held-out clue combinations, a second independently built generator and 8 published real cases, beside the rule table; shift answers and why lines through the station's checker; Llama rule reader on 80 tuning and 40 held-out clauses | A taught board's gate and limits on more than one real board (so far one: a rain-sensor pad taught and inspected on the Pi 4's webcam, `docs/RESULTS.md`; it can pass a board at a 10% miss rate, not 5%) |
 | | The cause rule table: its directions come from published process sources for 22 of 45 rules, but its numbers are our estimates and have not been reviewed by anyone with shop-floor experience; 8 real cases are too few to rank models |
 | Learning from operator feedback, simulated on held-out boards (DeepPCB: boards sent to a person 20% to 4%, no defective board passed) | |
-| Raspberry Pi 5 timings, memory and a 30-minute soak (`docs/RESULTS.md` once run on the device) | |
+| Raspberry Pi 4 timings, memory and a 3-minute soak (`docs/RESULTS.md`) | A 30-minute soak; timings on a Raspberry Pi 5 |
 
 The public datasets are scans or close-up photos, and some defects are synthetic: PKU-Market-PCB defects were drawn in with an image editor, and some of DeepPCB's were added by hand. Dataset results and real-camera results are therefore reported separately.
 
@@ -85,7 +85,7 @@ The public datasets are scans or close-up photos, and some defects are synthetic
 
 ## Run it
 
-**On the Raspberry Pi 5** (Raspberry Pi OS 64-bit, with the active cooler fitted):
+**On a Raspberry Pi 5 or 4** (Raspberry Pi OS 64-bit, with a cooler fitted). On a Pi 4, Llama needs ExecuTorch's LLM kernel library rebuilt for ARMv8.0: the wheel's copy uses ARMv8.2 instructions and crashes with an illegal instruction on the Cortex-A72. The rebuild script is not in this repository yet.
 
 ```bash
 tar xf pcb-station.tar && cd pcb-station

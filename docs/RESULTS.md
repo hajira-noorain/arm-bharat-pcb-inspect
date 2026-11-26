@@ -450,4 +450,83 @@ An operator types a question; Llama may only choose one of the station's fixed r
 | deeppcb | 748 | 0.18 -> 0.15 | 94.9% -> 95.3% | 20.4% -> 3.6% | 0.0% -> 0.0% |
 | mendeley | 157 | 2.30 -> 2.37 | 91.3% -> 91.8% | 100.0% -> 100.0% | 0.0% -> 0.0% |
 
+### On the device: Raspberry Pi 4 Model B Rev 1.4 (Debian GNU/Linux 13 (trixie), Python 3.13.5)
+
+Temperature 47.2 C at start, 62.8 C at end; throttle flags throttled=0x0.
+
+| Model | Threads | Median ms | p90 ms |
+|---|---|---|---|
+| detector fp32 | 1 | 763.87 | 764.45 |
+| detector fp32 | 2 | 453.48 | 454.16 |
+| detector fp32 | 4 | 365.12 | 419.76 |
+| detector int8 | 1 | 544.56 | 545.03 |
+| detector int8 | 2 | 341.11 | 341.69 |
+| detector int8 | 4 | 254.1 | 255.44 |
+| detector s fp32 | 1 | 2608.79 | 2632.23 |
+| detector s fp32 | 2 | 1726.51 | 1731.21 |
+| detector s fp32 | 4 | 1411.3 | 1505.65 |
+| detector s int8 | 1 | 1588.64 | 1589.11 |
+| detector s int8 | 2 | 962.31 | 963.15 |
+| detector s int8 | 4 | 692.72 | 734.04 |
+| detector m fp32 | 1 | 7799.04 | 7815.5 |
+| detector m fp32 | 2 | 5337.2 | 5413.13 |
+| detector m fp32 | 4 | 5144.79 | 5194.82 |
+| detector m int8 | 1 | 4691.86 | 4710.12 |
+| detector m int8 | 2 | 2996.61 | 3032.39 |
+| detector m int8 | 4 | 2211.87 | 2230.54 |
+| backbone fp32 | 1 | 674.08 | 688.51 |
+| backbone fp32 | 2 | 475.56 | 476.36 |
+| backbone fp32 | 4 | 400.77 | 402.39 |
+| backbone int8 | 1 | 450.53 | 450.81 |
+| backbone int8 | 2 | 273.93 | 296.7 |
+| backbone int8 | 4 | 186.19 | 186.31 |
+
+| Llama | File MB | Load ms | RSS after load MB | Time to first token ms | Prefill tok/s | Decode tok/s | Whole answer ms |
+|---|---|---|---|---|---|---|---|
+| llama3_2_1b_spinquant.pte | 1025.3 | 228.3 | 613 | 21509 | 16.5 | 3.6 | 66768 |
+
+End to end, median per inspection (ms):
+
+| Design | total to verdict | detector tiles | anomaly backbone | anomaly knn | golden align | severity | n tiles |
+|---|---|---|---|---|---|---|---|
+| deeppcb | 433.86 | 361.48 |  |  |  | 0.18 | 1.0 |
+| hripcb | 11477.31 | 10922.69 |  |  |  | 0.09 | 30.0 |
+| mendeley | 13566.23 | 12808.15 |  |  |  | 0.57 | 35.0 |
+| visa_pcb1 | 1022.08 |  | 399.99 | 282.77 |  | 0.15 |  |
+| visa_pcb2 | 925.19 |  | 397.99 | 282.92 |  | 0.09 |  |
+| visa_pcb3 | 878.78 |  | 400.67 | 288.77 |  | 0.08 |  |
+| visa_pcb4 | 1112.45 |  | 398.67 | 284.73 |  | 0.01 |  |
+
+What the operator waits for from Llama (median seconds):
+
+| Model file | File MB | Load s | Memory added MB | Advice for a two-defect board | One customer rule | Routing one shift question |
+|---|---|---|---|---|---|---|
+| llama3_2_1b_pcb_lora_v31.pte | 821.1 | 12.6 | 492 | 56.4 | 32.3 | 10.3 |
+| llama3_2_3b_spinquant.pte | 2267.1 | 36.0 | 2576 | 190.7 | 92.3 | 29.4 |
+| llama3_2_1b_spinquant.pte | 1025.3 | 32.1 | 1157 | 62.7 | 33.2 | 10.7 |
+
+Soak: 3.0 minutes of DeepPCB inspections with advice (4 boards), peak 63.3 C, verdict median 443.0 ms at the start and 443.0 ms at the end; throttle flags throttled=0x0.
+
+### A real board on the Pi 4: rain-sensor pad, webcam (taught and inspected on the device)
+
+Design `rain-sensor-pad`, 2 good photos, 0.0478 mm per pixel (scale entered by hand), teaching took 10.2 min. Can fail a board: yes; can pass one at the 5% miss rate: no.
+
+Note: compared inside the outline of the copper pattern only: the bare board edge, lettering, holes and pins around it are not inspected, and the limits below hold inside that outline.
+
+| Defect type | What the station states after teaching |
+|---|---|
+| open | Does NOT reach 90% detection of opens at 95% confidence at any tested size (up to 1.00 mm, n=40). |
+| short | Finds shorts across gaps from every tested size from 0.40 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=39 trials). |
+| pin hole | Finds pin holes from 0.79 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=83 trials). |
+| spurious copper | Finds spurious copper spots from every tested size from 0.29 mm up to 0.40 mm (largest tested) with at least 90% probability at 95% confidence (n=30 trials). |
+| mouse bite | Finds mouse bites from 0.44 mm up to 1.00 mm (largest tested) with at least 90% probability at 95% confidence (n=92 trials). |
+| spur | Does NOT reach 90% detection of spurs at 95% confidence at any tested size (up to 0.54 mm, n=44). |
+
+| Board | What it was | Design | Miss rate | Verdict | Findings | Verdict s |
+|---|---|---|---|---|---|---|
+| B00045 | defect pad | rain-sensor-pad | 10% | FAIL | 64 | 12.9 |
+| B00046 | good pad uneven light | rain-sensor-pad | 10% | FAIL | 1 | 7.5 |
+| B00047 | good pad from video frame | rain-sensor-pad | 10% | REVIEW | 3 | 32.9 |
+| B00051 | good pad taught photo | rain-sensor-pad | 10% | PASS | 0 | 2.8 |
+
 Mendeley scale from the 20 mil trace rule: 0.0203 mm/px (40 boards, implied 1249 dpi).

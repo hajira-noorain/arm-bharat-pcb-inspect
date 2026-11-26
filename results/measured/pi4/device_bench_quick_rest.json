@@ -1,0 +1,257 @@
+{
+ "system": {
+  "board": "Raspberry Pi 4 Model B Rev 1.4",
+  "machine": "aarch64",
+  "cpus": 4,
+  "cpu_model": "Cortex-A72",
+  "ram_gb": 7.64,
+  "os": "Debian GNU/Linux 13 (trixie)",
+  "python": "3.13.5",
+  "executorch": "unknown",
+  "temp_c_start": 47.2,
+  "throttled_start": "throttled=0x0",
+  "simulated": false,
+  "temp_c_end": 62.8,
+  "throttled_end": "throttled=0x0"
+ },
+ "when": "2026-11-26 02:16:59",
+ "power": {
+  "method": "sum of rail voltage x current from vcgencmd pmic_read_adc, sampled every 0.5 s; an estimate that reads lower than a wall meter",
+  "idle": null,
+  "detector_runtimes": null,
+  "end_to_end": null,
+  "llm_text": null,
+  "llm_decisions": null
+ },
+ "detector_runtimes": {
+  "arm_runtime_missing": "libarm-yolo26n.so or a converted model (model.bin) not found",
+  "executorch": {
+   "tile_ms_median": 377.7569584999583,
+   "tile_ms_p90": 432.58405850010604,
+   "n": 12,
+   "temp_c": 52.5
+  }
+ },
+ "end_to_end": {
+  "deeppcb": {
+   "board_id": 56.93,
+   "scale": 6.87,
+   "detector_tiles": 361.48,
+   "detector_merge": 0.79,
+   "n_tiles": 1.0,
+   "n_tiles_frame": 1.0,
+   "severity": 0.18,
+   "total_to_verdict": 433.86,
+   "boards": 5,
+   "image_size": [
+    640,
+    640
+   ]
+  },
+  "hripcb": {
+   "board_id": 557.11,
+   "scale": 157.24,
+   "detector_tiles": 10922.69,
+   "detector_merge": 1.12,
+   "n_tiles": 30.0,
+   "n_tiles_frame": 30.0,
+   "severity": 0.09,
+   "total_to_verdict": 11477.31,
+   "boards": 5,
+   "image_size": [
+    2316,
+    2868
+   ]
+  },
+  "mendeley": {
+   "board_id": 516.81,
+   "scale": 145.14,
+   "detector_tiles": 12808.15,
+   "detector_merge": 2.92,
+   "n_tiles": 35.0,
+   "n_tiles_frame": 35.0,
+   "severity": 0.57,
+   "total_to_verdict": 13566.23,
+   "boards": 5,
+   "image_size": [
+    2144,
+    2911
+   ]
+  },
+  "visa_pcb1": {
+   "board_id": 264.55,
+   "scale": 57.04,
+   "anomaly_pre": 15.14,
+   "anomaly_backbone": 399.99,
+   "anomaly_knn": 282.77,
+   "anomaly_post": 1.0,
+   "severity": 0.15,
+   "total_to_verdict": 1022.08,
+   "boards": 5,
+   "image_size": [
+    1070,
+    1404
+   ]
+  },
+  "visa_pcb2": {
+   "board_id": 165.31,
+   "scale": 56.7,
+   "anomaly_pre": 15.11,
+   "anomaly_backbone": 397.99,
+   "anomaly_knn": 282.92,
+   "anomaly_post": 0.65,
+   "severity": 0.09,
+   "total_to_verdict": 925.19,
+   "boards": 5,
+   "image_size": [
+    1070,
+    1404
+   ]
+  },
+  "visa_pcb3": {
+   "board_id": 124.46,
+   "scale": 27.2,
+   "anomaly_pre": 12.99,
+   "anomaly_backbone": 400.67,
+   "anomaly_knn": 288.77,
+   "anomaly_post": 0.62,
+   "severity": 0.08,
+   "total_to_verdict": 878.78,
+   "boards": 5,
+   "image_size": [
+    960,
+    1562
+   ]
+  },
+  "visa_pcb4": {
+   "board_id": 359.65,
+   "scale": 58.97,
+   "anomaly_pre": 15.06,
+   "anomaly_backbone": 398.67,
+   "anomaly_knn": 284.73,
+   "anomaly_post": 0.48,
+   "severity": 0.01,
+   "total_to_verdict": 1112.45,
+   "boards": 5,
+   "image_size": [
+    1104,
+    1358
+   ]
+  }
+ },
+ "llm": {
+  "model": "llama3_2_1b_spinquant.pte",
+  "file_mb": 1025.3,
+  "load_ms": 228.3,
+  "rss_before_mb": 537,
+  "rss_after_load_mb": 613,
+  "rss_after_runs_mb": 1741,
+  "runs": [
+   {
+    "wall_ms": 66767.5,
+    "first_token_ms": 21509,
+    "prefill_tps": 16.45822678878609,
+    "decode_tps": 3.6319612590799033,
+    "generated": 61,
+    "prompt_tokens": 354,
+    "temp_c": 55.5
+   }
+  ],
+  "wall_ms_median": 66767.5,
+  "first_token_ms_median": 21509,
+  "decode_tps_median": 3.6319612590799033,
+  "prefill_tps_median": 16.45822678878609
+ },
+ "llm_scores": {
+  "llama3_2_1b_pcb_lora_v31.pte": {
+   "file_mb": 821.1,
+   "load_ms": 12586.7,
+   "rss_added_mb": 492,
+   "advice": [
+    {
+     "wall_ms": 56373.8,
+     "forwards": 75,
+     "prompt_tokens": 295,
+     "prefill_tps": 16.7,
+     "shown": true,
+     "temp_c": 57.4
+    }
+   ],
+   "rule": [
+    {
+     "wall_ms": 32274.3,
+     "ok": true
+    }
+   ],
+   "route": [
+    {
+     "wall_ms": 10323.0,
+     "query": "open_alerts"
+    }
+   ],
+   "advice_ms_median": 56373.8,
+   "rule_ms_median": 32274.3,
+   "route_ms_median": 10323.0
+  },
+  "llama3_2_3b_spinquant.pte": {
+   "file_mb": 2267.1,
+   "load_ms": 35959.3,
+   "rss_added_mb": 2576,
+   "advice": [
+    {
+     "wall_ms": 190690.7,
+     "forwards": 111,
+     "prompt_tokens": 295,
+     "prefill_tps": 5.8,
+     "shown": true,
+     "temp_c": 59.4
+    }
+   ],
+   "rule": [
+    {
+     "wall_ms": 92328.9,
+     "ok": true
+    }
+   ],
+   "route": [
+    {
+     "wall_ms": 29412.2,
+     "query": "yield"
+    }
+   ],
+   "advice_ms_median": 190690.7,
+   "rule_ms_median": 92328.9,
+   "route_ms_median": 29412.2
+  },
+  "llama3_2_1b_spinquant.pte": {
+   "file_mb": 1025.3,
+   "load_ms": 32149.8,
+   "rss_added_mb": 1157,
+   "advice": [
+    {
+     "wall_ms": 62659.8,
+     "forwards": 84,
+     "prompt_tokens": 295,
+     "prefill_tps": 16.4,
+     "shown": true,
+     "temp_c": 60.3
+    }
+   ],
+   "rule": [
+    {
+     "wall_ms": 33151.5,
+     "ok": true
+    }
+   ],
+   "route": [
+    {
+     "wall_ms": 10685.1,
+     "query": "board_history"
+    }
+   ],
+   "advice_ms_median": 62659.8,
+   "rule_ms_median": 33151.5,
+   "route_ms_median": 10685.1
+  }
+ }
+}

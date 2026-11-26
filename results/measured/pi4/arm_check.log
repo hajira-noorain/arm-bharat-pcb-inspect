@@ -1,0 +1,9 @@
+arch: aarch64 python: 3.13.5 executorch: ?
+[cpuinfo_utils.cpp:81] Reading file /sys/devices/soc0/image_version
+[cpuinfo_utils.cpp:97] Failed to open midr file /sys/devices/soc0/image_version
+[cpuinfo_utils.cpp:110] Reading file /sys/devices/system/cpu/cpu0/regs/identification/midr_el1
+[cpuinfo_utils.cpp:110] Reading file /sys/devices/system/cpu/cpu1/regs/identification/midr_el1
+[cpuinfo_utils.cpp:110] Reading file /sys/devices/system/cpu/cpu2/regs/identification/midr_el1
+[cpuinfo_utils.cpp:110] Reading file /sys/devices/system/cpu/cpu3/regs/identification/midr_el1
+detector: 4 detections in 473 ms on deeppcb_000.golden.jpg; top: [('short', 0.81, (50, 115, 104, 165)), ('short', 0.77, (200, 188, 251, 231)), ('short', 0.75, (244, 502, 292, 555))]
+backbone features: (1, 384, 40, 40) finite: True

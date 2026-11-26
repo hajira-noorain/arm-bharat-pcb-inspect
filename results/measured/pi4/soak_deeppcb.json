@@ -1,0 +1,10 @@
+{
+ "minutes": 3.0,
+ "inspections": 4,
+ "temp_max_c": 63.3,
+ "throttled_any": [
+  "throttled=0x0"
+ ],
+ "verdict_ms_first10_median": 443.0,
+ "verdict_ms_last10_median": 443.0
+}
