@@ -78,7 +78,7 @@ dd { margin: 0; }
   <div class="band">
     <div class="kicker">Arm Bharat AI-SoC Challenge 2026-27 · Problem Statement 5 · real-time industrial defect detection and QC assistant</div>
     <h1>PCB Inspection Station</h1>
-    <p>An offline inspector for circuit boards on a Raspberry Pi 5. It finds and measures defects, says PASS, FAIL or CHECK at a miss rate you choose, and Llama 3.2 on ExecuTorch tells the operator the likely cause and what to do next. This document explains the whole system in plain words.</p>
+    <p>An offline inspector for circuit boards on a Raspberry Pi (measured on a Pi 4). It finds and measures defects, says PASS, FAIL or CHECK at a miss rate you choose, and Llama 3.2 on ExecuTorch tells the operator the likely cause and what to do next. This document explains the whole system in plain words.</p>
   </div>
 
   <div class="figs">
@@ -93,7 +93,7 @@ dd { margin: 0; }
   <div class="note"><b>Try it.</b> Recorded demo of the real station on held-out test boards: <b>pcb-inspection-demo.vercel.app</b>. The live version, with photo upload, runs from one Docker command (deploy/DEMO.md in the repository).</div>
 
   <div class="foot">
-    <div><b>What is measured and what is not.</b> Every number here was measured, mostly on public datasets. Speed, memory and power on the Raspberry Pi 5 are measured on the device on 20-21 November 2026 and are not in this document.</div>
+    <div><b>What is measured and what is not.</b> Every number here was measured, mostly on public datasets. Speed, memory and temperature were measured on a Raspberry Pi 4 (section 7). Board power was not: the Pi 4 has no power-reading chip.</div>
     <div><b>Where the details are.</b> docs/TECHNICAL_REPORT.md (the full write-up), docs/RESULTS.md (every table, generated from the result files), results/measured/ (the raw results).</div>
   </div>
 </div>
@@ -119,7 +119,7 @@ dd { margin: 0; }
     <tr><td>Classify type and severity</td><td>Type from the detector; size in millimetres from the good-board comparison; severity from IPC-style limits for Class 1, 2 and 3</td></tr>
     <tr><td>Alert operators with actionable advice</td><td>PASS / FAIL / CHECK with a green, red or amber light, and Llama's advice on cause and action</td></tr>
     <tr><td>Log inspection results</td><td>Every board, finding, decision and piece of advice in a database on the Pi, exportable as CSV</td></tr>
-    <tr><td>Real time at the edge, no cloud</td><td>Every model runs on the Raspberry Pi 5's Arm CPU</td></tr>
+    <tr><td>Real time at the edge, no cloud</td><td>Every model runs on the Raspberry Pi's Arm CPU; on a Pi 4, a DeepPCB board gets its verdict in 434 ms</td></tr>
     <tr><td>A Llama model on ExecuTorch for reasoning</td><td>Llama 3.2 1B fine-tuned for this station (LoRA, 4-bit) for advice and shift questions; Meta's Llama 3.2 3B (SpinQuant 4-bit) for customer rules; all on ExecuTorch</td></tr>
   </table>
 </section>
@@ -162,7 +162,7 @@ dd { margin: 0; }
     <tr><td>Pinholes</td><td>from 0.42 mm</td><td>not certified up to 1.00 mm</td></tr>
     <tr><td>Mouse bites</td><td>from 0.48 mm</td><td>not certified up to 1.00 mm</td></tr>
   </table>
-  <p class="soft">A detector that scores 96% on DeepPCB cannot promise 90% detection of any size on its own. That is why the station leads with the known-good comparison. The real printed card is photographed on the Pi on 20-21 November.</p>
+  <p class="soft">A detector that scores 96% on DeepPCB cannot promise 90% detection of any size on its own. That is why the station leads with the known-good comparison. The printed card has not yet been photographed under the station's camera.</p>
 </section>
 
 <!-- ================= 4. llama ================= -->
@@ -299,7 +299,7 @@ dd { margin: 0; }
 <!-- ================= 7. pi ================= -->
 <section>
   <h2><span class="n">7</span>Running on the Arm CPU</h2>
-  <p class="lead">The whole station runs on a Raspberry Pi 5 (8 GB, four Arm Cortex-A76 cores), offline. A phone or laptop on the Pi's own Wi-Fi hotspot opens the dashboard.</p>
+  <p class="lead">The whole station runs offline on a Raspberry Pi. It was measured on a Raspberry Pi 4 (8 GB, four Arm Cortex-A72 cores) with a USB webcam; it is built for the Pi 5 too, which has not been measured. A phone or laptop on the Pi's own Wi-Fi hotspot opens the dashboard.</p>
   <table>
     <tr><th>Part</th><th>Runs as</th><th class="num">File size</th></tr>
     <tr><td>Defect detector (YOLO26n; s and m also shipped)</td><td>ExecuTorch, XNNPACK, FP32 or INT8 (or Arm's optimised YOLO26 runtime)</td><td class="num">9.8 MB / 3.2 MB</td></tr>
@@ -309,8 +309,31 @@ dd { margin: 0; }
     <tr><td>Llama 3.2 3B Instruct, SpinQuant INT4: customer rules</td><td>ExecuTorch, XNNPACK with Arm KleidiAI kernels</td><td class="num">2.38 GB</td></tr>
     <tr><td>Llama 3.2 1B Instruct, SpinQuant INT4 (fallback)</td><td>ExecuTorch</td><td class="num">1.08 GB</td></tr>
   </table>
-  <p><b>Measured on the Pi on 20-21 November</b> (bench/bench_device.py, deploy/measure_on_pi.sh): inspections per second and time to verdict, time per stage, detector speed in FP32, INT8 and Arm's runtime at 1, 2 and 4 threads, Llama's time to first token and tokens per second, memory with everything loaded, board power from the Pi's own power chip, and temperature over a 30-minute run. Until then, speed figures in this project are labelled with the machine they came from: the fine-tuned 1B's advice for a board with two defects, causes and why lines included, took 4.5 s on a cloud server CPU.</p>
-  <div class="note"><b>Already checked without a Pi.</b> The Arm (aarch64) build of every model was run in an arm64 Debian emulator: all six detector files load and give the same findings. The check the Pi runs first (deploy/arm_check.py) loads every model and runs Llama, including from the web server's worker thread, a case that once crashed and is now tested.</div>
+  <h3>Measured on the Raspberry Pi 4</h3>
+  <table>
+    <tr><th>What</th><th class="num">Measured</th></tr>
+    <tr><td>Defect detector, one 640-pixel tile, INT8, 4 threads (FP32: 365 ms)</td><td class="num">254 ms</td></tr>
+    <tr><td>"Anything unusual" backbone, INT8, 4 threads</td><td class="num">186 ms</td></tr>
+    <tr><td>A DeepPCB board, picture to verdict</td><td class="num">434 ms</td></tr>
+    <tr><td>A VisA assembled board, picture to verdict</td><td class="num">0.88 to 1.11 s</td></tr>
+    <tr><td>Llama 3.2 1B writing text (SpinQuant INT4)</td><td class="num">3.6 tokens/s</td></tr>
+    <tr><td>Fine-tuned 1B: advice for a board with two defects, causes and why lines included</td><td class="num">56 s</td></tr>
+    <tr><td>Station process with Llama loaded, after the runs</td><td class="num">1.7 GB</td></tr>
+    <tr><td>3-minute soak of inspections with advice: peak temperature, throttling</td><td class="num">63.3 C, none</td></tr>
+  </table>
+  <p>The verdict never waits for Llama: the light changes in under a second on a DeepPCB board, and the advice follows. All figures: docs/RESULTS.md, from results/measured/pi4/.</p>
+  <div class="note"><b>Making Llama run on a Pi 4.</b> The prebuilt ExecuTorch library for Llama's kernels uses ARMv8.2 instructions, which the Pi 4's Cortex-A72 does not have, so Llama crashed with an illegal instruction. We rebuilt that library for ARMv8.0; the vision models never used the faulty code. Before the Pi, every detector file was also checked in an arm64 emulator: all six load and give the same findings.</div>
+
+  <h3>Real boards under the Pi 4's webcam</h3>
+  <p>A rain-sensor pad the station had never seen was taught from two good photos (0.0478 mm per pixel) in 10 minutes on the Pi. On this pad and camera it promises shorts from 0.40 mm, mouse bites from 0.44 mm, pin holes from 0.79 mm and spurious copper from 0.29 mm, each found at least 90% of the time with 95% confidence; it does not promise opens or spurs. It compares only the copper pattern, and it can pass a board at a 10% miss rate, not 5%.</p>
+  <table>
+    <tr><th>Board</th><th>Verdict</th><th class="num">Time</th></tr>
+    <tr><td>Damaged pad: two solder bridges, stray solder, knife cuts</td><td>FAIL, 64 findings</td><td class="num">12.9 s</td></tr>
+    <tr><td>Good pad, one of the photos it was taught from</td><td>PASS</td><td class="num">2.8 s</td></tr>
+    <tr><td>Good pad from a video frame, placed differently (lined up at 0.79, under the 0.85 minimum)</td><td>REVIEW</td><td class="num">32.9 s</td></tr>
+    <tr><td>Good pad under uneven light</td><td>FAIL (false)</td><td class="num">7.5 s</td></tr>
+  </table>
+  <p>On an Arduino Uno it had never seen, with no teaching, the part detector found 47 parts in about a second and named most of them; it took the UNO logo for a transistor and called the crystals chips.</p>
 
   <h3>The operator's screen</h3>
   <p>A dashboard served by the Pi shows, in order: the verdict with the stack light; the board with each finding numbered on it; a table of findings with size, place, IPC class result and confidence; and Llama's advice grouped by defect type. CHECK boards get Pass and Fail buttons that record the operator's name and reason. The Log tab lists every board and reopens it; Trends shows a Pareto chart of defect types and a control chart that flags when the process changes. Setup holds teaching a new board design from a few good boards, the eye test, customer rules and questions about the log.</p>
@@ -320,8 +343,8 @@ dd { margin: 0; }
 <section>
   <h2><span class="n">8</span>What it does not do yet</h2>
   <ul>
-    <li><b>Pi timings are not measured yet.</b> They are measured on the device on 20-21 November.</li>
-    <li><b>Real boards under the real camera</b> are tested only in that session (a taught board and a knife cut, the printed eye-test card). Everything else is on public datasets.</li>
+    <li><b>On the Pi:</b> measured on a Pi 4 only, not a Pi 5; the soak ran 3 minutes, not 30; board power was not measured.</li>
+    <li><b>Real boards under the real camera:</b> one bare board (the rain-sensor pad) and one assembled board (an Arduino Uno, parts found without teaching). On the pad, a good board under uneven light got a false FAIL, and passing needs the 10% setting. Everything else is on public datasets.</li>
     <li><b>Assembled boards:</b> the "anything unusual" model sends about 60% of VisA test boards to a person (about half of them are faulty), and the parts check works well on two of the four VisA designs and poorly on two. It does not check polarity, part value or solder joints.</li>
     <li><b>Severity limits</b> come from cited secondary sources, not the licensed IPC standard; they are editable per customer.</li>
     <li><b>Llama's causes come from a rule table we wrote.</b> 22 of the 45 rules follow published process sources; the numbers are our estimates and are not yet reviewed by anyone with shop-floor experience. The causes, actions and numbers the operator reads are always knowledge-base text or station-computed.</li>

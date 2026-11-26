@@ -1,82 +1,79 @@
-# Demo video script (target about 3 minutes 15 seconds)
+# Demo video script (target about 3 minutes)
 
-One story: **every inspection system claims a high accuracy; ours measures the smallest defect it can find on your camera and on your board, says what it cannot see, and refuses rules it cannot keep.** The eye-chart analogy carries it. Every PS5 requirement still appears on screen.
+One story: **an inspection station that runs entirely on a Raspberry Pi 4's Arm CPU, learns a board from a few photographs, says what size of defect it can promise to find on that board, and only passes a board it can vouch for.**
 
-**Rule:** what is on screen always matches what is being said at that moment. If a line talks about the stack light, the stack light is on screen.
+**Rule:** what is on screen always matches what is being said at that moment, and every number spoken is one that was measured (results files named at the end). A value that was not measured is cut, never estimated.
 
-**Recording:**
+**Sources:**
 
-- Two sources, both at 1080p: a phone on a tripod filming the physical station, and a screen capture of the dashboard.
-- Narration is recorded separately and cleaned with the video-cleanup skill.
-- Numbers on screen come from `docs/RESULTS.md` and the on-device `results/device_bench.json` and `results/soak_*.json`. A bracketed value that was not measured is cut, never guessed.
+- Webcam recording from the station itself (Logitech QuickCam Pro 9000, 1600x1200): `footage_raw/webcam_*_full.mkv`.
+- Phone B-roll: `footage_raw/phone/`.
+- Screen recording of the dashboard (http://localhost:8000 over the Ethernet cable).
+- Narration recorded separately afterwards.
 
-## 0:00 to 0:15: The question nobody answers
+Where the dashboard shows a capture replayed from tonight's photographs rather than a live one, the caption says "replayed capture".
 
-| Time | Shot | Narration |
-|---|---|---|
-| 0:00 | Title card: "PCB inspection station", PS5, team name, Arm Bharat AI-SoC 2026-27 | "Hello judges. Every inspection system claims a high accuracy. But ask it the one thing a factory needs to know, the smallest defect it will catch on *your* camera, and it has no answer. Ours does." |
-
-## 0:15 to 0:30: The device, offline
+## 0:00 to 0:15: What it is
 
 | Time | Shot | Narration |
 |---|---|---|
-| 0:15 | Wide shot: Pi 5 with active cooler, camera on a stand, diffused light, stack light, phone beside it | "This is the whole station: a Raspberry Pi 5, a camera, a light and a stack light. Everything runs on the Pi's Arm CPU." |
-| 0:23 | Close-up: phone in airplane mode joining the Pi's "PCB-Station" Wi-Fi and opening the dashboard | "The phone joins the Pi's own Wi-Fi. There is no internet for this whole video." |
+| 0:00 | Title card: "PCB inspection station", PS5, team name, Arm Bharat AI-SoC 2026-27 | "An offline PCB inspection station, running entirely on a Raspberry Pi 4." |
+| 0:06 | Phone B-roll: wide shot of the Pi, the webcam on its mount, the paper with the corner marks | "A Pi 4, a USB webcam and a lamp. No cloud, no GPU: the vision model and the language model both run on the Pi's four Arm Cortex-A72 cores." |
 
-## 0:30 to 1:05: The eye test
-
-| Time | Shot | Narration |
-|---|---|---|
-| 0:30 | Hands placing a printed card sheet under the camera; close-up of the coupons with tiny printed defects | "Like an eye chart, this printed card carries 252 copper patterns, each with one defect of known size, from a fifth of a millimetre up." |
-| 0:40 | Screen: Eye test tab, sheets being captured one by one, hit/miss marks appearing on the coupons | "The station photographs each sheet and inspects every pattern, exactly as it inspects a board." |
-| 0:50 | Screen: the statement panel, e.g. "Opens: certified from [x] mm. Mouse bites: not certified below [y] mm" | "Then it states, for each defect type, the smallest size it finds 90 percent of the time with 95 percent confidence, the standard used in aerospace testing. And it says plainly what it cannot certify." |
-
-## 1:05 to 1:45: A real board, taught and inspected live
-
-Everything in this segment is the station as built: the Teach a board screen (Setup), then Inspect. Rehearse it on the Pi before filming; if a step does not behave as written, film what it does and change the line.
+## 0:15 to 0:25: Offline
 
 | Time | Shot | Narration |
 |---|---|---|
-| 1:05 | Screen: Setup, Teach a board. A real bare board against the corner stops with the scale marker; "Capture a good board" pressed three times, the board lifted and put down between presses | "Now a real board the station has never seen. I show it the good board three times." |
-| 1:13 | Screen: "Finish teaching", progress bar, then the result with the stated limits ("Finds opens from ... mm") and the line "Measured on test defects drawn onto your own board, not on real defects" | "It draws test defects of known size onto those pictures, sets its own pass and fail thresholds, and tells me what size of defect it can find on this board. That took [teach seconds] seconds on the Pi." |
-| 1:22 | The same good board under the camera; foot pedal; green PASS band and green light | "The good board passes." |
-| 1:27 | Hands: a knife cut across one trace. Board back under the camera; pedal. Red FAIL band, the cut boxed; picture-in-picture of the red light | "I cut one trace. It fails in [verdict time] seconds: an open circuit, at the cut." |
-| 1:35 | Screen: defect list zoomed: "Open circuit", size in mm, Class 1/2/3 chips; then the "What to do" panel: likely cause with its percentage, the why line, the check to confirm it, and the footer naming the Llama model | "It measures the cut in millimetres against the reference picture and grades it. Our fine-tuned Llama 3.2 1B, on the Arm CPU through ExecuTorch, reads the findings and the clues from the log, never the pixels, and gives the likely cause with the clue behind it. Every cause and action shown is knowledge-base text, and every number in the sentence is filled in by the station, not typed by Llama." |
-| 1:41 | Screen: "What was it, once checked?" picker under the advice; choose the cause, Save; toast "Advice on this line now draws on 1 confirmed cause" | "After checking, the operator records what it actually was. The station learns this line's causes from those answers, without retraining." |
+| 0:15 | Phone B-roll: the Ethernet cable into the Pi; the laptop showing the dashboard header "Raspberry Pi 4 · offline" | "The laptop only shows the dashboard over a cable. Nothing leaves the Pi." |
 
-## 1:45 to 2:00: It says when it is unsure
+## 0:25 to 1:00: Teaching a board it has never seen
 
 | Time | Shot | Narration |
 |---|---|---|
-| 1:45 | Screen: an amber CHECK band on a borderline board, with Pass/Fail buttons | "When the evidence is borderline, the board goes to a person: amber light." |
-| 1:52 | Screen: switch the allowed miss rate from 5% to 1%; cut to the golden-board table in RESULTS.md (detector plus golden board, 5% row) with the measured value highlighted | "The operator chooses a target for how many defects may slip through. On boards it had never seen, at the 5 percent setting, it missed 4.0 percent." |
+| 0:25 | Webcam footage: the good rain-sensor pad placed into the corner marks, lifted, placed again | "This rain-sensor pad is new to the station. I show it the good board a few times." |
+| 0:33 | Screen: Teach a board, captures counted, "Finish teaching", progress bar | "It then draws practice defects of known size onto those photographs and checks how many it finds." |
+| 0:42 | Screen: the teaching result card: the sizes it can promise (shorts, mouse bites, pin holes) and the types it does not promise, plus the note "compared inside the outline of the copper pattern only" | "And it tells me, per defect type, the smallest size it finds at least 90 percent of the time with 95 percent confidence on this camera, and which types it cannot promise. [Fill from the teaching result.]" |
 
-## 2:00 to 2:30: It refuses rules it cannot keep
-
-| Time | Shot | Narration |
-|---|---|---|
-| 2:00 | Screen: Customer rules tab; paste "Reject mouse bites that remove more than 20% of the trace width" | "Customers write their acceptance rules in plain English." |
-| 2:07 | Screen: the compiled rule rendered back as a sentence, green "checked" chips; footer "Llama 3.2 3B on this device" | "Llama 3.2 3B, on the Pi, turns each clause into a rule. It can only pick answers the clause supports, and our checks verify every number and defect against the clause." |
-| 2:17 | Screen: a second clause, "Rework any mouse bite larger than 0.1 mm", which asks for a smaller size than the station certified; the capability flag the station shows: "proven to find these from [x] mm; smaller ones may be missed" | "And when a rule asks for a defect smaller than the eye test showed it can see, the station says so, instead of silently accepting a promise it cannot keep." |
-
-## 2:30 to 2:50: Measured on the Pi
+## 1:00 to 1:30: Good board passes, damaged board fails
 
 | Time | Shot | Narration |
 |---|---|---|
-| 2:30 | RESULTS table: detector on ExecuTorch vs Arm's optimised runtime, Llama tokens/s and memory, 30-minute soak with temperature | "Everything here was measured on the Pi itself: [detector ms] per tile on Arm's optimised runtime, Llama at [decode tokens per second], and [peak temperature] after 30 minutes, [throttled or not, as measured]." |
+| 1:00 | Webcam footage: the good pad placed. Screen: green PASS band, design rain-sensor-pad, miss rate 10%. Caption: "replayed capture: one of the photos it was taught from" | "The good pad passes, in 2.8 seconds, at the 10 percent miss rate." |
+| 1:05 | Screen: a REVIEW result (B00047): the same good pad from a later video frame, lined up at 0.79, under the 0.85 minimum | "When it cannot line a board up with the taught one well enough, it does not guess a pass: it sends the board to a person." |
+| 1:08 | Phone B-roll: close-ups of the damaged pad: solder bridges, solder dot, knife cuts | "This one has two solder bridges, a stray blob of solder and knife cuts across the fingers." |
+| 1:15 | Webcam footage: the damaged pad placed. Screen: red FAIL band, defects boxed, the defect list with sizes in millimetres | "It fails, in 12.9 seconds. The solder bridges, the stray solder and the knife cuts are boxed and measured in millimetres against the good board." |
 
-## 2:50 to 3:05: Honest about what is not proven
-
-| Time | Shot | Narration |
-|---|---|---|
-| 2:50 | README table "What is and is not validated", the right-hand column highlighted | "What we have not proven: the limit for etched copper rather than drawn defects, solder-masked boards under shop lighting, and solder joints on assembled boards. The report lists every one." |
-
-## 3:05 to 3:15: Close
+## 1:30 to 2:00: Advice from Llama on the Pi
 
 | Time | Shot | Narration |
 |---|---|---|
-| 3:05 | Architecture slide (two pipelines), then the GitHub link | "A station that measures what it can see, says what it cannot, and keeps only the promises it can. Code, report and every measurement are on GitHub. Thank you." |
+| 1:30 | Screen: the "What to do" panel filling in: likely cause, the clue line, the check to confirm it, footer naming Llama 3.2 1B on ExecuTorch | "Our fine-tuned Llama 3.2 1B runs on the Pi through ExecuTorch. It reads the station's findings, not the pixels, and gives the likely cause, the clue behind it and the check to confirm it." |
+| 1:45 | Screen: "What was it, once checked?": pick the cause, Save, the toast | "Once the operator has checked, they record what it actually was, and the station learns this line's causes from those answers without retraining." |
 
-## Fill-ins after the Pi session
+## 2:00 to 2:20: The assembled board
 
-Fill every bracketed value from `results/device_bench.json`, `results/soak_*.json`, the real eye-test result in the station's log, and `docs/RESULTS.md`, never estimates. If a number is not measured, the line is cut rather than guessed.
+| Time | Shot | Narration |
+|---|---|---|
+| 2:00 | Webcam footage: the Arduino Uno under the camera; screen: its result | "The same station handles assembled boards by comparing parts against a taught good board. [Cut this segment if the Uno run was not done.]" |
+
+## 2:20 to 2:45: Measured on the Pi 4
+
+| Time | Shot | Narration |
+|---|---|---|
+| 2:20 | Results slide (numbers from `results/measured/pi4/`) | "All measured on this Pi 4: the defect detector takes 254 milliseconds per tile on four threads in INT8, a full DeepPCB board gets its verdict in 434 milliseconds, and Llama 3.2 1B generates 3.6 tokens per second, with the whole station using 1.7 gigabytes. In a three-minute soak it peaked at 63.3 degrees with no throttling." |
+| 2:35 | Slide: ExecuTorch on the Cortex-A72 | "The ExecuTorch wheel's LLM kernels used ARMv8.2 instructions the Pi 4 does not have, so we rebuilt them for ARMv8.0." |
+
+## 2:45 to 3:00: Honest limits and close
+
+| Time | Shot | Narration |
+|---|---|---|
+| 2:45 | README "What is and is not validated" table | "What it does not promise, it says: on this webcam it does not promise opens or spurs on this pad, it inspects only the copper pattern, and on this pad it can pass a board at a 10 percent miss rate, not 5." |
+| 2:53 | Architecture slide, then the GitHub link | "A station that measures what it can see and only promises what it can keep. Everything is on GitHub. Thank you." |
+
+The full shot list, captions, slides and overlays are in `footage_raw/edit/` (EDIT_PLAN.md).
+
+## Where the numbers come from
+
+- Pi 4 benchmarks, soak and the Arm check: `results/measured/pi4/results_pi4_20261126_0235.tgz`.
+- Teaching result, verdicts and times for the rain-sensor pad: the station's log on the Pi (`var/inspections.db`) and the screenshots taken from it.
+- Fill every bracketed value from those, or cut the line.
