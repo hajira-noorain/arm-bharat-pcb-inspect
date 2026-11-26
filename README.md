@@ -82,7 +82,7 @@ Everything was measured on a Raspberry Pi 4 Model B (8 GB, four Arm Cortex-A72 c
 | Station with Llama loaded | 1.7 GB of 8 GB |
 | Soak of inspections with advice | peak 63.3 °C, no throttling |
 
-**Getting Llama onto the Pi 4.** ExecuTorch's prebuilt Llama kernels use ARMv8.2 instructions that the Pi 4's Cortex-A72 doesn't have. We rebuilt that library for ARMv8.0, and Llama now runs on the Pi 4.
+**Getting Llama onto the Pi 4.** ExecuTorch's prebuilt Llama kernels use ARMv8.2 instructions that the Pi 4's Cortex-A72 doesn't have. We rebuilt that library for ARMv8.0 (`deploy/rebuild_llm_ops_pi4.sh`), and Llama now runs on the Pi 4.
 
 **Real boards under the webcam:**
 
@@ -114,7 +114,7 @@ bash deploy/run_on_pi.sh replay  # or cycle through held-out demo boards
 bash deploy/hotspot.sh           # optional: a phone joins "PCB-Station" and opens http://10.42.0.1:8000
 ```
 
-On a Pi 4, rebuild ExecuTorch's Llama kernel library for ARMv8.0 first (see above).
+On a Pi 4, run `bash deploy/rebuild_llm_ops_pi4.sh` after setup: it rebuilds ExecuTorch's Llama kernel library for ARMv8.0 (the build took 6 minutes on our Pi 4).
 
 Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale_marker_sheet.pdf` at 100% and place a marker beside the board.
 
@@ -126,7 +126,6 @@ Press **Inspect**, the space bar or a USB foot pedal. Print `deploy/assets/scale
 
 - **More real boards on the line:** a wider set of in-house boards, solder-masked boards, and a lighting hood for even light, so more designs pass at the 5% setting as well as 10%.
 - **Raspberry Pi 5:** run the same benchmarks there, with a 30-minute soak and board-power readings from the Pi 5's power chip.
-- **Ship the Pi 4 Llama rebuild** as a script, so any Pi 4 runs Llama out of the box.
 - **Deeper assembled-board checks:** part polarity, part values and solder joints, on top of today's missing, extra and changed parts.
 - **Shop-floor tuning of the cause knowledge base:** a process engineer reviews it, and real-line feedback refines Llama's advice further.
 - **Long-run monitoring:** drift tracking over weeks on a real line, building on the control charts already in the dashboard.

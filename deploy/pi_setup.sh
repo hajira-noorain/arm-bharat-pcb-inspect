@@ -36,6 +36,10 @@ if [ -f models/vision/pcb_y26n.pt ]; then
     if [ -n "$LIB" ] && [ -n "$MDL" ]; then echo "Arm runtime ready: $LIB, model $(dirname "$MDL")"
     else echo "Arm runtime not set up (the station will use ExecuTorch for vision)"; fi )
 fi
+# Pi 4 (Cortex-A72, CPU part 0xd08): the prebuilt Llama kernels need ARMv8.2 and crash with "illegal instruction"
+if grep -qi "0xd08" /proc/cpuinfo; then
+  echo "Raspberry Pi 4 detected: run  bash deploy/rebuild_llm_ops_pi4.sh  once to rebuild the Llama kernels for ARMv8.0"
+fi
 vcgencmd measure_temp || true
 vcgencmd get_throttled || true
 echo "Setup done. Start the station with:  bash deploy/run_on_pi.sh"

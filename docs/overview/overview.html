@@ -322,7 +322,7 @@ dd { margin: 0; }
     <tr><td>3-minute soak of inspections with advice: peak temperature, throttling</td><td class="num">63.3 C, none</td></tr>
   </table>
   <p>The verdict never waits for Llama: the light changes in under a second on a DeepPCB board, and the advice follows. All figures: docs/RESULTS.md, from results/measured/pi4/.</p>
-  <div class="note"><b>Making Llama run on a Pi 4.</b> The prebuilt ExecuTorch library for Llama's kernels uses ARMv8.2 instructions, which the Pi 4's Cortex-A72 does not have, so Llama crashed with an illegal instruction. We rebuilt that library for ARMv8.0; the vision models never used the faulty code. Before the Pi, every detector file was also checked in an arm64 emulator: all six load and give the same findings.</div>
+  <div class="note"><b>Making Llama run on a Pi 4.</b> The prebuilt ExecuTorch library for Llama's kernels uses ARMv8.2 instructions, which the Pi 4's Cortex-A72 does not have, so Llama crashed with an illegal instruction. We rebuilt that library for ARMv8.0 (script: deploy/rebuild_llm_ops_pi4.sh); the vision models never used the faulty code. Before the Pi, every detector file was also checked in an arm64 emulator: all six load and give the same findings.</div>
 
   <h3>Real boards under the Pi 4's webcam</h3>
   <p>A rain-sensor pad the station had never seen was taught from two good photos (0.0478 mm per pixel) in 10 minutes on the Pi. On this pad and camera it promises shorts from 0.40 mm, mouse bites from 0.44 mm, pin holes from 0.79 mm and spurious copper from 0.29 mm, each found at least 90% of the time with 95% confidence; it does not promise opens or spurs. It compares only the copper pattern, and it can pass a board at a 10% miss rate, not 5%.</p>
