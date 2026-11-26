@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import platform
 import re
 import logging
 import math
@@ -32,6 +33,7 @@ from .advisor import Advisor
 from .anomaly import enrol
 from .camera import ReplayCamera, open_camera
 from .demo import MAX_UPLOAD_BYTES, UploadError, decode_upload, load_samples, match_known, seconds_until
+from .golden import copper_mode
 from .gpio import StackLight
 from .kb import default_kb
 from .learning import FeedbackBuffer, crop_embedding
@@ -841,7 +843,7 @@ class Station:
         self.teach_status.pop(name, None)
         return {"cancelled": name}
 
-    def teach_finish(self, name: str, mm_per_px: float | None = None) -> dict:
+    def teach_finish(self, name: str, mm_per_px: float | None = None, copper: str | None = None) -> dict:
         caps = self.teach_sessions.get(name) or []
         if len(caps) < 2:
             raise HTTPException(409, "capture the good board at least twice (3 or more is better)")
@@ -858,19 +860,26 @@ class Station:
                                      "capture, or enter millimetres per pixel")
         self.teach_status[name] = {"running": True, "progress": 0.0, "started": time.time()}
 
+        cmode = copper if copper in ("auto", "colour") else self.cfg.get("teach_copper", "auto")
+        # tested sizes: 0.2 to 1.0 mm, but nothing narrower than 6 pixels of this camera (a smaller planted
+        # defect is below what the optics resolve, so it would only measure the blur); the report states the range
+        lo = max(0.2, round(6 * mmpp, 2))
+        sizes = (lo, max(1.0, 3 * lo))
+
         def job():
             from .teach import calibrate_bare
             try:
                 def score(t, g, aligned):
-                    with self.lock:     # inspections of other designs can interleave between trials
+                    with self.lock, copper_mode(cmode):  # other inspections can interleave between trials
                         return self.inspector.golden_evidence(t, g, aligned=aligned, guided=True)
 
                 def progress(f):
                     self.teach_status[name]["progress"] = round(float(f), 3)
                 t0 = time.perf_counter()
-                res = calibrate_bare(score, caps[0], caps[1:], 1.0 / mmpp, np.random.default_rng(), progress=progress,
-                                     n_windows=int(self.cfg.get("teach_windows", 120)),
-                                     n_good=int(self.cfg.get("teach_good", 24)))
+                with copper_mode(cmode):    # planting reads the copper the same way the evidence does
+                    res = calibrate_bare(score, caps[0], caps[1:], 1.0 / mmpp, np.random.default_rng(),
+                                         progress=progress, n_windows=int(self.cfg.get("teach_windows", 120)),
+                                         n_good=int(self.cfg.get("teach_good", 24)), sizes_mm=sizes)
                 gdir, gate_dir = self.root / "models" / "golden", self.root / "models" / "gate"
                 gdir.mkdir(parents=True, exist_ok=True)
                 gate_dir.mkdir(parents=True, exist_ok=True)
@@ -880,7 +889,8 @@ class Station:
                 d = Design(name, "bare", True, None, mmpp, 20.0,
                            self.inspector.severity.default_rules, None, 0.05, 0.05,
                            f"taught on the station from {len(caps)} good captures; gate calibrated on planted defects",
-                           f"models/golden/{name}.png", f"models/gate/{name}_golden.json", "guided")
+                           f"models/golden/{name}.png", f"models/gate/{name}_golden.json", "guided",
+                           copper=cmode)
                 with self.lock:
                     save_design(self.root / self.cfg["designs_dir"], d)
                     self.designs[name] = d
@@ -926,6 +936,15 @@ def _cuda() -> bool:
 
 
 # ======================================================================= web
+
+def _device_model() -> str:
+    """The board this runs on, for the dashboard header ("Raspberry Pi 4 Model B Rev 1.4" on a Pi)."""
+    try:
+        return Path("/proc/device-tree/model").read_text(errors="ignore").replace(chr(0), "").strip() or platform.machine()
+    except OSError:
+        return f"{platform.system()} {platform.machine()}"
+
+
 class InspectReq(BaseModel):
     design: str
     alpha: float | None = None
@@ -962,6 +981,7 @@ class EnrolReq(BaseModel):
 class TeachReq(BaseModel):
     name: str
     mm_per_px: float | None = None
+    copper: str | None = None     # 'auto' | 'colour' (pcbinspect/golden.py COPPER_MODE)
 
 
 class EyeCaptureReq(BaseModel):
@@ -1018,6 +1038,7 @@ def create_app(cfg: dict) -> FastAPI:
                     "anomaly": n in st.inspector.anomaly} for n, d in st.designs.items()]
         return {"designs": designs,
                 "demo": st.demo, "queue": st.waiting, "disclosure": DISCLOSURE if st.demo else None,
+                "device": _device_model(),
                 "camera": None if st.camera is None else st.camera.name,
                 "llm": None if st.llm is None else st.llm.model,
                 "vision": {"detector": None if st.detector is None else st.detector.tiles.name,
@@ -1161,7 +1182,7 @@ def create_app(cfg: dict) -> FastAPI:
 
     @app.post("/api/teach/finish")
     def teach_finish(req: TeachReq):
-        return st.teach_finish(req.name, req.mm_per_px)
+        return st.teach_finish(req.name, req.mm_per_px, req.copper)
 
     @app.post("/api/teach/cancel")
     def teach_cancel(req: TeachReq):

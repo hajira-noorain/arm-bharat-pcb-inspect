@@ -35,7 +35,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from .golden import MIN_ALIGN_CC, align
+from .golden import COPPER_MODE, MIN_ALIGN_CC, align, colour_copper, copper_area
 
 
 @dataclass
@@ -93,6 +93,19 @@ def _otsu_thr(ch: np.ndarray) -> float:
 def consistent_masks(test: np.ndarray, golden: np.ndarray):
     """Copper masks for test and (aligned) golden on the same LAB channel with matching polarity.
     Copper is taken as the golden's minority phase. Returns (test_mask, golden_mask, Seg)."""
+    if COPPER_MODE.get() == "colour":           # by colour, inside the golden board's outline (see golden.py)
+        region = copper_area(golden)
+        mg, cg, thr_g = colour_copper(golden, region)
+        mt, ct, thr_t = colour_copper(test, region)
+        if not mg.any() or mg.all():
+            z = np.zeros(test.shape[:2], bool)
+            return z, z, None
+        ct, cg = ct.astype(np.float32), cg.astype(np.float32)
+        lv_t = (float(np.median(ct[region & ~mt])), float(np.median(ct[mt]))) if mt.any() and (region & ~mt).any() \
+            else (0.0, 255.0)
+        lv_g = (float(np.median(cg[region & ~mg])), float(np.median(cg[mg])))
+        on = region.astype(np.float32)          # copper fraction is only read on the board, like the masks
+        return mt, mg, Seg(ct, cg, thr_t, thr_g, False, False, lv_t, lv_g, _frac(ct, lv_t) * on, _frac(cg, lv_g) * on)
     lt, lg = cv2.cvtColor(test, cv2.COLOR_BGR2LAB), cv2.cvtColor(golden, cv2.COLOR_BGR2LAB)
     best = None
     for c in range(3):

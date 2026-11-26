@@ -25,7 +25,7 @@ import numpy as np
 
 from .defect_render import NOUN, TYPES, place
 from .gate import ConformalGate, defect_level_scores
-from .golden import MIN_ALIGN_CC, align, copper_mask
+from .golden import COPPER_MODE, MIN_ALIGN_CC, align, copper_area, copper_mask
 from .pod import fit_pod
 
 WINDOW = 960            # planted-defect trials run on windows of the capture (scores are local)
@@ -67,6 +67,8 @@ def plant_on_photo(photo: np.ndarray, specs, px_per_mm: float, rng: np.random.Ge
         return photo.copy(), []
     cu = cu0.copy()
     occupied = np.zeros(cu.shape, bool)
+    if COPPER_MODE.get() == "colour":           # plant only where a colour-mode board is compared (its copper
+        occupied = ~copper_area(photo)          # outline): defects on the bare edge are outside what it inspects
     placed = []
     for cls, size in specs:
         r = place(cu, cls, size, px_per_mm, rng, occupied)
@@ -135,6 +137,9 @@ def calibrate_bare(score_fn, golden: np.ndarray, goods: list[np.ndarray], px_per
     if not goods:
         raise ValueError("need at least one good capture besides the golden one")
     notes = []
+    if COPPER_MODE.get() == "colour":
+        notes.append("compared inside the outline of the copper pattern only: the bare board edge, lettering, "
+                     "holes and pins around it are not inspected, and the limits below hold inside that outline")
     aligned = []                                   # (capture, golden warped onto it)
     for g in goods:
         ga, cc = align(g, golden)

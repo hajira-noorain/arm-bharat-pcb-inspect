@@ -101,3 +101,58 @@ def test_severity_uses_measurement():
                   measurement=meas)
     assert d.ipc["class1"] == "accept" and d.ipc["class3"] in ("reject", "uncertain")
     assert "nick" in d.severity_reason
+
+
+def _majority_copper_pad():
+    """A bare pad like the rain sensor: black board on white paper, copper covering most of the board
+    (wide orange fingers, narrow black gaps)."""
+    img = np.full((400, 500, 3), 235, np.uint8)                 # white paper
+    img[60:340, 80:420] = (25, 30, 25)                          # black board
+    for x in range(100, 400, 30):                               # 24 px copper fingers, 6 px gaps
+        img[80:320, x:x + 24] = (110, 150, 215)                 # BGR copper orange
+    return img
+
+
+def test_colour_copper_takes_the_orange_phase_when_copper_is_the_majority():
+    from pcbinspect.golden import copper_mask, copper_mode
+    img = _majority_copper_pad()
+    finger, gap, paper = (200, 112), (200, 126), (20, 20)       # (y, x)
+    auto = copper_mask(img) > 0
+    assert not auto[finger]                                     # the minority rule picks the gaps here
+    with copper_mode("colour"):
+        cu = copper_mask(img) > 0
+    assert cu[finger] and not cu[gap] and not cu[paper]
+    assert (copper_mask(img) > 0)[gap] == auto[gap]             # mode is restored after the block
+
+
+def test_colour_mode_ignores_the_background_in_the_golden_diff():
+    from pcbinspect.golden import copper_mode
+    from pcbinspect.golden_diff import diff_candidates
+    golden = _majority_copper_pad()
+    test = golden.copy()
+    test[5:40, 5:60] = (200, 200, 150)                          # something on the paper, off the board
+    test[:, 440:] = (180, 200, 240)                             # and a warmer patch of paper (light falloff)
+    test[150:170, 130:140] = (25, 30, 25)                       # a cut across one finger: an open
+    with copper_mode("colour"):
+        cands, info = diff_candidates(test, golden, aligned=True)
+    assert info["ok"]
+    centres = [((c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2) for c in cands]
+    assert any(120 <= x <= 150 and 140 <= y <= 180 for x, y in centres)
+    assert not any(y < 60 or x > 425 for x, y in centres)
+
+
+def test_colour_mode_drops_detector_boxes_outside_the_copper_pattern():
+    """Colour-mode designs inspect the copper pattern only; detector boxes on the paper, the board edge or
+    lettering are dropped like the comparison drops them. Other designs keep every box."""
+    from types import SimpleNamespace as Box
+    from pcbinspect.golden import copper_mode
+    from pcbinspect.pipeline import _in_compared_area
+    img = _majority_copper_pad()
+    on_copper = Box(bbox=(190, 150, 230, 190))       # centre on the fingers
+    on_paper = Box(bbox=(5, 5, 40, 40))              # white paper around the board
+    on_edge = Box(bbox=(82, 322, 98, 338))           # black board margin below the fingers
+    dets = [on_copper, on_paper, on_edge]
+    with copper_mode("colour"):
+        assert _in_compared_area(dets, img) == [on_copper]
+        assert _in_compared_area(dets, None) == dets  # no aligned golden: nothing to judge against
+    assert _in_compared_area(dets, img) == dets      # auto mode keeps every box

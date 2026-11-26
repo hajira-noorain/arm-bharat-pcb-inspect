@@ -20,10 +20,82 @@ boards under in-line lighting: there, copper under the mask is a faint ridge and
 """
 from __future__ import annotations
 
+import contextvars
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 import cv2
 import numpy as np
+
+# How copper is told apart from the rest, per design ('copper:' in its yaml):
+#   'auto'   - the LAB channel with the most contrast, copper = the minority phase (scans, the datasets)
+#   'colour' - bare copper photographed on a camera station: copper is the orange phase of LAB b, and only
+#              the board itself counts (the background around it and through its holes is ignored). Needed
+#              where copper covers more than half the board, which makes the minority rule pick the gaps.
+COPPER_MODE = contextvars.ContextVar("copper_mode", default="auto")
+
+
+@contextmanager
+def copper_mode(mode: str | None):
+    token = COPPER_MODE.set(mode or "auto")
+    try:
+        yield
+    finally:
+        COPPER_MODE.reset(token)
+
+
+def board_region(bgr: np.ndarray) -> np.ndarray:
+    """The board's footprint: the filled outline of the largest dark region (solder mask, or the gaps
+    joined to it), so a plain background around the board is left out. The whole picture when no such
+    region is found."""
+    gray = cv2.GaussianBlur(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY), (5, 5), 0)
+    otsu, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    dark = (gray < min(70.0, otsu)).astype(np.uint8)
+    n, lab, st, _ = cv2.connectedComponentsWithStats(dark)
+    full = np.ones(gray.shape, bool)
+    if n < 2:
+        return full
+    k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA]))
+    cs, _ = cv2.findContours((lab == k).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    region = np.zeros(gray.shape, np.uint8)
+    cv2.fillPoly(region, [cv2.convexHull(max(cs, key=cv2.contourArea))], 1)
+    return region.astype(bool) if region.mean() >= 0.05 else full
+
+
+def colour_copper(bgr: np.ndarray, region: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray, float]:
+    """Bare copper on a camera station: Otsu on LAB lightness inside the board (the strong contrast), with the
+    copper side picked by colour (the more orange phase of LAB b), not as the minority. Bright solder on a
+    bridge therefore reads like copper. Returns (mask, blurred lightness, threshold)."""
+    if region is None:
+        region = board_region(bgr)
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+    L = cv2.GaussianBlur(lab[:, :, 0], (3, 3), 0)
+    inside = L[region]
+    if inside.size < 20:
+        return np.zeros(L.shape, bool), L, 255.0
+    thr = float(cv2.threshold(inside.reshape(-1, 1), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[0])
+    bright = (L > thr) & region
+    dark = region & ~bright
+    b = lab[:, :, 2].astype(np.float32)
+    copper_is_bright = not dark.any() or (bright.any() and b[bright].mean() >= b[dark].mean())
+    return (bright if copper_is_bright else dark), L, thr
+
+
+def copper_area(golden: np.ndarray) -> np.ndarray:
+    """Where a colour-mode board is compared: the outline (convex hull) of its large copper regions, so the
+    board's bare edge, lettering, mounting holes and header pins, whose colour wobbles between captures,
+    are left out. Copper defects lie inside it; the whole board when no large copper region is found."""
+    board = board_region(golden)
+    cu = colour_copper(golden, board)[0].astype(np.uint8)
+    n, lab, st, _ = cv2.connectedComponentsWithStats(cu)
+    big = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] >= 0.02 * board.sum()]
+    if not big:
+        return board
+    pts = np.vstack([cv2.findNonZero((lab == i).astype(np.uint8)) for i in big])
+    area = np.zeros(cu.shape, np.uint8)
+    cv2.fillPoly(area, [cv2.convexHull(pts)], 1)
+    return area.astype(bool) & board
+
 
 MISSING_TYPES = {"mouse_bite", "pin_hole", "open", "missing_pad"}
 EXTRA_TYPES = {"spur", "spurious_copper", "short"}
@@ -69,6 +141,8 @@ class Measurement:
 def copper_mask(bgr: np.ndarray) -> np.ndarray:
     """Conductor layer as a binary mask: Otsu on the LAB channel with the most contrast.
     Works on binarised scans and bare copper on laminate; not validated under solder mask."""
+    if COPPER_MODE.get() == "colour":
+        return colour_copper(bgr, copper_area(bgr))[0].astype(np.uint8) * 255
     lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
     best, best_sep = None, -1.0
     for ch in (lab[:, :, 0], lab[:, :, 1], lab[:, :, 2]):

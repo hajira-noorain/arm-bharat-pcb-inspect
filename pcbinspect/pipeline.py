@@ -20,7 +20,7 @@ from .calib import detect_scale, read_board_id
 from .detect_bare import BareDetector
 from .gate import ConformalGate, GateThresholds
 from .fusion import fuse
-from .golden import MIN_ALIGN_CC, GoldenMeasurer, align
+from .golden import COPPER_MODE, MIN_ALIGN_CC, GoldenMeasurer, align, copper_area, copper_mode
 from .golden_diff import diff_candidates
 from .learning import RescoreHead, crop_embedding, rescore
 from .record import ANOMALY_CLASS, Defect, Inspection, zone_of
@@ -49,6 +49,7 @@ class Design:
     detector_tiles: str = "all"            # 'all' | 'guided' (golden-first: only tiles holding a difference;
     #                                        the gate must be calibrated under the same policy)
     parts_map: str | None = None           # assembled boards: the taught good board's parts (pcbinspect/parts.py)
+    copper: str = "auto"                   # how copper is segmented: 'auto' | 'colour' (golden.COPPER_MODE)
 
     @classmethod
     def from_yaml(cls, p: Path) -> "Design":
@@ -60,7 +61,8 @@ class Design:
         return cls(d["name"], d["kind"], d.get("detector", d["kind"] == "bare"),
                    d.get("anomaly_dir"), d.get("mm_per_px"), d.get("marker_mm", 20.0), rules,
                    d.get("gate"), d.get("alpha", 0.05), d.get("beta", 0.01), d.get("description", ""),
-                   d.get("golden"), d.get("gate_golden"), d.get("detector_tiles", "all"), d.get("parts_map"))
+                   d.get("golden"), d.get("gate_golden"), d.get("detector_tiles", "all"), d.get("parts_map"),
+                   d.get("copper", "auto"))
 
 
 @dataclass
@@ -218,6 +220,8 @@ class Inspector:
             guided = golden_ok and d.detector_tiles == "guided"
             dets, dl = self.detector.detect(bgr, only_near=[c.bbox for c in diffs] if guided else None)
             lat.update(dl)
+            if golden_ok:
+                dets = _in_compared_area(dets, golden_aligned)
             cands += [Candidate(x.cls, "detector", x.bbox, x.conf, x.conf) for x in dets]
 
         anomaly_res = None
@@ -320,6 +324,7 @@ class Inspector:
         dets = []
         if self.detector is not None:
             dd, _ = self.detector.detect(bgr, only_near=[c.bbox for c in diffs] if guided else None)
+            dd = _in_compared_area(dd, g_al)
             dets = [{"bbox": x.bbox, "conf": x.conf, "cls": x.cls} for x in dd]
         return [(tuple(f["bbox"]), float(f["conf"])) for f in fuse(dets, diffs)]
 
@@ -342,6 +347,14 @@ class Inspector:
         """force_review: a reason why this capture cannot be trusted (blur, glare, a lighting shift
         outside the calibrated envelope). A board that would PASS goes to a person instead: the
         miss-rate guarantee only holds for captures like the calibration ones."""
+        with copper_mode(self.designs[design].copper if design in self.designs else None):
+            return self._inspect(bgr, design, board_id, alpha, log, golden, force_review, capture_info, use_golden)
+
+    def _inspect(self, bgr: np.ndarray, design: str, board_id: str | None = None,
+                alpha: float | None = None, log: bool = True,
+                golden: np.ndarray | None = None, force_review: str | None = None,
+                capture_info: dict | None = None,
+                use_golden: bool = True) -> tuple[Inspection, Analysis, int | None]:
         t_all = time.perf_counter()
         d = self.designs[design]
         if golden is None and use_golden:     # use_golden=False: a photo of some other board (demo upload)
@@ -484,6 +497,23 @@ def load_designs(config_dir: Path) -> dict[str, Design]:
     return out
 
 
+def _in_compared_area(dets, golden_aligned):
+    """Colour-mode designs inspect the copper pattern only (golden.copper_area): detector boxes centred
+    outside it (background, lettering, holes, pins) are dropped, as the comparison drops them. Other designs
+    keep every box."""
+    if COPPER_MODE.get() != "colour" or golden_aligned is None or not dets:
+        return dets
+    area = cv2.dilate(copper_area(golden_aligned).astype(np.uint8), np.ones((9, 9), np.uint8)) > 0
+    h, w = area.shape
+    keep = []
+    for x in dets:
+        cx = min(w - 1, max(0, int((x.bbox[0] + x.bbox[2]) / 2)))
+        cy = min(h - 1, max(0, int((x.bbox[1] + x.bbox[3]) / 2)))
+        if area[cy, cx]:
+            keep.append(x)
+    return keep
+
+
 def save_design(config_dir: Path, d: Design) -> None:
     Path(config_dir).mkdir(parents=True, exist_ok=True)
     doc = {"name": d.name, "kind": d.kind, "detector": d.use_detector, "anomaly_dir": d.anomaly_dir,
@@ -493,6 +523,6 @@ def save_design(config_dir: Path, d: Design) -> None:
                       "min_spacing_mm": d.rules.min_spacing_mm} if d.rules.rules_from_design else None),
            "gate": d.gate_file, "alpha": d.alpha, "beta": d.beta, "description": d.description,
            "golden": d.golden, "gate_golden": d.gate_golden,
-           "detector_tiles": d.detector_tiles, "parts_map": d.parts_map}
+           "detector_tiles": d.detector_tiles, "parts_map": d.parts_map, "copper": d.copper}
     (Path(config_dir) / f"{d.name}.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     json  # noqa: B018 (keep import for callers that serialise designs)

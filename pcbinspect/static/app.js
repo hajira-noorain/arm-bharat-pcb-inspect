@@ -95,6 +95,7 @@ let state = null, current = null, samples = [], sampleIdx = -1, source = "camera
 
 async function loadState() {
   state = await api("/api/state");
+  if (state.device) $("#device").textContent = `${state.device.replace(/ Model .*/, "")} · offline`;
   const sel = $("#design"), keep = sel.value || store.get("pcb-design");
   sel.innerHTML = state.designs.map((d) => `<option value="${esc(d.name)}">${esc(d.name)}${d.calibrated ? "" : " (not calibrated)"}</option>`).join("");
   if (keep && state.designs.some((d) => d.name === keep)) sel.value = keep;
@@ -399,8 +400,10 @@ function groupAdvice(steps, defects) {
     if (!groups.has(k)) groups.set(k, { ids: [], cls, action: s.action, cause: s.cause, step: s.process_step, cause_id: s.cause_id, action_id: s.action_id,
       p: s.p ? s.p[s.cause_id] : null, abstain: !!s.abstain, alternatives: s.alternatives || [], confirm: s.confirm, provenance: s.provenance, evidence: s.evidence,
       candidates: s.candidates || [], learned_from: s.learned_from || 0, keys: [], why: s.why || "" });
-    groups.get(k).ids.push(d ? num(d) : String(s.defect));
-    groups.get(k).keys.push(String(s.defect));
+    const g = groups.get(k);
+    if (g.keys.includes(String(s.defect))) continue;   // a defect with several steps is listed once
+    g.ids.push(d ? num(d) : String(s.defect));
+    g.keys.push(String(s.defect));
   }
   return [...groups.values()].map((g) => ({ ...g, ids: g.ids.sort((a, b) => a - b) }));
 }
